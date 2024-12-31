@@ -1,2 +1,2 @@
 # Laboratory-Management-System
-Laboratory Management System for maintaining lab records and Stock inventory.
+A web-based Laboratory Management System for managing stock, issue registers, approvals, and inventory updates.
