@@ -1,0 +1,44 @@
+# Python / Django
+*.pyc
+__pycache__/
+*.log
+*.pot
+db.sqlite3
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# Environment variables (CRITICAL SECURITY)
+.env
+.env.local
+*.env
+
+# React / Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+build/
+dist/
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Django media/static
+media/
+staticfiles/
