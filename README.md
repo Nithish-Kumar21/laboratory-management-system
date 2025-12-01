@@ -17,25 +17,39 @@ Full-stack web application for managing laboratory inventory, stock registers, d
 ### Backend Setup
 
 cd backend
+
 python -m venv venv
+
 venv\Scripts\activate # Windows (Mac/Linux: source venv/bin/activate)
+
 pip install -r requirements.txt
+
 python manage.py migrate
+
 python manage.py runserver
+
 
 
 ### Frontend Setup
 
 cd frontend
+
 npm install
+
 npm start
+
 
 
 ### Database Configuration
 Create a PostgreSQL database and update `backend/backend/settings.py` with your credentials.
 
 ## Team Members
-- [Add your names here]
+- Dharani
+- Gowtham
+- Sarathy
+- Anbu Selvan
+- Sharath
+- Nithish Kumar
 
 ## Development Status
 Active development - LMS modules: Inventory, Stock Register, Damaged Entry, Issue Register
