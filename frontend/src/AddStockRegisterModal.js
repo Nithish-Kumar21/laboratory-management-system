@@ -5,7 +5,8 @@ import './AddStockRegisterModal.css';
 function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
     invoice_number: '',
-    date: new Date().toISOString().split('T')[0], // Today's date
+    date: new Date().toISOString().split('T')[0],
+    supplier_name: '',  // ✅ NEW FIELD
   });
 
   const [chemicalItems, setChemicalItems] = useState([]);
@@ -37,11 +38,11 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
   if (!isOpen) return null;
 
   const addChemicalRow = () => {
-    setChemicalItems([...chemicalItems, { chemical_name: '', quantity_ml: '', rate: '' }]);
+    setChemicalItems([...chemicalItems, { chemical_name: '', quantity_ml: '', rate: '', make: '' }]);  // ✅ Added make
   };
 
   const addApparatusRow = () => {
-    setApparatusItems([...apparatusItems, { apparatus_name: '', quantity_pieces: '', rate: '' }]);
+    setApparatusItems([...apparatusItems, { apparatus_name: '', quantity_pieces: '', rate: '', make: '' }]);  // ✅ Added make
   };
 
   const removeChemicalRow = (index) => {
@@ -57,7 +58,6 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
     updated[index][field] = value;
     setChemicalItems(updated);
     
-    // Show suggestions when typing in name field
     if (field === 'chemical_name') {
       setShowChemicalSuggestions({ ...showChemicalSuggestions, [index]: true });
     }
@@ -68,7 +68,6 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
     updated[index][field] = value;
     setApparatusItems(updated);
     
-    // Show suggestions when typing in name field
     if (field === 'apparatus_name') {
       setShowApparatusSuggestions({ ...showApparatusSuggestions, [index]: true });
     }
@@ -104,6 +103,11 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
       newErrors.date = 'Date is required';
     }
 
+    // ✅ NEW: Validate supplier name
+    if (!formData.supplier_name.trim()) {
+      newErrors.supplier_name = 'Supplier name is required';
+    }
+
     // Validate at least one item
     if (chemicalItems.length === 0 && apparatusItems.length === 0) {
       newErrors.items = 'At least one chemical or apparatus item must be added';
@@ -120,6 +124,9 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
       if (!item.rate || parseFloat(item.rate) <= 0) {
         newErrors[`chemical_rate_${index}`] = 'Rate must be greater than 0';
       }
+      if (!item.make.trim()) {  // ✅ NEW VALIDATION
+        newErrors[`chemical_make_${index}`] = 'Make is required';
+      }
     });
 
     // Validate apparatus items
@@ -132,6 +139,9 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
       }
       if (!item.rate || parseFloat(item.rate) <= 0) {
         newErrors[`apparatus_rate_${index}`] = 'Rate must be greater than 0';
+      }
+      if (!item.make.trim()) {  // ✅ NEW VALIDATION
+        newErrors[`apparatus_make_${index}`] = 'Make is required';
       }
     });
 
@@ -151,17 +161,22 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
     const payload = {
       invoice_number: formData.invoice_number,
       date: formData.date,
+      supplier_name: formData.supplier_name,  // ✅ NEW FIELD
       chemical_items: chemicalItems.map(item => ({
         chemical_name: item.chemical_name,
         quantity_ml: parseFloat(item.quantity_ml),
-        rate: parseFloat(item.rate)
+        rate: parseFloat(item.rate),
+        make: item.make  // ✅ NEW FIELD
       })),
       apparatus_items: apparatusItems.map(item => ({
         apparatus_name: item.apparatus_name,
         quantity_pieces: parseInt(item.quantity_pieces),
-        rate: parseFloat(item.rate)
+        rate: parseFloat(item.rate),
+        make: item.make  // ✅ NEW FIELD
       }))
     };
+
+    console.log('Submitting payload:', payload);
 
     try {
       const response = await fetch('http://127.0.0.1:8000/api/stock_register/', {
@@ -172,16 +187,32 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
         body: JSON.stringify(payload)
       });
 
+      console.log('Response status:', response.status);
+
       if (response.ok) {
+        const data = await response.json();
+        console.log('Success! Created entry:', data);
         onSuccess();
         resetForm();
         onClose();
       } else {
         const errorData = await response.json();
-        setErrors({ submit: errorData.invoice_number?.[0] || 'Failed to create entry' });
+        console.error('Server returned error:', errorData);
+        
+        let errorMessage = 'Failed to create entry. ';
+        if (errorData.invoice_number) {
+          errorMessage += errorData.invoice_number[0];
+        } else if (errorData.error) {
+          errorMessage += errorData.error;
+        } else {
+          errorMessage += JSON.stringify(errorData);
+        }
+        
+        setErrors({ submit: errorMessage });
       }
     } catch (error) {
-      setErrors({ submit: 'Network error. Please try again.' });
+      console.error('Network error:', error);
+      setErrors({ submit: `Network error: ${error.message}. Make sure Django server is running.` });
     } finally {
       setSubmitting(false);
     }
@@ -191,6 +222,7 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
     setFormData({
       invoice_number: '',
       date: new Date().toISOString().split('T')[0],
+      supplier_name: '',  // ✅ NEW FIELD
     });
     setChemicalItems([]);
     setApparatusItems([]);
@@ -233,6 +265,19 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
                 />
                 {errors.date && <span className="error-text">{errors.date}</span>}
               </div>
+            </div>
+
+            {/* ✅ NEW: Supplier Name */}
+            <div className="form-group">
+              <label>Supplier Name *</label>
+              <input
+                type="text"
+                value={formData.supplier_name}
+                onChange={(e) => setFormData({ ...formData, supplier_name: e.target.value })}
+                className={errors.supplier_name ? 'error' : ''}
+                placeholder="Enter supplier name"
+              />
+              {errors.supplier_name && <span className="error-text">{errors.supplier_name}</span>}
             </div>
 
             {errors.items && <div className="error-banner">{errors.items}</div>}
@@ -296,6 +341,18 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
                       className={errors[`chemical_rate_${index}`] ? 'error' : ''}
                     />
                     {errors[`chemical_rate_${index}`] && <span className="error-text">{errors[`chemical_rate_${index}`]}</span>}
+                  </div>
+
+                  {/* ✅ NEW: Make field */}
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="Make"
+                      value={item.make}
+                      onChange={(e) => updateChemicalItem(index, 'make', e.target.value)}
+                      className={errors[`chemical_make_${index}`] ? 'error' : ''}
+                    />
+                    {errors[`chemical_make_${index}`] && <span className="error-text">{errors[`chemical_make_${index}`]}</span>}
                   </div>
 
                   <button
@@ -367,6 +424,18 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
                       className={errors[`apparatus_rate_${index}`] ? 'error' : ''}
                     />
                     {errors[`apparatus_rate_${index}`] && <span className="error-text">{errors[`apparatus_rate_${index}`]}</span>}
+                  </div>
+
+                  {/* ✅ NEW: Make field */}
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="Make"
+                      value={item.make}
+                      onChange={(e) => updateApparatusItem(index, 'make', e.target.value)}
+                      className={errors[`apparatus_make_${index}`] ? 'error' : ''}
+                    />
+                    {errors[`apparatus_make_${index}`] && <span className="error-text">{errors[`apparatus_make_${index}`]}</span>}
                   </div>
 
                   <button

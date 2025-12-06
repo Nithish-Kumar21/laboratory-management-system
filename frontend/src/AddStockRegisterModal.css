@@ -166,11 +166,12 @@
 
 .item-row {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 40px;
+  grid-template-columns: 2fr 1fr 1fr 1fr 40px;  /* ✅ Added 1fr for Make column */
   gap: 10px;
   margin-bottom: 15px;
   align-items: start;
 }
+
 
 .item-row input {
   padding: 10px 12px;

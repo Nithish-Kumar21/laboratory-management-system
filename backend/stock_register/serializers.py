@@ -2,24 +2,28 @@ from rest_framework import serializers
 from .models import StockRegister, ChemicalItem, ApparatusItem
 
 
-# Read-only serializers (existing)
+
+# Read-only serializers (existing + NEW 'make' field)
 class ChemicalItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChemicalItem
-        fields = ['id', 'chemical_name', 'quantity_ml', 'rate']
+        fields = ['id', 'chemical_name', 'make', 'quantity_ml', 'rate']  # Added 'make'
+
 
 
 class ApparatusItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = ApparatusItem
-        fields = ['id', 'apparatus_name', 'quantity_pieces', 'rate']
+        fields = ['id', 'apparatus_name', 'make', 'quantity_pieces', 'rate']  # Added 'make'
+
 
 
 class StockRegisterListSerializer(serializers.ModelSerializer):
     """Serializer for list view - just basic info"""
     class Meta:
         model = StockRegister
-        fields = ['id', 'invoice_number', 'date']
+        fields = ['id', 'invoice_number', 'date', 'supplier_name']  # Added 'supplier_name'
+
 
 
 class StockRegisterDetailSerializer(serializers.ModelSerializer):
@@ -27,16 +31,18 @@ class StockRegisterDetailSerializer(serializers.ModelSerializer):
     chemical_items = ChemicalItemSerializer(many=True, read_only=True)
     apparatus_items = ApparatusItemSerializer(many=True, read_only=True)
 
+
     class Meta:
         model = StockRegister
-        fields = ['id', 'invoice_number', 'date', 'chemical_items', 'apparatus_items']
+        fields = ['id', 'invoice_number', 'date', 'supplier_name', 'chemical_items', 'apparatus_items']  # Added 'supplier_name'
 
 
-# Write serializers (NEW)
+
+# Write serializers (NEW + 'make' field)
 class ChemicalItemWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChemicalItem
-        fields = ['chemical_name', 'quantity_ml', 'rate']
+        fields = ['chemical_name', 'make', 'quantity_ml', 'rate']  # Added 'make'
     
     def validate_quantity_ml(self, value):
         if value <= 0:
@@ -49,10 +55,11 @@ class ChemicalItemWriteSerializer(serializers.ModelSerializer):
         return value
 
 
+
 class ApparatusItemWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = ApparatusItem
-        fields = ['apparatus_name', 'quantity_pieces', 'rate']
+        fields = ['apparatus_name', 'make', 'quantity_pieces', 'rate']  # Added 'make'
     
     def validate_quantity_pieces(self, value):
         if value <= 0:
@@ -65,14 +72,16 @@ class ApparatusItemWriteSerializer(serializers.ModelSerializer):
         return value
 
 
+
 class StockRegisterCreateSerializer(serializers.ModelSerializer):
     """Serializer for creating new stock register entries with nested items"""
     chemical_items = ChemicalItemWriteSerializer(many=True, required=False)
     apparatus_items = ApparatusItemWriteSerializer(many=True, required=False)
 
+
     class Meta:
         model = StockRegister
-        fields = ['invoice_number', 'date', 'chemical_items', 'apparatus_items']
+        fields = ['invoice_number', 'date', 'supplier_name', 'chemical_items', 'apparatus_items']  # Added 'supplier_name'
     
     def validate_invoice_number(self, value):
         if StockRegister.objects.filter(invoice_number=value).exists():
@@ -95,14 +104,14 @@ class StockRegisterCreateSerializer(serializers.ModelSerializer):
         chemical_items_data = validated_data.pop('chemical_items', [])
         apparatus_items_data = validated_data.pop('apparatus_items', [])
         
-        # Create stock register entry
+        # Create stock register entry (now includes supplier_name)
         stock_register = StockRegister.objects.create(**validated_data)
         
-        # Create chemical items
+        # Create chemical items (now includes make)
         for item_data in chemical_items_data:
             ChemicalItem.objects.create(stock_register=stock_register, **item_data)
         
-        # Create apparatus items
+        # Create apparatus items (now includes make)
         for item_data in apparatus_items_data:
             ApparatusItem.objects.create(stock_register=stock_register, **item_data)
         
