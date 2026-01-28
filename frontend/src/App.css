@@ -319,3 +319,84 @@
   height: 32px;
   font-size: 14px;
 }
+
+/* ============================================ */
+/* DARK MODE GLOBAL STYLES */
+/* ============================================ */
+
+/* Main content area dark mode */
+:root.dark-mode .main-content {
+  background-color: #1a1a1a;
+  color: #e0e0e0;
+}
+
+/* Sidebar dark mode - darker variant */
+:root.dark-mode .sidebar {
+  background-color: #1e1e1e;
+  border-right: 1px solid #2a2a2a;
+}
+
+:root.dark-mode .sidebar-header {
+  border-bottom-color: rgba(255, 255, 255, 0.05);
+}
+
+:root.dark-mode .sidebar-title {
+  color: #e0e0e0;
+}
+
+:root.dark-mode .sidebar-nav a {
+  color: #b0b0b0;
+}
+
+:root.dark-mode .sidebar-nav a:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-left-color: #4a9eff;
+}
+
+:root.dark-mode .sidebar-nav a.active {
+  background-color: #2a5a8f;
+  border-left-color: #4a9eff;
+}
+
+:root.dark-mode .sidebar-footer {
+  border-top-color: rgba(255, 255, 255, 0.05);
+}
+
+:root.dark-mode .user-menu-trigger {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+:root.dark-mode .user-menu-trigger:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+:root.dark-mode .user-dropdown {
+  background: #2d2d2d;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+:root.dark-mode .user-dropdown button {
+  background: #2d2d2d;
+  color: #e0e0e0;
+}
+
+:root.dark-mode .user-dropdown button:hover {
+  background: #3a3a3a;
+}
+
+:root.dark-mode .user-dropdown button:not(:last-child) {
+  border-bottom-color: #3a3a3a;
+}
+
+/* Scrollbar dark mode */
+:root.dark-mode .main-content::-webkit-scrollbar-track {
+  background: #2a2a2a;
+}
+
+:root.dark-mode .main-content::-webkit-scrollbar-thumb {
+  background: #555;
+}
+
+:root.dark-mode .main-content::-webkit-scrollbar-thumb:hover {
+  background: #666;
+}

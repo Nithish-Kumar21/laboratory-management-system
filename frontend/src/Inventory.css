@@ -100,3 +100,56 @@
     opacity: 1;
   }
 }
+
+/* ============================================ */
+/* DARK MODE STYLES */
+/* ============================================ */
+
+:root.dark-mode .inventory-page {
+  background-color: #1a1a1a;
+  color: #e0e0e0;
+}
+
+:root.dark-mode .inventory-page h2 {
+  color: #e0e0e0;
+}
+
+:root.dark-mode .inventory-tabs {
+  border-bottom-color: #3a3a3a;
+}
+
+:root.dark-mode .tab-btn {
+  color: #b0b0b0;
+}
+
+:root.dark-mode .tab-btn--active {
+  border-bottom-color: #4a9eff;
+  color: #4a9eff;
+}
+
+:root.dark-mode .tab-btn:hover {
+  color: #4a9eff;
+}
+
+:root.dark-mode .minimal-table {
+  background: #2d2d2d;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+:root.dark-mode .minimal-table th {
+  background: #3a3a3a;
+  color: #4a9eff;
+  border-bottom-color: #4a4a4a;
+}
+
+:root.dark-mode .minimal-table td {
+  color: #e0e0e0;
+}
+
+:root.dark-mode .minimal-table tr:nth-child(even) {
+  background: #2a2a2a;
+}
+
+:root.dark-mode .minimal-table tr:hover {
+  background: #353535;
+}

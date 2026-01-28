@@ -41,7 +41,7 @@ const UserProfile = () => {
 
     try {
       const response = await api.patch(`/users/${user.id}/`, formData);
-      updateUser(response.data);
+      updateUser({ ...user, ...response.data });
       setSuccess('Profile updated successfully!');
     } catch (err) {
       const errorData = err.response?.data;

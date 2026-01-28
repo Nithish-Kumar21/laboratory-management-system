@@ -143,11 +143,9 @@ function Sidebar() {
 
           {showUserMenu && !isCollapsed && (
             <div className="user-dropdown">
-              {isStoreKeeper && (
-                <button onClick={() => { navigate('/settings'); setShowUserMenu(false); }}>
-                  <FaCog /> Settings
-                </button>
-              )}
+              <button onClick={() => { navigate('/settings'); setShowUserMenu(false); }}>
+                <FaCog /> Settings
+              </button>
               <button onClick={() => { navigate('/profile'); setShowUserMenu(false); }}>
                 <FaUser /> My Profile
               </button>

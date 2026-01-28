@@ -155,3 +155,77 @@
     padding: 8px;
   }
 }
+
+/* ============================================ */
+/* DARK MODE STYLES */
+/* ============================================ */
+
+:root.dark-mode .damaged-detail-page {
+  background-color: #1a1a1a;
+  color: #e0e0e0;
+}
+
+:root.dark-mode .damaged-detail-page h2 {
+  color: #e0e0e0;
+}
+
+:root.dark-mode .damaged-detail-page .back-button {
+  background: #2d2d2d;
+  color: #e0e0e0;
+  border-color: #4a4a4a;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+:root.dark-mode .damaged-detail-page .back-button:hover {
+  background: #3a3a3a;
+  color: #ff6b6b;
+}
+
+:root.dark-mode .entry-info {
+  background: #2d2d2d;
+  border-left-color: #e74c3c;
+}
+
+:root.dark-mode .entry-info p {
+  color: #e0e0e0;
+}
+
+:root.dark-mode .entry-info strong {
+  color: #ff6b6b;
+}
+
+:root.dark-mode .damaged-detail-page h3 {
+  color: #ff6b6b;
+  border-bottom-color: #3a3a3a;
+}
+
+:root.dark-mode .detail-table {
+  background: #2d2d2d;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+:root.dark-mode .detail-table thead {
+  background: #3a3a3a;
+}
+
+:root.dark-mode .detail-table th {
+  color: #ff6b6b;
+  border-bottom-color: #4a4a4a;
+}
+
+:root.dark-mode .detail-table td {
+  color: #e0e0e0;
+  border-bottom-color: #3a3a3a;
+}
+
+:root.dark-mode .detail-table tbody tr:hover {
+  background: #353535;
+}
+
+:root.dark-mode .loading-message {
+  color: #b0b0b0;
+}
+
+:root.dark-mode .error-message {
+  color: #ff6b6b;
+}

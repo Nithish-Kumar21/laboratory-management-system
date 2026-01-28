@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import '../Settings.css';
 
 function Settings() {
     const { isStoreKeeper } = useAuth();
+    const { isDarkMode, toggleTheme } = useTheme();
     const navigate = useNavigate();
     const [config, setConfig] = useState({
         use_common_reorder_level: false,
@@ -14,70 +16,93 @@ function Settings() {
     });
     const [chemicals, setChemicals] = useState([]);
     const [apparatus, setApparatus] = useState([]);
-    const [selectedCategory, setSelectedCategory] = useState('chemical');
+
+    // Separate toggles for chemicals and apparatus - persist in localStorage
+    const [chemicalMode, setChemicalMode] = useState(() => {
+        const saved = localStorage.getItem('chemicalMode');
+        return saved || 'common'; // 'common' or 'separate'
+    });
+    const [apparatusMode, setApparatusMode] = useState(() => {
+        const saved = localStorage.getItem('apparatusMode');
+        return saved || 'common'; // 'common' or 'separate'
+    });
+
     const [editingId, setEditingId] = useState(null);
     const [tempLevel, setTempLevel] = useState('');
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
 
+    // Save mode preferences to localStorage whenever they change
     useEffect(() => {
-        if (!isStoreKeeper) {
-            navigate('/');
-            return;
+        localStorage.setItem('chemicalMode', chemicalMode);
+    }, [chemicalMode]);
+
+    useEffect(() => {
+        localStorage.setItem('apparatusMode', apparatusMode);
+    }, [apparatusMode]);
+
+    useEffect(() => {
+        if (isStoreKeeper) {
+            fetchInventoryData();
         }
+    }, [isStoreKeeper]);
 
-        const fetchData = async () => {
-            try {
-                const [configRes, chemRes, appRes] = await Promise.all([
-                    api.get('/lab_configuration/'),
-                    api.get('/available_chemicals/'),
-                    api.get('/available_apparatus/'),
-                ]);
-
-                setConfig(configRes.data);
-                setChemicals(chemRes.data.results || chemRes.data);
-                setApparatus(appRes.data.results || appRes.data);
-                setLoading(false);
-            } catch (err) {
-                console.error('Error fetching settings:', err);
-                setLoading(false);
-            }
-        };
-
-        fetchData();
-    }, [isStoreKeeper, navigate]);
-
-    const handleToggle = async (type) => {
-        const newConfig = { ...config };
-        newConfig.use_common_reorder_level = (type === 'common');
-
+    const fetchInventoryData = async () => {
+        setLoading(true);
         try {
-            const res = await api.patch('/lab_configuration/1/', newConfig);
-            setConfig(res.data);
-            setMessage('Settings updated successfully');
-            setTimeout(() => setMessage(''), 3000);
-        } catch (err) {
-            alert('Failed to update settings');
-        }
-    };
-
-    const updateCommonLevels = async () => {
-        try {
-            const res = await api.patch('/lab_configuration/1/', config);
-            setConfig(res.data);
-            setMessage('Common levels updated and applied to all items');
-            // Refresh local data
-            const [chemRes, appRes] = await Promise.all([
+            const [configRes, chemRes, appRes] = await Promise.all([
+                api.get('/lab_configuration/'),
                 api.get('/available_chemicals/'),
                 api.get('/available_apparatus/'),
             ]);
+
+            setConfig(configRes.data);
             setChemicals(chemRes.data.results || chemRes.data);
+            setApparatus(appRes.data.results || appRes.data);
+        } catch (err) {
+            console.error('Error fetching settings:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const updateCommonChemicalLevel = async () => {
+        try {
+            const res = await api.patch('/lab_configuration/1/', {
+                ...config,
+                use_common_reorder_level: true
+            });
+            setConfig(res.data);
+            setMessage('Common chemical reorder level updated successfully');
+
+            // Refresh chemicals data
+            const chemRes = await api.get('/available_chemicals/');
+            setChemicals(chemRes.data.results || chemRes.data);
+            window.dispatchEvent(new Event('inventory-updated'));
+            localStorage.setItem('inventory-updated', Date.now());
+            setTimeout(() => setMessage(''), 3000);
+        } catch (err) {
+            alert('Failed to update chemical level');
+        }
+    };
+
+    const updateCommonApparatusLevel = async () => {
+        try {
+            const res = await api.patch('/lab_configuration/1/', {
+                ...config,
+                use_common_reorder_level: true
+            });
+            setConfig(res.data);
+            setMessage('Common apparatus reorder level updated successfully');
+
+            // Refresh apparatus data
+            const appRes = await api.get('/available_apparatus/');
             setApparatus(appRes.data.results || appRes.data);
             window.dispatchEvent(new Event('inventory-updated'));
             localStorage.setItem('inventory-updated', Date.now());
             setTimeout(() => setMessage(''), 3000);
         } catch (err) {
-            alert('Failed to update levels');
+            alert('Failed to update apparatus level');
         }
     };
 
@@ -108,37 +133,27 @@ function Settings() {
         }
     };
 
-    if (loading) return <div className="settings-page">Loading...</div>;
-
-    const currentItems = selectedCategory === 'chemical' ? chemicals : apparatus;
-    const unit = selectedCategory === 'chemical' ? 'ml' : 'pieces';
-
     return (
         <div className="settings-page">
-            <h2>Lab Inventory Settings</h2>
+            <h2>Settings</h2>
             {message && <div className="success-banner">{message}</div>}
 
+            {/* APPEARANCE SETTINGS - Available to all users */}
             <div className="settings-section">
-                <h3>Reorder Level Mode</h3>
+                <h3>Appearance</h3>
                 <div className="toggle-container">
                     <div className="toggle-row">
-                        <span>Common reorder level for items</span>
+                        <div className="toggle-info">
+                            <span className="toggle-label">Dark Mode</span>
+                            <span className="toggle-description">
+                                {isDarkMode ? 'Switch to light theme' : 'Switch to dark theme'}
+                            </span>
+                        </div>
                         <label className="switch">
                             <input
                                 type="checkbox"
-                                checked={config.use_common_reorder_level}
-                                onChange={() => handleToggle('common')}
-                            />
-                            <span className="slider round"></span>
-                        </label>
-                    </div>
-                    <div className="toggle-row">
-                        <span>Separate reorder level for items</span>
-                        <label className="switch">
-                            <input
-                                type="checkbox"
-                                checked={!config.use_common_reorder_level}
-                                onChange={() => handleToggle('separate')}
+                                checked={isDarkMode}
+                                onChange={toggleTheme}
                             />
                             <span className="slider round"></span>
                         </label>
@@ -146,107 +161,225 @@ function Settings() {
                 </div>
             </div>
 
-            {config.use_common_reorder_level ? (
-                <div className="settings-section animate-fade">
-                    <h3>Set Common Reorder Levels</h3>
-                    <div className="common-input-grid">
-                        <div className="input-group">
-                            <label>Chemical (ml)</label>
-                            <input
-                                type="number"
-                                value={config.common_chemical_reorder_level}
-                                onChange={(e) => setConfig({ ...config, common_chemical_reorder_level: e.target.value })}
-                                placeholder="e.g. 500"
-                            />
+            {/* INVENTORY SETTINGS - Store Keeper Only */}
+            {isStoreKeeper && (
+                <>
+                    <div className="settings-divider"></div>
+
+                    {/* CHEMICALS SECTION */}
+                    <div className="settings-section">
+                        <h3>Chemicals Reorder Level Settings</h3>
+                        <div className="toggle-container">
+                            <div className="toggle-row">
+                                <span>Common reorder level for all chemicals</span>
+                                <label className="switch">
+                                    <input
+                                        type="checkbox"
+                                        checked={chemicalMode === 'common'}
+                                        onChange={() => setChemicalMode(chemicalMode === 'common' ? 'separate' : 'common')}
+                                    />
+                                    <span className="slider round"></span>
+                                </label>
+                            </div>
+                            <div className="toggle-row">
+                                <span>Separate reorder level for each chemical</span>
+                                <label className="switch">
+                                    <input
+                                        type="checkbox"
+                                        checked={chemicalMode === 'separate'}
+                                        onChange={() => setChemicalMode(chemicalMode === 'separate' ? 'common' : 'separate')}
+                                    />
+                                    <span className="slider round"></span>
+                                </label>
+                            </div>
                         </div>
-                        <div className="input-group">
-                            <label>Apparatus (pieces)</label>
-                            <input
-                                type="number"
-                                value={config.common_apparatus_reorder_level}
-                                onChange={(e) => setConfig({ ...config, common_apparatus_reorder_level: e.target.value })}
-                                placeholder="e.g. 5"
-                            />
-                        </div>
-                    </div>
-                    <button className="btn-save" onClick={updateCommonLevels}>Apply Common Levels</button>
-                </div>
-            ) : (
-                <div className="settings-section animate-fade">
-                    <div className="section-header-flex">
-                        <h3>Set Individual Reorder Levels</h3>
-                        <div className="category-select-box">
-                            <select
-                                value={selectedCategory}
-                                onChange={(e) => setSelectedCategory(e.target.value)}
-                                className="category-dropdown"
-                            >
-                                <option value="chemical">Chemicals</option>
-                                <option value="apparatus">Apparatus</option>
-                            </select>
-                        </div>
+
+                        {chemicalMode === 'common' ? (
+                            <div className="common-level-box animate-fade">
+                                <div className="input-group">
+                                    <label>Common Chemical Reorder Level (ml)</label>
+                                    <input
+                                        type="number"
+                                        value={config.common_chemical_reorder_level}
+                                        onChange={(e) => setConfig({ ...config, common_chemical_reorder_level: e.target.value })}
+                                        placeholder="e.g. 500"
+                                    />
+                                </div>
+                                <button className="btn-save" onClick={updateCommonChemicalLevel}>
+                                    Apply to All Chemicals
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="items-list-container animate-fade">
+                                <h4 className="subsection-title">Individual Chemical Reorder Levels</h4>
+                                <table className="settings-items-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Chemical Name</th>
+                                            <th>Reorder Level (ml)</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {chemicals.map((item) => (
+                                            <tr key={item.id}>
+                                                <td>{item.chemical_name}</td>
+                                                <td>
+                                                    {editingId === item.id ? (
+                                                        <input
+                                                            type="number"
+                                                            className="inline-edit-input"
+                                                            value={tempLevel}
+                                                            onChange={(e) => setTempLevel(e.target.value)}
+                                                            autoFocus
+                                                        />
+                                                    ) : (
+                                                        <span className="level-display">{item.reorder_level}</span>
+                                                    )}
+                                                </td>
+                                                <td>
+                                                    {editingId === item.id ? (
+                                                        <div className="action-btn-group">
+                                                            <button
+                                                                className="btn-inline-save"
+                                                                onClick={() => handleIndividualUpdate(item.id, 'chemical')}
+                                                            >
+                                                                Save
+                                                            </button>
+                                                            <button
+                                                                className="btn-inline-cancel"
+                                                                onClick={() => setEditingId(null)}
+                                                            >
+                                                                Cancel
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <button
+                                                            className="btn-inline-edit"
+                                                            onClick={() => {
+                                                                setEditingId(item.id);
+                                                                setTempLevel(item.reorder_level);
+                                                            }}
+                                                        >
+                                                            Edit
+                                                        </button>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
                     </div>
 
-                    <div className="items-list-container">
-                        <table className="settings-items-table">
-                            <thead>
-                                <tr>
-                                    <th>Item Name</th>
-                                    <th>Current Reorder Level ({unit})</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {currentItems.map((item) => (
-                                    <tr key={item.id}>
-                                        <td>{selectedCategory === 'chemical' ? item.chemical_name : item.apparatus_name}</td>
-                                        <td>
-                                            {editingId === item.id ? (
-                                                <input
-                                                    type="number"
-                                                    className="inline-edit-input"
-                                                    value={tempLevel}
-                                                    onChange={(e) => setTempLevel(e.target.value)}
-                                                    autoFocus
-                                                />
-                                            ) : (
-                                                <span className="level-display">{item.reorder_level}</span>
-                                            )}
-                                        </td>
-                                        <td>
-                                            {editingId === item.id ? (
-                                                <div className="action-btn-group">
-                                                    <button
-                                                        className="btn-inline-save"
-                                                        onClick={() => handleIndividualUpdate(item.id, selectedCategory)}
-                                                    >
-                                                        Save
-                                                    </button>
-                                                    <button
-                                                        className="btn-inline-cancel"
-                                                        onClick={() => setEditingId(null)}
-                                                    >
-                                                        Cancel
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <button
-                                                    className="btn-inline-edit"
-                                                    onClick={() => {
-                                                        setEditingId(item.id);
-                                                        setTempLevel(item.reorder_level);
-                                                    }}
-                                                >
-                                                    Edit
-                                                </button>
-                                            )}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                    {/* APPARATUS SECTION */}
+                    <div className="settings-section">
+                        <h3>Apparatus Reorder Level Settings</h3>
+                        <div className="toggle-container">
+                            <div className="toggle-row">
+                                <span>Common reorder level for all apparatus</span>
+                                <label className="switch">
+                                    <input
+                                        type="checkbox"
+                                        checked={apparatusMode === 'common'}
+                                        onChange={() => setApparatusMode(apparatusMode === 'common' ? 'separate' : 'common')}
+                                    />
+                                    <span className="slider round"></span>
+                                </label>
+                            </div>
+                            <div className="toggle-row">
+                                <span>Separate reorder level for each apparatus</span>
+                                <label className="switch">
+                                    <input
+                                        type="checkbox"
+                                        checked={apparatusMode === 'separate'}
+                                        onChange={() => setApparatusMode(apparatusMode === 'separate' ? 'common' : 'separate')}
+                                    />
+                                    <span className="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        {apparatusMode === 'common' ? (
+                            <div className="common-level-box animate-fade">
+                                <div className="input-group">
+                                    <label>Common Apparatus Reorder Level (pieces)</label>
+                                    <input
+                                        type="number"
+                                        value={config.common_apparatus_reorder_level}
+                                        onChange={(e) => setConfig({ ...config, common_apparatus_reorder_level: e.target.value })}
+                                        placeholder="e.g. 5"
+                                    />
+                                </div>
+                                <button className="btn-save" onClick={updateCommonApparatusLevel}>
+                                    Apply to All Apparatus
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="items-list-container animate-fade">
+                                <h4 className="subsection-title">Individual Apparatus Reorder Levels</h4>
+                                <table className="settings-items-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Apparatus Name</th>
+                                            <th>Reorder Level (pieces)</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {apparatus.map((item) => (
+                                            <tr key={item.id}>
+                                                <td>{item.apparatus_name}</td>
+                                                <td>
+                                                    {editingId === item.id ? (
+                                                        <input
+                                                            type="number"
+                                                            className="inline-edit-input"
+                                                            value={tempLevel}
+                                                            onChange={(e) => setTempLevel(e.target.value)}
+                                                            autoFocus
+                                                        />
+                                                    ) : (
+                                                        <span className="level-display">{item.reorder_level}</span>
+                                                    )}
+                                                </td>
+                                                <td>
+                                                    {editingId === item.id ? (
+                                                        <div className="action-btn-group">
+                                                            <button
+                                                                className="btn-inline-save"
+                                                                onClick={() => handleIndividualUpdate(item.id, 'apparatus')}
+                                                            >
+                                                                Save
+                                                            </button>
+                                                            <button
+                                                                className="btn-inline-cancel"
+                                                                onClick={() => setEditingId(null)}
+                                                            >
+                                                                Cancel
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <button
+                                                            className="btn-inline-edit"
+                                                            onClick={() => {
+                                                                setEditingId(item.id);
+                                                                setTempLevel(item.reorder_level);
+                                                            }}
+                                                        >
+                                                            Edit
+                                                        </button>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
                     </div>
-                </div>
+                </>
             )}
         </div>
     );
