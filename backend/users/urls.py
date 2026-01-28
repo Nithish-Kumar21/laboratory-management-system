@@ -1,34 +1,22 @@
 from django.urls import path
+from rest_framework_simplejwt.views import TokenRefreshView
 from . import views
 
 urlpatterns = [
-    # Authentication endpoints
-    path('auth/login/', views.login_view, name='login'),
-    path('auth/logout/', views.logout_view, name='logout'),
-    path('auth/me/', views.current_user_view, name='current-user'),
-    path('auth/check-session/', views.check_session_view, name='check-session'),
+    # Authentication
+    path('login/', views.LoginView.as_view(), name='login'),
+    path('logout/', views.LogoutView.as_view(), name='logout'),
+    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     
-    # User management endpoints (superuser only)
-    path('users/', views.list_users_view, name='list-users'),
-    path('users/create/', views.create_user_view, name='create-user'),
-    path('users/<int:user_id>/', views.get_user_view, name='get-user'),
-    path('users/<int:user_id>/update/', views.update_user_view, name='update-user'),
-    path('users/<int:user_id>/delete/', views.deactivate_user_view, name='deactivate-user'),
-    path('users/<int:user_id>/activate/', views.activate_user_view, name='activate-user'),
-    path('users/<int:user_id>/reset-password/', views.admin_reset_password_view, name='admin-reset-password'),
+    # Password Management
+    path('change-password/', views.ChangePasswordView.as_view(), name='change-password'),
+    path('forgot-password/', views.ForgotPasswordView.as_view(), name='forgot-password'),
+    path('reset-password/', views.ResetPasswordView.as_view(), name='reset-password'),
     
-    # Password management endpoints
-    path('password/change/', views.change_password_view, name='change-password'),
-    path('password/reset-request/', views.password_reset_request_view, name='password-reset-request'),
-    path('password/reset-confirm/', views.password_reset_confirm_view, name='password-reset-confirm'),
-    path('password/validate-token/<str:token>/', views.validate_reset_token_view, name='validate-reset-token'),
+    # User Management (CRUD)
+    path('', views.UserListCreateView.as_view(), name='user-list-create'),
+    path('<int:pk>/', views.UserRetrieveUpdateDestroyView.as_view(), name='user-detail'),
     
-    # Profile endpoints
-    path('profile/', views.get_profile_view, name='get-profile'),
-    path('profile/update/', views.update_profile_view, name='update-profile'),
-    
-    # Utility endpoints
-    path('users/check-employee-id/<str:employee_id>/', views.check_employee_id_view, name='check-employee-id'),
-    path('users/check-email/<str:email>/', views.check_email_view, name='check-email'),
-    path('users/stats/', views.user_stats_view, name='user-stats'),
+    # Current User Profile
+    path('me/', views.CurrentUserView.as_view(), name='current-user'),
 ]

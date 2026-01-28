@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaTimes, FaPlus, FaTrash } from 'react-icons/fa';
+import api from './utils/api';
 import './AddStockRegisterModal.css';
 
 function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
@@ -23,14 +24,12 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
   // Fetch autocomplete data
   useEffect(() => {
     if (isOpen) {
-      fetch('http://127.0.0.1:8000/api/stock_register/chemical_names/')
-        .then(res => res.json())
-        .then(data => setChemicalNames(data))
+      api.get('/stock_register/chemical_names/')
+        .then(response => setChemicalNames(Array.isArray(response.data) ? response.data : response.data.results || []))
         .catch(err => console.error('Error fetching chemical names:', err));
 
-      fetch('http://127.0.0.1:8000/api/stock_register/apparatus_names/')
-        .then(res => res.json())
-        .then(data => setApparatusNames(data))
+      api.get('/stock_register/apparatus_names/')
+        .then(response => setApparatusNames(Array.isArray(response.data) ? response.data : response.data.results || []))
         .catch(err => console.error('Error fetching apparatus names:', err));
     }
   }, [isOpen]);
@@ -57,7 +56,7 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
     const updated = [...chemicalItems];
     updated[index][field] = value;
     setChemicalItems(updated);
-    
+
     if (field === 'chemical_name') {
       setShowChemicalSuggestions({ ...showChemicalSuggestions, [index]: true });
     }
@@ -67,7 +66,7 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
     const updated = [...apparatusItems];
     updated[index][field] = value;
     setApparatusItems(updated);
-    
+
     if (field === 'apparatus_name') {
       setShowApparatusSuggestions({ ...showApparatusSuggestions, [index]: true });
     }
@@ -85,7 +84,7 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
 
   const filterSuggestions = (items, query) => {
     if (!query) return items;
-    return items.filter(item => 
+    return items.filter(item =>
       item.toLowerCase().includes(query.toLowerCase())
     );
   };
@@ -151,7 +150,7 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validate()) {
       return;
     }
@@ -179,27 +178,20 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
     console.log('Submitting payload:', payload);
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/stock_register/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload)
-      });
+      const response = await api.post('/stock_register/', payload);
 
-      console.log('Response status:', response.status);
+      console.log('Success! Created entry:', response.data);
+      window.dispatchEvent(new Event('inventory-updated'));
+      localStorage.setItem('inventory-updated', Date.now());
+      onSuccess();
+      resetForm();
+      onClose();
+    } catch (error) {
+      console.error('Submission error:', error);
+      const errorData = error.response?.data;
+      let errorMessage = 'Failed to create entry. ';
 
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Success! Created entry:', data);
-        onSuccess();
-        resetForm();
-        onClose();
-      } else {
-        const errorData = await response.json();
-        console.error('Server returned error:', errorData);
-        
-        let errorMessage = 'Failed to create entry. ';
+      if (errorData) {
         if (errorData.invoice_number) {
           errorMessage += errorData.invoice_number[0];
         } else if (errorData.error) {
@@ -207,12 +199,11 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
         } else {
           errorMessage += JSON.stringify(errorData);
         }
-        
-        setErrors({ submit: errorMessage });
+      } else {
+        errorMessage += error.message || 'Unknown error occurred.';
       }
-    } catch (error) {
-      console.error('Network error:', error);
-      setErrors({ submit: `Network error: ${error.message}. Make sure Django server is running.` });
+
+      setErrors({ submit: errorMessage });
     } finally {
       setSubmitting(false);
     }

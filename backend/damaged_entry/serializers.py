@@ -33,7 +33,23 @@ class DamagedItemWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = DamagedItem
         fields = ['apparatus_name', 'quantity']
-    
+
+    def validate(self, data):
+        apparatus_name = data.get('apparatus_name')
+        quantity = data.get('quantity')
+        
+        from inventory.models import AvailableApparatus
+        try:
+            apparatus = AvailableApparatus.objects.get(apparatus_name=apparatus_name)
+            if quantity > apparatus.available_quantity_pieces:
+                raise serializers.ValidationError(
+                    f"Damaged quantity ({quantity}) cannot exceed available quantity ({apparatus.available_quantity_pieces}) for {apparatus_name}"
+                )
+        except AvailableApparatus.DoesNotExist:
+            raise serializers.ValidationError(f"Apparatus '{apparatus_name}' not found in inventory")
+            
+        return data
+
     def validate_quantity(self, value):
         if value <= 0:
             raise serializers.ValidationError("Quantity must be greater than 0")

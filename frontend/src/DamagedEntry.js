@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaPlus } from 'react-icons/fa';
+import { useAuth } from './context/AuthContext';
+import api from './utils/api';
 import AddDamagedEntryModal from './AddDamagedEntryModal';
 import './DamagedEntry.css';
 
@@ -10,29 +12,30 @@ function DamagedEntry() {
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
+  const { isAdmin, isStoreKeeper, isStaff, isHOD } = useAuth();
+
+  const canAddEntry = isAdmin || isStoreKeeper;
 
   const fetchDamagedEntries = () => {
     setLoading(true);
-    fetch('http://127.0.0.1:8000/api/damaged_entry/')
+    api.get('/damaged_entry/')
       .then((response) => {
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        return response.json();
-      })
-      .then((data) => {
-        setDamagedEntries(data);
+        setDamagedEntries(Array.isArray(response.data) ? response.data : response.data.results || []);
         setLoading(false);
       })
       .catch((error) => {
-        setError(error.message);
+        setError(error.response?.data?.error || error.message || 'Network response was not ok');
         setLoading(false);
       });
   };
 
   useEffect(() => {
+    if (isStaff) {
+      navigate('/');
+      return;
+    }
     fetchDamagedEntries();
-  }, []);
+  }, [isStaff, navigate]);
 
   const handleRowClick = (id) => {
     navigate(`/damaged-entry/${id}`);
@@ -49,9 +52,11 @@ function DamagedEntry() {
     <div className="damaged-entry-page">
       <div className="page-header">
         <h2>Damaged Entry</h2>
-        <button className="add-entry-btn" onClick={() => setIsModalOpen(true)}>
-          <FaPlus /> Add New Entry
-        </button>
+        {canAddEntry && (
+          <button className="add-entry-btn" onClick={() => setIsModalOpen(true)}>
+            <FaPlus /> Add New Entry
+          </button>
+        )}
       </div>
 
       <table className="minimal-table clickable-table">

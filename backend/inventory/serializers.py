@@ -1,7 +1,8 @@
 from rest_framework import serializers
 from .models import (
     AvailableChemical, AvailableApparatus,
-    LowStockChemical, LowStockApparatus
+    LowStockChemical, LowStockApparatus,
+    LabConfiguration
 )
 
 class AvailableChemicalSerializer(serializers.ModelSerializer):
@@ -26,3 +27,9 @@ class LowStockApparatusSerializer(serializers.ModelSerializer):
     class Meta:
         model = LowStockApparatus
         fields = ['id', 'apparatus_name', 'current_quantity_pieces', 'reorder_level', 'last_checked']
+
+
+class LabConfigurationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LabConfiguration
+        fields = '__all__'

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaTimes, FaPlus, FaTrash } from 'react-icons/fa';
+import api from './utils/api';
 import './AddDamagedEntryModal.css';
 
 function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
@@ -22,9 +23,11 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
   // Fetch autocomplete data
   useEffect(() => {
     if (isOpen) {
-      fetch('http://127.0.0.1:8000/api/damaged_entry/apparatus_names/')
-        .then(res => res.json())
-        .then(data => setApparatusNames(data))
+      api.get('/damaged_entry/apparatus_names/')
+        .then(response => {
+          const data = Array.isArray(response.data) ? response.data : response.data.results || [];
+          setApparatusNames(data);
+        })
         .catch(err => console.error('Error fetching apparatus names:', err));
     }
   }, [isOpen]);
@@ -43,22 +46,34 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
     const updated = [...apparatusItems];
     updated[index][field] = value;
     setApparatusItems(updated);
-    
+
     // Show suggestions when typing in name field
     if (field === 'apparatus_name') {
       setShowApparatusSuggestions({ ...showApparatusSuggestions, [index]: true });
+
+      // If manually typed name matches exactly, sync available quantity
+      const match = apparatusNames.find(a => a.name.toLowerCase() === value.toLowerCase());
+      if (match) {
+        updated[index].available_quantity = match.available_quantity;
+      } else {
+        delete updated[index].available_quantity;
+      }
+      setApparatusItems(updated);
     }
   };
 
-  const selectApparatusSuggestion = (index, name) => {
-    updateApparatusItem(index, 'apparatus_name', name);
+  const selectApparatusSuggestion = (index, apparatus) => {
+    const updated = [...apparatusItems];
+    updated[index].apparatus_name = apparatus.name;
+    updated[index].available_quantity = apparatus.available_quantity;
+    setApparatusItems(updated);
     setShowApparatusSuggestions({ ...showApparatusSuggestions, [index]: false });
   };
 
   const filterSuggestions = (items, query) => {
     if (!query) return items;
-    return items.filter(item => 
-      item.toLowerCase().includes(query.toLowerCase())
+    return items.filter(item =>
+      item.name.toLowerCase().includes(query.toLowerCase())
     );
   };
 
@@ -100,8 +115,12 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
       if (!item.apparatus_name.trim()) {
         newErrors[`apparatus_name_${index}`] = 'Apparatus name is required';
       }
-      if (!item.quantity || parseInt(item.quantity) <= 0) {
+
+      const qty = parseInt(item.quantity);
+      if (!item.quantity || qty <= 0) {
         newErrors[`apparatus_quantity_${index}`] = 'Quantity must be greater than 0';
+      } else if (item.available_quantity !== undefined && qty > item.available_quantity) {
+        newErrors[`apparatus_quantity_${index}`] = `Cannot exceed available stock (${item.available_quantity})`;
       }
     });
 
@@ -111,7 +130,7 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validate()) {
       return;
     }
@@ -133,38 +152,30 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
     console.log('Submitting payload:', payload); // Debug log
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/damaged_entry/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload)
-      });
+      const response = await api.post('/damaged_entry/', payload);
 
-      console.log('Response status:', response.status); // Debug log
+      console.log('Success! Created entry:', response.data);
+      window.dispatchEvent(new Event('inventory-updated'));
+      localStorage.setItem('inventory-updated', Date.now());
+      onSuccess();
+      resetForm();
+      onClose();
+    } catch (error) {
+      console.error('Submission error:', error);
+      const errorData = error.response?.data;
+      let errorMessage = 'Failed to create entry. ';
 
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Success! Created entry:', data); // Debug log
-        onSuccess();
-        resetForm();
-        onClose();
-      } else {
-        const errorData = await response.json();
-        console.error('Server returned error:', errorData); // Debug log
-        
-        let errorMessage = 'Failed to create entry. ';
+      if (errorData) {
         if (errorData.error) {
           errorMessage += errorData.error;
         } else {
           errorMessage += JSON.stringify(errorData);
         }
-        
-        setErrors({ submit: errorMessage });
+      } else {
+        errorMessage += error.message || 'Unknown error occurred.';
       }
-    } catch (error) {
-      console.error('Network error:', error); // Debug log
-      setErrors({ submit: `Network error: ${error.message}. Make sure Django server is running.` });
+
+      setErrors({ submit: errorMessage });
     } finally {
       setSubmitting(false);
     }
@@ -283,15 +294,16 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
                       onBlur={() => setTimeout(() => setShowApparatusSuggestions({ ...showApparatusSuggestions, [index]: false }), 200)}
                       className={errors[`apparatus_name_${index}`] ? 'error' : ''}
                     />
-                    {showApparatusSuggestions[index] && item.apparatus_name && (
+                    {showApparatusSuggestions[index] && (
                       <div className="suggestions-dropdown">
-                        {filterSuggestions(apparatusNames, item.apparatus_name).map((name, i) => (
+                        {filterSuggestions(apparatusNames, item.apparatus_name).map((app, i) => (
                           <div
                             key={i}
                             className="suggestion-item"
-                            onMouseDown={() => selectApparatusSuggestion(index, name)}
+                            onMouseDown={() => selectApparatusSuggestion(index, app)}
                           >
-                            {name}
+                            <span>{app.name}</span>
+                            <span className="available-hint">Stock: {app.available_quantity}</span>
                           </div>
                         ))}
                       </div>

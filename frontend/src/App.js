@@ -1,6 +1,20 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useAuth } from './context/AuthContext';
 import Sidebar from './Sidebar';
+import ProtectedRoute from './components/ProtectedRoute';
+
+// Authentication Components
+import Login from './components/Login';
+import ChangePassword from './components/ChangePassword';
+import ForgotPassword from './components/ForgotPassword';
+import ResetPassword from './components/ResetPassword';
+
+// User Management Components
+import UserManagement from './components/UserManagement';
+import UserProfile from './components/UserProfile';
+
+// Existing Components
 import Home from './Home';
 import Inventory from './Inventory';
 import StockRegister from './StockRegister';
@@ -8,27 +22,75 @@ import StockRegisterDetail from './StockRegisterDetail';
 import IssueRegister from './IssueRegister';
 import DamagedEntry from './DamagedEntry';
 import DamagedEntryDetail from './DamagedEntryDetail';
+import Settings from './components/Settings';
+import LowStockToast from './components/LowStockToast';
+
 import './App.css';
 
-function App() {
+function AppContent() {
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return <div style={{ padding: '20px', textAlign: 'center' }}>Loading...</div>;
+  }
+
   return (
     <Router>
-      <div className="App">
-        <Sidebar />
-        <div className="main-content">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/inventory" element={<Inventory />} />
-            <Route path="/stock-register" element={<StockRegister />} />
-            <Route path="/stock-register/:id" element={<StockRegisterDetail />} />
-            <Route path="/issue-register" element={<IssueRegister />} />
-            <Route path="/damaged-entry" element={<DamagedEntry />} />
-            <Route path="/damaged-entry/:id" element={<DamagedEntryDetail />} />
-          </Routes>
-        </div>
-      </div>
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/change-password" element={<ProtectedRoute><ChangePassword /></ProtectedRoute>} />
+
+        {/* Protected Routes with Sidebar Layout */}
+        <Route
+          path="/*"
+          element={
+            <ProtectedRoute>
+              <div className="app-container">
+                <Sidebar />
+                <LowStockToast />
+                <div className="main-content">
+                  <Routes>
+                    <Route path="" element={<Home />} />
+                    <Route path="profile" element={<UserProfile />} />
+
+                    {/* Admin Only */}
+                    <Route
+                      path="/users"
+                      element={
+                        <ProtectedRoute adminOnly>
+                          <UserManagement />
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    <Route path="settings" element={<Settings />} />
+
+                    {/* Existing Routes */}
+                    <Route path="inventory" element={<Inventory />} />
+                    <Route path="stock-register" element={<StockRegister />} />
+                    <Route path="stock-register/:id" element={<StockRegisterDetail />} />
+                    <Route path="issue-register" element={<IssueRegister />} />
+                    <Route path="damaged-entry" element={<DamagedEntry />} />
+                    <Route path="damaged-entry/:id" element={<DamagedEntryDetail />} />
+
+                    {/* Catch all - redirect to home */}
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                  </Routes>
+                </div>
+              </div>
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
     </Router>
   );
+}
+
+function App() {
+  return <AppContent />;
 }
 
 export default App;

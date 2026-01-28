@@ -54,3 +54,19 @@ class LowStockApparatus(models.Model):
 
     def __str__(self):
         return f"{self.apparatus_name} (Low Stock)"
+
+
+class LabConfiguration(models.Model):
+    """
+    Model to store lab-wide configurations like reorder levels.
+    """
+    use_common_reorder_level = models.BooleanField(default=False)
+    common_chemical_reorder_level = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    common_apparatus_reorder_level = models.IntegerField(default=0)
+
+    class Meta:
+        db_table = 'lab_configuration'
+        managed = True # Allow Django to create this table
+
+    def __str__(self):
+        return "Lab Configuration"

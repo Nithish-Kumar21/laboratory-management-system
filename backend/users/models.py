@@ -33,7 +33,7 @@ class UserManager(BaseUserManager):
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('is_active', True)
         extra_fields.setdefault('password_must_change', False)
-        extra_fields.setdefault('role', 'HOD')
+        extra_fields.setdefault('role', 'hod')
         extra_fields.setdefault('department', 'B.Sc Chemistry')
         extra_fields.setdefault('designation', 'System Administrator')
         
@@ -47,9 +47,10 @@ class UserManager(BaseUserManager):
 
 class User(AbstractBaseUser, PermissionsMixin):
     ROLE_CHOICES = [
-        ('HOD', 'Head of Department'),
-        ('Store Keeper', 'Store Keeper'),
-        ('Staff', 'Staff'),
+        ('admin', 'Administrator'),
+        ('hod', 'Head of Department'),
+        ('store_keeper', 'Store Keeper'),
+        ('staff', 'Staff'),
     ]
     
     DEPARTMENT_CHOICES = [
@@ -62,8 +63,8 @@ class User(AbstractBaseUser, PermissionsMixin):
         unique=True,
         validators=[
             RegexValidator(
-                regex=r'^[A-Za-z0-9]+$',
-                message='Employee ID must contain only letters and numbers'
+                regex=r'^[A-Za-z0-9_\-]+$',
+                message='Employee ID must contain only letters, numbers, underscores, and hyphens'
             )
         ]
     )

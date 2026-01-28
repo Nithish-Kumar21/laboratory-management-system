@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import api from './utils/api';
 import './LowStockAlert.css';
 
 function LowStockAlert({ activeTab }) {
@@ -9,19 +10,39 @@ function LowStockAlert({ activeTab }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    fetchLowStock();
+
+    window.addEventListener('inventory-updated', fetchLowStock);
+
+    const handleStorage = (e) => {
+      if (e.key === 'inventory-updated') {
+        fetchLowStock();
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+
+    // Add polling fallback (every 3 seconds) for a real-time experience
+    const interval = setInterval(fetchLowStock, 3000);
+
+    return () => {
+      window.removeEventListener('inventory-updated', fetchLowStock);
+      window.removeEventListener('storage', handleStorage);
+      clearInterval(interval);
+    };
+  }, []);
+
+  const fetchLowStock = () => {
     // Fetch low stock chemicals
-    fetch('http://127.0.0.1:8000/api/low_stock_chemicals/')
-      .then(response => response.json())
-      .then(data => setLowStockChemicals(data))
+    api.get('/low_stock_chemicals/')
+      .then(response => setLowStockChemicals(Array.isArray(response.data) ? response.data : response.data.results || []))
       .catch(error => console.error('Error fetching low stock chemicals:', error));
 
     // Fetch low stock apparatus
-    fetch('http://127.0.0.1:8000/api/low_stock_apparatus/')
-      .then(response => response.json())
-      .then(data => setLowStockApparatus(data))
+    api.get('/low_stock_apparatus/')
+      .then(response => setLowStockApparatus(Array.isArray(response.data) ? response.data : response.data.results || []))
       .catch(error => console.error('Error fetching low stock apparatus:', error))
       .finally(() => setLoading(false));
-  }, []);
+  };
 
   // Determine what to show based on active tab
   const currentLowStock = activeTab === 'chemical' ? lowStockChemicals : lowStockApparatus;

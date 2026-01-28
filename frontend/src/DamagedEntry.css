@@ -119,3 +119,40 @@
   background: #c0392b;
   box-shadow: 0 4px 10px rgba(231, 76, 60, 0.4);
 }
+
+/* Detail Table Styles (copied from StockRegisterDetail) */
+.detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-top: 15px;
+}
+
+.detail-table thead {
+  background: #ecf0f1;
+}
+
+.detail-table th {
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #2c3e50;
+  border-bottom: 2px solid #bdc3c7;
+}
+
+.detail-table td {
+  padding: 12px;
+  border-bottom: 1px solid #ecf0f1;
+  color: #34495e;
+}
+
+.detail-table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+.detail-table tbody tr:last-child td {
+  border-bottom: none;
+}

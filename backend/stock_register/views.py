@@ -7,6 +7,9 @@ from .serializers import (
     StockRegisterDetailSerializer,
     StockRegisterCreateSerializer
 )
+from django.db import transaction
+from backend.permissions import StockRegisterPermission
+from inventory.models import AvailableChemical, AvailableApparatus
 
 
 
@@ -18,6 +21,7 @@ class StockRegisterViewSet(viewsets.ModelViewSet):
     Create: Accepts nested chemical and apparatus items with make and supplier_name.
     """
     queryset = StockRegister.objects.all().order_by('-date')
+    permission_classes = [StockRegisterPermission]
     
     def get_serializer_class(self):
         if self.action == 'create':
@@ -67,3 +71,32 @@ class StockRegisterViewSet(viewsets.ModelViewSet):
             make=''
         ).values_list('make', flat=True).distinct().order_by('make')
         return Response(list(makes))
+    @transaction.atomic
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        
+        # 1. Deduct chemicals from inventory
+        for chem in instance.chemical_items.all():
+            try:
+                available = AvailableChemical.objects.get(chemical_name=chem.chemical_name)
+                available.available_quantity_ml -= chem.quantity_ml
+                available.save()
+            except AvailableChemical.DoesNotExist:
+                pass
+                
+        # 2. Deduct apparatus from inventory
+        for app in instance.apparatus_items.all():
+            try:
+                available = AvailableApparatus.objects.get(apparatus_name=app.apparatus_name)
+                available.available_quantity_pieces -= app.quantity_pieces
+                available.save()
+            except AvailableApparatus.DoesNotExist:
+                pass
+                
+        # 3. Delete related items manually since it's DO_NOTHING and managed=False
+        # Note: We must delete items manually because of the database constraints/settings
+        ChemicalItem.objects.filter(stock_register=instance).delete()
+        ApparatusItem.objects.filter(stock_register=instance).delete()
+        
+        # 4. Delete the register entry
+        return super().destroy(request, *args, **kwargs)

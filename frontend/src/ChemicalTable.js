@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import api from './utils/api';
 
 function ChemicalTable() {
   const [chemicals, setChemicals] = useState([]);
@@ -6,19 +7,13 @@ function ChemicalTable() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch('http://127.0.0.1:8000/api/available_chemicals/')
+    api.get('/available_chemicals/')
       .then((response) => {
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        return response.json();
-      })
-      .then((data) => {
-        setChemicals(data);
+        setChemicals(Array.isArray(response.data) ? response.data : response.data.results || []);
         setLoading(false);
       })
       .catch((error) => {
-        setError(error.message);
+        setError(error.response?.data?.error || error.message || 'Network response was not ok');
         setLoading(false);
       });
   }, []);

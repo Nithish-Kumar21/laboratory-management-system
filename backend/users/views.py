@@ -1,571 +1,202 @@
-from rest_framework.decorators import api_view
+from rest_framework import status, generics
+from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
-from django.contrib.auth import authenticate, login, logout, get_user_model
-from django.db import IntegrityError
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
+from rest_framework.exceptions import PermissionDenied
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth import authenticate
+from django.core.mail import send_mail
+from django.conf import settings
+from django.utils import timezone
+from .models import User, PasswordResetToken
 from .serializers import (
     UserSerializer, UserCreateSerializer, UserUpdateSerializer,
     ChangePasswordSerializer, PasswordResetRequestSerializer,
     PasswordResetConfirmSerializer
 )
-from .permissions import superuser_required, authenticated_required
-from .models import PasswordResetToken
-from .utils import send_welcome_email, send_password_reset_email, send_password_changed_notification
-
-User = get_user_model()
+import secrets
+from datetime import timedelta
 
 
-# ============================================
-# AUTHENTICATION ENDPOINTS
-# ============================================
 
-@api_view(['POST'])
-def login_view(request):
-    """
-    Login endpoint - authenticate with employee_id and password
-    POST /api/auth/login/
-    Body: {employee_id, password}
-    """
-    employee_id = request.data.get('employee_id')
-    password = request.data.get('password')
+
+class LoginView(APIView):
+    permission_classes = [AllowAny]
     
-    if not employee_id or not password:
-        return Response(
-            {'error': 'Employee ID and password are required'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-    
-    # Authenticate user
-    user = authenticate(request, username=employee_id, password=password)
-    
-    if user is None:
-        # Check if account is locked
-        try:
-            user_obj = User.objects.get(employee_id=employee_id)
-            if user_obj.is_account_locked():
-                return Response(
-                    {
-                        'error': 'Account locked',
-                        'message': f'Your account has been locked due to multiple failed login attempts. '
-                                   f'Please try again after 30 minutes or contact administrator.'
-                    },
-                    status=status.HTTP_403_FORBIDDEN
-                )
-        except User.DoesNotExist:
-            pass
+    def post(self, request):
+        username = request.data.get('username')
+        password = request.data.get('password')
         
-        return Response(
-            {'error': 'Invalid employee ID or password'},
-            status=status.HTTP_401_UNAUTHORIZED
-        )
-    
-    # Check if user is active
-    if not user.is_active:
-        return Response(
-            {'error': 'Account is deactivated. Please contact administrator.'},
-            status=status.HTTP_403_FORBIDDEN
-        )
-    
-    # Login user (create session)
-    login(request, user)
-    
-    # Serialize user data
-    serializer = UserSerializer(user)
-    
-    return Response({
-        'message': 'Login successful',
-        'user': serializer.data,
-        'password_must_change': user.password_must_change
-    }, status=status.HTTP_200_OK)
-
-
-@api_view(['POST'])
-@authenticated_required
-def logout_view(request):
-    """
-    Logout endpoint
-    POST /api/auth/logout/
-    """
-    logout(request)
-    return Response(
-        {'message': 'Logout successful'},
-        status=status.HTTP_200_OK
-    )
-
-
-@api_view(['GET'])
-@authenticated_required
-def current_user_view(request):
-    """
-    Get current authenticated user
-    GET /api/auth/me/
-    """
-    serializer = UserSerializer(request.user)
-    return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-@api_view(['GET'])
-def check_session_view(request):
-    """
-    Check if session is valid
-    GET /api/auth/check-session/
-    """
-    if request.user.is_authenticated:
-        serializer = UserSerializer(request.user)
+        if not username or not password:
+            return Response({'error': 'Username and password required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        user = authenticate(username=username, password=password)
+        
+        if user is None:
+            return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        if not user.is_active:
+            return Response({'error': 'Account is inactive'}, status=status.HTTP_403_FORBIDDEN)
+        
+        # Generate JWT tokens
+        refresh = RefreshToken.for_user(user)
+        
         return Response({
-            'authenticated': True,
-            'user': serializer.data
-        }, status=status.HTTP_200_OK)
-    
-    return Response(
-        {'authenticated': False},
-        status=status.HTTP_200_OK
-    )
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+            'user': UserSerializer(user).data
+        })
 
 
-# ============================================
-# USER MANAGEMENT ENDPOINTS (Superuser only)
-# ============================================
-
-@api_view(['GET'])
-@superuser_required
-def list_users_view(request):
-    """
-    List all users with optional filtering
-    GET /api/users/
-    Query params: role, department, is_active, search
-    """
-    users = User.objects.all()
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
     
-    # Filtering
-    role = request.GET.get('role')
-    if role:
-        users = users.filter(role=role)
-    
-    department = request.GET.get('department')
-    if department:
-        users = users.filter(department=department)
-    
-    is_active = request.GET.get('is_active')
-    if is_active is not None:
-        users = users.filter(is_active=is_active.lower() == 'true')
-    
-    search = request.GET.get('search')
-    if search:
-        users = users.filter(
-            employee_id__icontains=search
-        ) | users.filter(
-            full_name__icontains=search
-        ) | users.filter(
-            email__icontains=search
-        )
-    
-    serializer = UserSerializer(users, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-@api_view(['POST'])
-@superuser_required
-def create_user_view(request):
-    """
-    Create new user
-    POST /api/users/
-    Body: {employee_id, full_name, email, phone, role, designation, department, password (optional)}
-    """
-    serializer = UserCreateSerializer(data=request.data, context={'request': request})
-    
-    if serializer.is_valid():
+    def post(self, request):
         try:
-            user = serializer.save()
-            
-            # Send welcome email
-            plain_password = user._plain_password
-            email_sent = send_welcome_email(user, plain_password)
-            
-            response_data = UserSerializer(user).data
-            response_data['generated_password'] = plain_password
-            response_data['email_sent'] = email_sent
-            
-            return Response(
-                {
-                    'message': 'User created successfully',
-                    'user': response_data
-                },
-                status=status.HTTP_201_CREATED
-            )
-        except IntegrityError as e:
-            return Response(
-                {'error': 'Database integrity error. User may already exist.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-    
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            refresh_token = request.data.get('refresh')
+            if refresh_token:
+                token = RefreshToken(refresh_token)
+                token.blacklist()
+            return Response({'message': 'Logged out successfully'}, status=status.HTTP_200_OK)
+        except Exception:
+            return Response({'message': 'Logged out successfully'}, status=status.HTTP_200_OK)
 
 
-@api_view(['GET'])
-@superuser_required
-def get_user_view(request, user_id):
-    """
-    Get user details by ID
-    GET /api/users/<id>/
-    """
-    try:
-        user = User.objects.get(id=user_id)
-        serializer = UserSerializer(user)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    except User.DoesNotExist:
-        return Response(
-            {'error': 'User not found'},
-            status=status.HTTP_404_NOT_FOUND
-        )
-
-
-@api_view(['PUT', 'PATCH'])
-@superuser_required
-def update_user_view(request, user_id):
-    """
-    Update user details
-    PUT/PATCH /api/users/<id>/
-    Body: {full_name, email, phone, role, designation, department, is_active}
-    """
-    try:
-        user = User.objects.get(id=user_id)
-    except User.DoesNotExist:
-        return Response(
-            {'error': 'User not found'},
-            status=status.HTTP_404_NOT_FOUND
-        )
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
     
-    serializer = UserUpdateSerializer(user, data=request.data, partial=True)
-    
-    if serializer.is_valid():
-        serializer.save()
-        return Response(
-            {
-                'message': 'User updated successfully',
-                'user': UserSerializer(user).data
-            },
-            status=status.HTTP_200_OK
-        )
-    
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-@api_view(['DELETE'])
-@superuser_required
-def deactivate_user_view(request, user_id):
-    """
-    Deactivate user (soft delete)
-    DELETE /api/users/<id>/
-    """
-    try:
-        user = User.objects.get(id=user_id)
-    except User.DoesNotExist:
-        return Response(
-            {'error': 'User not found'},
-            status=status.HTTP_404_NOT_FOUND
-        )
-    
-    if user.id == request.user.id:
-        return Response(
-            {'error': 'Cannot deactivate your own account'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-    
-    user.is_active = False
-    user.save()
-    
-    return Response(
-        {'message': 'User deactivated successfully'},
-        status=status.HTTP_200_OK
-    )
-
-
-@api_view(['POST'])
-@superuser_required
-def activate_user_view(request, user_id):
-    """
-    Activate user
-    POST /api/users/<id>/activate/
-    """
-    try:
-        user = User.objects.get(id=user_id)
-    except User.DoesNotExist:
-        return Response(
-            {'error': 'User not found'},
-            status=status.HTTP_404_NOT_FOUND
-        )
-    
-    user.is_active = True
-    user.save()
-    
-    return Response(
-        {'message': 'User activated successfully'},
-        status=status.HTTP_200_OK
-    )
-
-
-@api_view(['POST'])
-@superuser_required
-def admin_reset_password_view(request, user_id):
-    """
-    Admin resets user password (generates new password)
-    POST /api/users/<id>/reset-password/
-    """
-    try:
-        user = User.objects.get(id=user_id)
-    except User.DoesNotExist:
-        return Response(
-            {'error': 'User not found'},
-            status=status.HTTP_404_NOT_FOUND
-        )
-    
-    # Generate new password
-    new_password = User.generate_secure_password()
-    user.set_password(new_password)
-    user.password_must_change = True
-    user.save()
-    
-    # Send email
-    email_sent = send_welcome_email(user, new_password)
-    
-    return Response(
-        {
-            'message': 'Password reset successfully',
-            'new_password': new_password,
-            'email_sent': email_sent
-        },
-        status=status.HTTP_200_OK
-    )
-
-
-# ============================================
-# PASSWORD MANAGEMENT ENDPOINTS
-# ============================================
-
-@api_view(['POST'])
-@authenticated_required
-def change_password_view(request):
-    """
-    Change own password
-    POST /api/password/change/
-    Body: {old_password, new_password, confirm_password}
-    """
-    serializer = ChangePasswordSerializer(data=request.data, context={'request': request})
-    
-    if serializer.is_valid():
-        serializer.save()
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'message': 'Password changed successfully'}, status=status.HTTP_200_OK)
         
-        # Send notification email
-        send_password_changed_notification(request.user)
-        
-        return Response(
-            {'message': 'Password changed successfully'},
-            status=status.HTTP_200_OK
-        )
-    
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['POST'])
-def password_reset_request_view(request):
-    """
-    Request password reset (generates token and sends email)
-    POST /api/password/reset-request/
-    Body: {employee_id}
-    """
-    serializer = PasswordResetRequestSerializer(data=request.data)
+class ForgotPasswordView(APIView):
+    permission_classes = [AllowAny]
     
-    if serializer.is_valid():
-        employee_id = serializer.validated_data['employee_id']
-        user = User.objects.get(employee_id=employee_id, is_active=True)
+    def post(self, request):
+        email = request.data.get('email')
         
-        # Create reset token
-        reset_token_obj = PasswordResetToken.create_for_user(user)
-        
-        # Send email
-        email_sent = send_password_reset_email(user, reset_token_obj.token)
-        
-        return Response(
-            {
-                'message': 'Password reset email sent successfully',
-                'email_sent': email_sent
-            },
-            status=status.HTTP_200_OK
-        )
-    
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-@api_view(['POST'])
-def password_reset_confirm_view(request):
-    """
-    Confirm password reset with token
-    POST /api/password/reset-confirm/
-    Body: {token, new_password, confirm_password}
-    """
-    serializer = PasswordResetConfirmSerializer(data=request.data)
-    
-    if serializer.is_valid():
-        token = serializer.validated_data['token']
-        new_password = serializer.validated_data['new_password']
+        if not email:
+            return Response({'error': 'Email required'}, status=status.HTTP_400_BAD_REQUEST)
         
         try:
-            reset_token = PasswordResetToken.objects.get(token=token)
+            user = User.objects.get(email=email)
+            
+            # Create reset token
+            token = secrets.token_urlsafe(32)
+            PasswordResetToken.objects.create(
+                user=user,
+                token=token,
+                expires_at=timezone.now() + timedelta(hours=24)
+            )
+            
+            # Send email
+            reset_link = f"{settings.FRONTEND_URL}/reset-password?token={token}"
+            send_mail(
+                'Password Reset Request',
+                f'Click here to reset your password: {reset_link}',
+                settings.DEFAULT_FROM_EMAIL,
+                [email],
+                fail_silently=True,
+            )
+            
+            return Response({'message': 'Password reset link sent to email'}, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({'message': 'If email exists, reset link has been sent'}, status=status.HTTP_200_OK)
+
+
+class ResetPasswordView(APIView):
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        token = request.data.get('token')
+        new_password = request.data.get('new_password')
+        
+        if not token or not new_password:
+            return Response({'error': 'Token and new password required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            reset_token = PasswordResetToken.objects.get(
+                token=token,
+                used=False,
+                expires_at__gt=timezone.now()
+            )
+            
+            user = reset_token.user
+            user.set_password(new_password)
+            user.save()
+            
+            reset_token.used = True
+            reset_token.save()
+            
+            return Response({'message': 'Password reset successfully'}, status=status.HTTP_200_OK)
         except PasswordResetToken.DoesNotExist:
-            return Response(
-                {'error': 'Invalid or expired reset token'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        if not reset_token.is_valid():
-            return Response(
-                {'error': 'Reset token has expired or already been used'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        # Reset password
-        user = reset_token.user
-        user.set_password(new_password)
-        user.password_must_change = False
-        user.last_password_change = timezone.now()
-        user.save()
-        
-        # Mark token as used
-        reset_token.mark_as_used()
-        
-        # Send notification
-        send_password_changed_notification(user)
-        
-        return Response(
-            {'message': 'Password reset successfully'},
-            status=status.HTTP_200_OK
-        )
+            return Response({'error': 'Invalid or expired token'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserListCreateView(generics.ListCreateAPIView):
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return UserCreateSerializer
+        return UserSerializer
     
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def get_permissions(self):
+        return [IsAuthenticated()]
+    
+    def get_queryset(self):
+        # Only admins can see all users
+        if self.request.user.role == 'admin':
+            return User.objects.all().order_by('-date_joined')
+        # Others see only themselves
+        return User.objects.filter(id=self.request.user.id)
+    
+    def perform_create(self, serializer):
+        # Only admin can create users
+        if self.request.user.role != 'admin':
+            raise PermissionDenied("Only admins can create users")
+        serializer.save()
 
 
-@api_view(['GET'])
-def validate_reset_token_view(request, token):
-    """
-    Validate if reset token is valid
-    GET /api/password/validate-token/<token>/
-    """
-    try:
-        reset_token = PasswordResetToken.objects.get(token=token)
-        if reset_token.is_valid():
-            return Response(
-                {'valid': True, 'employee_id': reset_token.user.employee_id},
-                status=status.HTTP_200_OK
+class UserRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = User.objects.all()
+    permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        if self.request.method in ['PUT', 'PATCH']:
+            return UserUpdateSerializer
+        return UserSerializer
+    
+    def get_object(self):
+        user = super().get_object()
+        # Users can edit themselves or admin can edit anyone
+        if user.id != self.request.user.id and self.request.user.role != 'admin':
+            raise PermissionDenied("You don't have permission to edit this user")
+        return user
+    
+    def perform_update(self, serializer):
+        # Only admins can change role and is_active
+        if self.request.user.role != 'admin':
+            serializer.save(
+                role=self.get_object().role,
+                is_active=self.get_object().is_active
             )
         else:
-            return Response(
-                {'valid': False, 'error': 'Token expired or already used'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-    except PasswordResetToken.DoesNotExist:
-        return Response(
-            {'valid': False, 'error': 'Invalid token'},
-            status=status.HTTP_404_NOT_FOUND
-        )
-
-
-# ============================================
-# PROFILE ENDPOINTS
-# ============================================
-
-@api_view(['GET'])
-@authenticated_required
-def get_profile_view(request):
-    """
-    Get own profile
-    GET /api/profile/
-    """
-    serializer = UserSerializer(request.user)
-    return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-@api_view(['PUT', 'PATCH'])
-@authenticated_required
-def update_profile_view(request):
-    """
-    Update own profile (limited fields)
-    PUT/PATCH /api/profile/
-    Body: {full_name, email, phone}
-    """
-    allowed_fields = ['full_name', 'email', 'phone']
-    data = {k: v for k, v in request.data.items() if k in allowed_fields}
+            serializer.save()
     
-    serializer = UserUpdateSerializer(request.user, data=data, partial=True)
+    def perform_destroy(self, instance):
+        # Only admin can delete
+        if self.request.user.role != 'admin':
+            raise PermissionDenied("Only admins can delete users")
+        instance.delete()
+
+
+class CurrentUserView(APIView):
+    permission_classes = [IsAuthenticated]
     
-    if serializer.is_valid():
-        serializer.save()
-        return Response(
-            {
-                'message': 'Profile updated successfully',
-                'user': UserSerializer(request.user).data
-            },
-            status=status.HTTP_200_OK
-        )
-    
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-# ============================================
-# UTILITY ENDPOINTS
-# ============================================
-
-@api_view(['GET'])
-@superuser_required
-def check_employee_id_view(request, employee_id):
-    """
-    Check if employee_id is available
-    GET /api/users/check-employee-id/<employee_id>/
-    """
-    exists = User.objects.filter(employee_id=employee_id).exists()
-    return Response(
-        {'available': not exists},
-        status=status.HTTP_200_OK
-    )
-
-
-@api_view(['GET'])
-@superuser_required
-def check_email_view(request, email):
-    """
-    Check if email is available
-    GET /api/users/check-email/<email>/
-    """
-    exists = User.objects.filter(email=email).exists()
-    return Response(
-        {'available': not exists},
-        status=status.HTTP_200_OK
-    )
-
-
-@api_view(['GET'])
-@superuser_required
-def user_stats_view(request):
-    """
-    Get user statistics
-    GET /api/users/stats/
-    """
-    total_users = User.objects.count()
-    active_users = User.objects.filter(is_active=True).count()
-    hod_count = User.objects.filter(role='HOD', is_active=True).count()
-    store_keeper_count = User.objects.filter(role='Store Keeper', is_active=True).count()
-    staff_count = User.objects.filter(role='Staff', is_active=True).count()
-    
-    return Response(
-        {
-            'total_users': total_users,
-            'active_users': active_users,
-            'inactive_users': total_users - active_users,
-            'roles': {
-                'HOD': hod_count,
-                'Store Keeper': store_keeper_count,
-                'Staff': staff_count
-            }
-        },
-        status=status.HTTP_200_OK
-    )
+    def get(self, request):
+        serializer = UserSerializer(request.user)
+        return Response(serializer.data)
