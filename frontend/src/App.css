@@ -39,15 +39,7 @@
   position: relative;
 }
 
-.sidebar-logo {
-  width: 40px;
-  height: 40px;
-  margin-right: 12px;
-}
 
-.sidebar.collapsed .sidebar-logo {
-  margin-right: 0;
-}
 
 .sidebar-title {
   font-size: 1.5rem;
@@ -60,8 +52,6 @@
 }
 
 .toggle-btn {
-  position: absolute;
-  right: 15px;
   background: transparent;
   border: none;
   color: white;
@@ -69,6 +59,8 @@
   cursor: pointer;
   padding: 5px;
   transition: transform 0.3s;
+  margin-right: 15px;
+  /* Add spacing between button and title */
 }
 
 .toggle-btn:hover {

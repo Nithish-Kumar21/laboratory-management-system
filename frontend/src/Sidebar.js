@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FaHome, FaBoxes, FaClipboardList, FaFileAlt, FaExclamationTriangle, FaBars, FaUser, FaUsers, FaSignOutAlt, FaChevronDown, FaCog } from 'react-icons/fa';
 import { useAuth } from './context/AuthContext';
 import api from './utils/api';
-import logo from './logo.svg';
 import './App.css';
 
 function Sidebar() {
@@ -58,11 +57,10 @@ function Sidebar() {
   return (
     <div className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
       <div className="sidebar-header">
-        <img src={logo} alt="Logo" className="sidebar-logo" />
-        {!isCollapsed && <h2 className="sidebar-title">Lab Manager</h2>}
         <button className="toggle-btn" onClick={toggleSidebar}>
           <FaBars />
         </button>
+        {!isCollapsed && <h2 className="sidebar-title">Lab Manager</h2>}
       </div>
 
       <nav className="sidebar-nav">
