@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import api from './utils/api';
+import api from '../../utils/api';
 
 function ChemicalTable() {
   const [chemicals, setChemicals] = useState([]);
@@ -7,9 +7,12 @@ function ChemicalTable() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    api.get('/available_chemicals/')
+    api
+      .get('/available_chemicals/')
       .then((response) => {
-        setChemicals(Array.isArray(response.data) ? response.data : response.data.results || []);
+        setChemicals(
+          Array.isArray(response.data) ? response.data : response.data.results || []
+        );
         setLoading(false);
       })
       .catch((error) => {
@@ -46,3 +49,4 @@ function ChemicalTable() {
 }
 
 export default ChemicalTable;
+

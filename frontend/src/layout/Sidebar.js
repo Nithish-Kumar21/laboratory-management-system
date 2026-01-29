@@ -1,9 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { FaHome, FaBoxes, FaClipboardList, FaFileAlt, FaExclamationTriangle, FaBars, FaUser, FaUsers, FaSignOutAlt, FaChevronDown, FaCog } from 'react-icons/fa';
-import { useAuth } from './context/AuthContext';
-import api from './utils/api';
-import './App.css';
+import {
+  FaBars,
+  FaBoxes,
+  FaChevronDown,
+  FaClipboardList,
+  FaCog,
+  FaExclamationTriangle,
+  FaFileAlt,
+  FaHome,
+  FaSignOutAlt,
+  FaUser,
+  FaUsers,
+} from 'react-icons/fa';
+import { useAuth } from '../context/AuthContext';
+import api from '../utils/api';
+import '../styles/App.css';
 
 function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -11,18 +23,23 @@ function Sidebar() {
   const [lowStockCount, setLowStockCount] = useState(0);
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout, isAdmin, isStaff, isStoreKeeper, isHOD } = useAuth();
+  const { user, logout, isAdmin, isStaff } = useAuth();
 
   const fetchLowStockCount = async () => {
     try {
       const [chemRes, appRes] = await Promise.all([
         api.get('/low_stock_chemicals/'),
-        api.get('/low_stock_apparatus/')
+        api.get('/low_stock_apparatus/'),
       ]);
-      const chemData = Array.isArray(chemRes.data) ? chemRes.data : chemRes.data.results || [];
-      const appData = Array.isArray(appRes.data) ? appRes.data : appRes.data.results || [];
+      const chemData = Array.isArray(chemRes.data)
+        ? chemRes.data
+        : chemRes.data.results || [];
+      const appData = Array.isArray(appRes.data)
+        ? appRes.data
+        : appRes.data.results || [];
       setLowStockCount(chemData.length + appData.length);
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.error('Error fetching count:', err);
     }
   };
@@ -69,7 +86,10 @@ function Sidebar() {
           {!isCollapsed && <span>Home</span>}
         </Link>
 
-        <Link to="/inventory" className={location.pathname === '/inventory' ? 'active' : ''}>
+        <Link
+          to="/inventory"
+          className={location.pathname === '/inventory' ? 'active' : ''}
+        >
           <div className="nav-icon-wrapper">
             <FaBoxes className="nav-icon" />
             {isCollapsed && lowStockCount > 0 && (
@@ -88,17 +108,26 @@ function Sidebar() {
 
         {!isStaff && (
           <>
-            <Link to="/stock-register" className={location.pathname === '/stock-register' ? 'active' : ''}>
+            <Link
+              to="/stock-register"
+              className={location.pathname === '/stock-register' ? 'active' : ''}
+            >
               <FaClipboardList className="nav-icon" />
               {!isCollapsed && <span>Stock Register</span>}
             </Link>
 
-            <Link to="/issue-register" className={location.pathname === '/issue-register' ? 'active' : ''}>
+            <Link
+              to="/issue-register"
+              className={location.pathname === '/issue-register' ? 'active' : ''}
+            >
               <FaFileAlt className="nav-icon" />
               {!isCollapsed && <span>Issue Register</span>}
             </Link>
 
-            <Link to="/damaged-entry" className={location.pathname === '/damaged-entry' ? 'active' : ''}>
+            <Link
+              to="/damaged-entry"
+              className={location.pathname === '/damaged-entry' ? 'active' : ''}
+            >
               <FaExclamationTriangle className="nav-icon" />
               {!isCollapsed && <span>Damaged Entry</span>}
             </Link>
@@ -113,7 +142,6 @@ function Sidebar() {
         )}
       </nav>
 
-      {/* User Menu */}
       <div className="sidebar-footer">
         <div className="user-menu">
           <button
@@ -127,13 +155,15 @@ function Sidebar() {
               </div>
               {!isCollapsed && (
                 <div style={{ flex: 1, textAlign: 'left' }}>
-                  <div className="user-name">
-                    {user?.full_name || user?.employee_id}
-                  </div>
+                  <div className="user-name">{user?.full_name || user?.employee_id}</div>
                   <div className="user-role">
-                    {user?.role === 'admin' ? 'Administrator' :
-                      user?.role === 'hod' ? 'Head of Dept.' :
-                        user?.role === 'store_keeper' ? 'Store Keeper' : 'Staff'}
+                    {user?.role === 'admin'
+                      ? 'Administrator'
+                      : user?.role === 'hod'
+                        ? 'Head of Dept.'
+                        : user?.role === 'store_keeper'
+                          ? 'Store Keeper'
+                          : 'Staff'}
                   </div>
                 </div>
               )}
@@ -143,10 +173,20 @@ function Sidebar() {
 
           {showUserMenu && !isCollapsed && (
             <div className="user-dropdown">
-              <button onClick={() => { navigate('/settings'); setShowUserMenu(false); }}>
+              <button
+                onClick={() => {
+                  navigate('/settings');
+                  setShowUserMenu(false);
+                }}
+              >
                 <FaCog /> Settings
               </button>
-              <button onClick={() => { navigate('/profile'); setShowUserMenu(false); }}>
+              <button
+                onClick={() => {
+                  navigate('/profile');
+                  setShowUserMenu(false);
+                }}
+              >
                 <FaUser /> My Profile
               </button>
               <button onClick={handleLogout} style={{ color: '#dc3545' }}>
@@ -161,3 +201,4 @@ function Sidebar() {
 }
 
 export default Sidebar;
+

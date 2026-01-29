@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
-import '../Settings.css';
+import './Settings.css';
 
 function Settings() {
     const { isStoreKeeper } = useAuth();
     const { isDarkMode, toggleTheme } = useTheme();
-    const navigate = useNavigate();
     const [config, setConfig] = useState({
         use_common_reorder_level: false,
         common_chemical_reorder_level: 0,
@@ -136,6 +134,7 @@ function Settings() {
     return (
         <div className="settings-page">
             <h2>Settings</h2>
+            {loading && <div className="info-banner">Loading settings…</div>}
             {message && <div className="success-banner">{message}</div>}
 
             {/* APPEARANCE SETTINGS - Available to all users */}

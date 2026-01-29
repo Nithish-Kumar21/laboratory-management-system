@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { FaArrowLeft, FaTrash } from 'react-icons/fa';
-import { useAuth } from './context/AuthContext';
-import api from './utils/api';
+import { useAuth } from '../context/AuthContext';
+import api from '../utils/api';
 import './DamagedEntry.css';
 
 function DamagedEntryDetail() {
@@ -19,7 +19,8 @@ function DamagedEntryDetail() {
       navigate('/');
       return;
     }
-    api.get(`/damaged_entry/${id}/`)
+    api
+      .get(`/damaged_entry/${id}/`)
       .then((response) => {
         setDamagedEntry(response.data);
         setLoading(false);
@@ -35,7 +36,11 @@ function DamagedEntryDetail() {
   };
 
   const handleDelete = async () => {
-    if (window.confirm('Are you sure you want to delete this entry? This will also add the damaged quantities back to the inventory.')) {
+    if (
+      window.confirm(
+        'Are you sure you want to delete this entry? This will also add the damaged quantities back to the inventory.'
+      )
+    ) {
       setDeleting(true);
       try {
         await api.delete(`/damaged_entry/${id}/`);
@@ -77,7 +82,7 @@ function DamagedEntryDetail() {
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              cursor: 'pointer'
+              cursor: 'pointer',
             }}
           >
             <FaTrash /> {deleting ? 'Deleting...' : 'Delete Entry'}
@@ -86,11 +91,21 @@ function DamagedEntryDetail() {
       </div>
 
       <div className="entry-info">
-        <p><strong>Staff:</strong> {damagedEntry.staff}</p>
-        <p><strong>Class:</strong> {damagedEntry.class_name}</p>
-        <p><strong>Date:</strong> {damagedEntry.date}</p>
-        <p><strong>Caused By:</strong> {damagedEntry.caused_by}</p>
-        <p><strong>Details:</strong> {damagedEntry.details}</p>
+        <p>
+          <strong>Staff:</strong> {damagedEntry.staff}
+        </p>
+        <p>
+          <strong>Class:</strong> {damagedEntry.class_name}
+        </p>
+        <p>
+          <strong>Date:</strong> {damagedEntry.date}
+        </p>
+        <p>
+          <strong>Caused By:</strong> {damagedEntry.caused_by}
+        </p>
+        <p>
+          <strong>Details:</strong> {damagedEntry.details}
+        </p>
       </div>
 
       {damagedEntry.damaged_items && damagedEntry.damaged_items.length > 0 && (
@@ -119,3 +134,4 @@ function DamagedEntryDetail() {
 }
 
 export default DamagedEntryDetail;
+

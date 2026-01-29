@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { FaArrowLeft, FaTrash } from 'react-icons/fa';
-import { useAuth } from './context/AuthContext';
-import api from './utils/api';
+import { useAuth } from '../context/AuthContext';
+import api from '../utils/api';
 import './StockRegisterDetail.css';
 
 function StockRegisterDetail() {
@@ -19,7 +19,8 @@ function StockRegisterDetail() {
       navigate('/');
       return;
     }
-    api.get(`/stock_register/${id}/`)
+    api
+      .get(`/stock_register/${id}/`)
       .then((response) => {
         setStockRegister(response.data);
         setLoading(false);
@@ -35,7 +36,11 @@ function StockRegisterDetail() {
   };
 
   const handleDelete = async () => {
-    if (window.confirm('Are you sure you want to delete this entry? This will also update the inventory quantities.')) {
+    if (
+      window.confirm(
+        'Are you sure you want to delete this entry? This will also update the inventory quantities.'
+      )
+    ) {
       setDeleting(true);
       try {
         await api.delete(`/stock_register/${id}/`);
@@ -77,7 +82,7 @@ function StockRegisterDetail() {
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              cursor: 'pointer'
+              cursor: 'pointer',
             }}
           >
             <FaTrash /> {deleting ? 'Deleting...' : 'Delete Entry'}
@@ -85,14 +90,18 @@ function StockRegisterDetail() {
         )}
       </div>
 
-      {/* Entry Information Card */}
       <div className="entry-info">
-        <p><strong>Invoice No.:</strong> {stockRegister.invoice_number}</p>
-        <p><strong>Date of Entry:</strong> {stockRegister.date}</p>
-        <p><strong>Supplier:</strong> {stockRegister.supplier_name}</p>
+        <p>
+          <strong>Invoice No.:</strong> {stockRegister.invoice_number}
+        </p>
+        <p>
+          <strong>Date of Entry:</strong> {stockRegister.date}
+        </p>
+        <p>
+          <strong>Supplier:</strong> {stockRegister.supplier_name}
+        </p>
       </div>
 
-      {/* Chemical List */}
       {stockRegister.chemical_items && stockRegister.chemical_items.length > 0 && (
         <div className="items-section">
           <h3>Chemical List</h3>
@@ -119,7 +128,6 @@ function StockRegisterDetail() {
         </div>
       )}
 
-      {/* Apparatus List */}
       {stockRegister.apparatus_items && stockRegister.apparatus_items.length > 0 && (
         <div className="items-section">
           <h3>Apparatus List</h3>
@@ -150,3 +158,4 @@ function StockRegisterDetail() {
 }
 
 export default StockRegisterDetail;
+

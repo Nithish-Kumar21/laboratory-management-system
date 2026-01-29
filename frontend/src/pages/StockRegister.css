@@ -1,12 +1,12 @@
-.damaged-entry-page,
-.damaged-detail-page {
+.stock-register-page,
+.stock-detail-page {
   max-width: 900px;
   margin: 0 auto;
   padding: 20px;
 }
 
-.damaged-entry-page h2,
-.damaged-detail-page h2 {
+.stock-register-page h2,
+.stock-detail-page h2 {
   color: #2c3e50;
   margin-bottom: 20px;
 }
@@ -28,7 +28,7 @@
   padding: 15px 20px;
   border-radius: 8px;
   margin-bottom: 30px;
-  border-left: 4px solid #e74c3c;
+  border-left: 4px solid #3752a6;
 }
 
 .entry-info p {
@@ -38,13 +38,13 @@
 }
 
 .entry-info strong {
-  color: #c0392b;
+  color: #3752a6;
   margin-right: 10px;
 }
 
 /* Section headings */
-.damaged-detail-page h3 {
-  color: #e74c3c;
+.stock-detail-page h3 {
+  color: #3752a6;
   margin-top: 30px;
   margin-bottom: 15px;
   font-size: 1.2rem;
@@ -53,10 +53,11 @@
 }
 
 /* Back Button */
-.damaged-detail-page .back-button {
+.back-button {
   position: fixed;
   top: 20px;
   left: 270px;
+  /* Default: next to expanded sidebar */
   width: 50px;
   height: 50px;
   border-radius: 50%;
@@ -73,24 +74,22 @@
   z-index: 100;
 }
 
-.damaged-detail-page .back-button:hover {
+.back-button:hover {
   background: #2c3e50;
   color: white;
   transform: scale(1.05);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-.damaged-detail-page .back-button:active {
+.back-button:active {
   transform: scale(0.95);
 }
 
-.damaged-detail-page {
+.stock-detail-page {
   position: relative;
   padding: 20px 20px 20px 90px;
 }
 
-
-/* Existing styles remain... */
 
 .page-header {
   display: flex;
@@ -100,7 +99,7 @@
 }
 
 .add-entry-btn {
-  background: #e74c3c;
+  background: #27ae60;
   color: white;
   border: none;
   padding: 12px 20px;
@@ -112,73 +111,36 @@
   font-size: 1rem;
   font-weight: 600;
   transition: background 0.3s;
-  box-shadow: 0 2px 6px rgba(231, 76, 60, 0.3);
+  box-shadow: 0 2px 6px rgba(39, 174, 96, 0.3);
 }
 
 .add-entry-btn:hover {
-  background: #c0392b;
-  box-shadow: 0 4px 10px rgba(231, 76, 60, 0.4);
-}
-
-/* Detail Table Styles (copied from StockRegisterDetail) */
-.detail-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  border-radius: 6px;
-  overflow: hidden;
-  margin-top: 15px;
-}
-
-.detail-table thead {
-  background: #ecf0f1;
-}
-
-.detail-table th {
-  padding: 12px;
-  text-align: left;
-  font-weight: 600;
-  color: #2c3e50;
-  border-bottom: 2px solid #bdc3c7;
-}
-
-.detail-table td {
-  padding: 12px;
-  border-bottom: 1px solid #ecf0f1;
-  color: #34495e;
-}
-
-.detail-table tbody tr:hover {
-  background: #f8f9fa;
-}
-
-.detail-table tbody tr:last-child td {
-  border-bottom: none;
+  background: #229954;
+  box-shadow: 0 4px 10px rgba(39, 174, 96, 0.4);
 }
 
 /* ============================================ */
 /* DARK MODE STYLES */
 /* ============================================ */
 
-:root.dark-mode .damaged-entry-page,
-:root.dark-mode .damaged-detail-page {
+:root.dark-mode .stock-register-page,
+:root.dark-mode .stock-detail-page {
   background-color: #1a1a1a;
   color: #e0e0e0;
 }
 
-:root.dark-mode .damaged-entry-page h2,
-:root.dark-mode .damaged-detail-page h2 {
+:root.dark-mode .stock-register-page h2,
+:root.dark-mode .stock-detail-page h2 {
   color: #e0e0e0;
 }
 
 :root.dark-mode .clickable-table tbody tr:hover {
-  background: #3a2a2a !important;
+  background: #2a4a6a !important;
 }
 
 :root.dark-mode .entry-info {
   background: #2d2d2d;
-  border-left-color: #e74c3c;
+  border-left-color: #4a9eff;
 }
 
 :root.dark-mode .entry-info p {
@@ -186,55 +148,33 @@
 }
 
 :root.dark-mode .entry-info strong {
-  color: #ff6b6b;
+  color: #4a9eff;
 }
 
-:root.dark-mode .damaged-detail-page h3 {
-  color: #ff6b6b;
+:root.dark-mode .stock-detail-page h3 {
+  color: #4a9eff;
   border-bottom-color: #3a3a3a;
 }
 
-:root.dark-mode .damaged-detail-page .back-button {
+:root.dark-mode .back-button {
   background: #2d2d2d;
   color: #e0e0e0;
   border-color: #4a4a4a;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
-:root.dark-mode .damaged-detail-page .back-button:hover {
+:root.dark-mode .back-button:hover {
   background: #3a3a3a;
-  color: #ff6b6b;
+  color: #4a9eff;
 }
 
 :root.dark-mode .add-entry-btn {
-  background: #d32f2f;
-  box-shadow: 0 2px 6px rgba(211, 47, 47, 0.3);
+  background: #388e3c;
+  box-shadow: 0 2px 6px rgba(56, 142, 60, 0.3);
 }
 
 :root.dark-mode .add-entry-btn:hover {
-  background: #c62828;
-  box-shadow: 0 4px 10px rgba(211, 47, 47, 0.4);
+  background: #2e7d32;
+  box-shadow: 0 4px 10px rgba(56, 142, 60, 0.4);
 }
 
-:root.dark-mode .detail-table {
-  background: #2d2d2d;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-:root.dark-mode .detail-table thead {
-  background: #3a3a3a;
-}
-
-:root.dark-mode .detail-table th {
-  color: #ff6b6b;
-  border-bottom-color: #4a4a4a;
-}
-
-:root.dark-mode .detail-table td {
-  color: #e0e0e0;
-  border-bottom-color: #3a3a3a;
-}
-
-:root.dark-mode .detail-table tbody tr:hover {
-  background: #353535;
-}

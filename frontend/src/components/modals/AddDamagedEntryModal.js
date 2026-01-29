@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { FaTimes, FaPlus, FaTrash } from 'react-icons/fa';
-import api from './utils/api';
+import React, { useEffect, useState } from 'react';
+import { FaPlus, FaTimes, FaTrash } from 'react-icons/fa';
+import api from '../../utils/api';
 import './AddDamagedEntryModal.css';
 
 function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
     staff: '',
     class_name: '',
-    date: new Date().toISOString().split('T')[0], // Today's date
+    date: new Date().toISOString().split('T')[0],
     caused_by: '',
     details: '',
   });
@@ -16,20 +16,19 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
-  // Autocomplete data
   const [apparatusNames, setApparatusNames] = useState([]);
   const [showApparatusSuggestions, setShowApparatusSuggestions] = useState({});
 
-  // Fetch autocomplete data
   useEffect(() => {
-    if (isOpen) {
-      api.get('/damaged_entry/apparatus_names/')
-        .then(response => {
-          const data = Array.isArray(response.data) ? response.data : response.data.results || [];
-          setApparatusNames(data);
-        })
-        .catch(err => console.error('Error fetching apparatus names:', err));
-    }
+    if (!isOpen) return;
+    api
+      .get('/damaged_entry/apparatus_names/')
+      .then((response) => {
+        const data = Array.isArray(response.data) ? response.data : response.data.results || [];
+        setApparatusNames(data);
+      })
+      // eslint-disable-next-line no-console
+      .catch((err) => console.error('Error fetching apparatus names:', err));
   }, [isOpen]);
 
   if (!isOpen) return null;
@@ -45,21 +44,19 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
   const updateApparatusItem = (index, field, value) => {
     const updated = [...apparatusItems];
     updated[index][field] = value;
-    setApparatusItems(updated);
 
-    // Show suggestions when typing in name field
     if (field === 'apparatus_name') {
       setShowApparatusSuggestions({ ...showApparatusSuggestions, [index]: true });
 
-      // If manually typed name matches exactly, sync available quantity
-      const match = apparatusNames.find(a => a.name.toLowerCase() === value.toLowerCase());
+      const match = apparatusNames.find((a) => a.name.toLowerCase() === value.toLowerCase());
       if (match) {
         updated[index].available_quantity = match.available_quantity;
       } else {
         delete updated[index].available_quantity;
       }
-      setApparatusItems(updated);
     }
+
+    setApparatusItems(updated);
   };
 
   const selectApparatusSuggestion = (index, apparatus) => {
@@ -72,45 +69,20 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
 
   const filterSuggestions = (items, query) => {
     if (!query) return items;
-    return items.filter(item =>
-      item.name.toLowerCase().includes(query.toLowerCase())
-    );
+    return items.filter((item) => item.name.toLowerCase().includes(query.toLowerCase()));
   };
 
   const validate = () => {
     const newErrors = {};
 
-    // Validate staff
-    if (!formData.staff.trim()) {
-      newErrors.staff = 'Staff name is required';
-    }
+    if (!formData.staff.trim()) newErrors.staff = 'Staff name is required';
+    if (!formData.class_name.trim()) newErrors.class_name = 'Class is required';
+    if (!formData.date) newErrors.date = 'Date is required';
+    if (!formData.caused_by.trim()) newErrors.caused_by = 'Caused by is required';
+    if (!formData.details.trim()) newErrors.details = 'Details are required';
 
-    // Validate class
-    if (!formData.class_name.trim()) {
-      newErrors.class_name = 'Class is required';
-    }
+    if (apparatusItems.length === 0) newErrors.items = 'At least one damaged apparatus item must be added';
 
-    // Validate date
-    if (!formData.date) {
-      newErrors.date = 'Date is required';
-    }
-
-    // Validate caused_by
-    if (!formData.caused_by.trim()) {
-      newErrors.caused_by = 'Caused by is required';
-    }
-
-    // Validate details
-    if (!formData.details.trim()) {
-      newErrors.details = 'Details are required';
-    }
-
-    // Validate at least one item
-    if (apparatusItems.length === 0) {
-      newErrors.items = 'At least one damaged apparatus item must be added';
-    }
-
-    // Validate apparatus items
     apparatusItems.forEach((item, index) => {
       if (!item.apparatus_name.trim()) {
         newErrors[`apparatus_name_${index}`] = 'Apparatus name is required';
@@ -130,10 +102,7 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!validate()) {
-      return;
-    }
+    if (!validate()) return;
 
     setSubmitting(true);
 
@@ -143,34 +112,26 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
       date: formData.date,
       caused_by: formData.caused_by,
       details: formData.details,
-      damaged_items: apparatusItems.map(item => ({
+      damaged_items: apparatusItems.map((item) => ({
         apparatus_name: item.apparatus_name,
-        quantity: parseInt(item.quantity)
-      }))
+        quantity: parseInt(item.quantity),
+      })),
     };
 
-    console.log('Submitting payload:', payload); // Debug log
-
     try {
-      const response = await api.post('/damaged_entry/', payload);
-
-      console.log('Success! Created entry:', response.data);
+      await api.post('/damaged_entry/', payload);
       window.dispatchEvent(new Event('inventory-updated'));
       localStorage.setItem('inventory-updated', Date.now());
       onSuccess();
       resetForm();
       onClose();
     } catch (error) {
-      console.error('Submission error:', error);
       const errorData = error.response?.data;
       let errorMessage = 'Failed to create entry. ';
 
       if (errorData) {
-        if (errorData.error) {
-          errorMessage += errorData.error;
-        } else {
-          errorMessage += JSON.stringify(errorData);
-        }
+        if (errorData.error) errorMessage += errorData.error;
+        else errorMessage += JSON.stringify(errorData);
       } else {
         errorMessage += error.message || 'Unknown error occurred.';
       }
@@ -205,7 +166,6 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
 
         <form onSubmit={handleSubmit}>
           <div className="modal-body">
-            {/* Staff and Class */}
             <div className="form-row">
               <div className="form-group">
                 <label>Staff *</label>
@@ -232,7 +192,6 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
               </div>
             </div>
 
-            {/* Date and Caused By */}
             <div className="form-row">
               <div className="form-group">
                 <label>Date *</label>
@@ -258,7 +217,6 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
               </div>
             </div>
 
-            {/* Details */}
             <div className="form-group">
               <label>Details *</label>
               <textarea
@@ -273,7 +231,6 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
 
             {errors.items && <div className="error-banner">{errors.items}</div>}
 
-            {/* Apparatus Items */}
             <div className="items-section">
               <div className="section-header">
                 <h3>Damaged Apparatus List</h3>
@@ -290,8 +247,19 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
                       placeholder="Apparatus name"
                       value={item.apparatus_name}
                       onChange={(e) => updateApparatusItem(index, 'apparatus_name', e.target.value)}
-                      onFocus={() => setShowApparatusSuggestions({ ...showApparatusSuggestions, [index]: true })}
-                      onBlur={() => setTimeout(() => setShowApparatusSuggestions({ ...showApparatusSuggestions, [index]: false }), 200)}
+                      onFocus={() =>
+                        setShowApparatusSuggestions({ ...showApparatusSuggestions, [index]: true })
+                      }
+                      onBlur={() =>
+                        setTimeout(
+                          () =>
+                            setShowApparatusSuggestions({
+                              ...showApparatusSuggestions,
+                              [index]: false,
+                            }),
+                          200
+                        )
+                      }
                       className={errors[`apparatus_name_${index}`] ? 'error' : ''}
                     />
                     {showApparatusSuggestions[index] && (
@@ -308,7 +276,9 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
                         ))}
                       </div>
                     )}
-                    {errors[`apparatus_name_${index}`] && <span className="error-text">{errors[`apparatus_name_${index}`]}</span>}
+                    {errors[`apparatus_name_${index}`] && (
+                      <span className="error-text">{errors[`apparatus_name_${index}`]}</span>
+                    )}
                   </div>
 
                   <div>
@@ -319,7 +289,9 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
                       onChange={(e) => updateApparatusItem(index, 'quantity', e.target.value)}
                       className={errors[`apparatus_quantity_${index}`] ? 'error' : ''}
                     />
-                    {errors[`apparatus_quantity_${index}`] && <span className="error-text">{errors[`apparatus_quantity_${index}`]}</span>}
+                    {errors[`apparatus_quantity_${index}`] && (
+                      <span className="error-text">{errors[`apparatus_quantity_${index}`]}</span>
+                    )}
                   </div>
 
                   <button
@@ -351,3 +323,4 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
 }
 
 export default AddDamagedEntryModal;
+

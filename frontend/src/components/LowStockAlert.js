@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
-import api from './utils/api';
+import api from '../utils/api';
 import './LowStockAlert.css';
 
 function LowStockAlert({ activeTab }) {
@@ -21,7 +21,6 @@ function LowStockAlert({ activeTab }) {
     };
     window.addEventListener('storage', handleStorage);
 
-    // Add polling fallback (every 3 seconds) for a real-time experience
     const interval = setInterval(fetchLowStock, 3000);
 
     return () => {
@@ -32,23 +31,35 @@ function LowStockAlert({ activeTab }) {
   }, []);
 
   const fetchLowStock = () => {
-    // Fetch low stock chemicals
-    api.get('/low_stock_chemicals/')
-      .then(response => setLowStockChemicals(Array.isArray(response.data) ? response.data : response.data.results || []))
-      .catch(error => console.error('Error fetching low stock chemicals:', error));
+    api
+      .get('/low_stock_chemicals/')
+      .then((response) =>
+        setLowStockChemicals(
+          Array.isArray(response.data) ? response.data : response.data.results || []
+        )
+      )
+      .catch((error) =>
+        // eslint-disable-next-line no-console
+        console.error('Error fetching low stock chemicals:', error)
+      );
 
-    // Fetch low stock apparatus
-    api.get('/low_stock_apparatus/')
-      .then(response => setLowStockApparatus(Array.isArray(response.data) ? response.data : response.data.results || []))
-      .catch(error => console.error('Error fetching low stock apparatus:', error))
+    api
+      .get('/low_stock_apparatus/')
+      .then((response) =>
+        setLowStockApparatus(
+          Array.isArray(response.data) ? response.data : response.data.results || []
+        )
+      )
+      .catch((error) =>
+        // eslint-disable-next-line no-console
+        console.error('Error fetching low stock apparatus:', error)
+      )
       .finally(() => setLoading(false));
   };
 
-  // Determine what to show based on active tab
   const currentLowStock = activeTab === 'chemical' ? lowStockChemicals : lowStockApparatus;
   const shouldDisplay = currentLowStock.length > 0;
 
-  // Don't render anything if no low stock for current tab
   if (loading || !shouldDisplay) {
     return null;
   }
@@ -111,3 +122,4 @@ function LowStockAlert({ activeTab }) {
 }
 
 export default LowStockAlert;
+

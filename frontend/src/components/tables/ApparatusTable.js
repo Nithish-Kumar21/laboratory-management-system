@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import api from './utils/api';
+import api from '../../utils/api';
 
 function ApparatusTable() {
   const [apparatus, setApparatus] = useState([]);
@@ -7,9 +7,12 @@ function ApparatusTable() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    api.get('/available_apparatus/')
+    api
+      .get('/available_apparatus/')
       .then((response) => {
-        setApparatus(Array.isArray(response.data) ? response.data : response.data.results || []);
+        setApparatus(
+          Array.isArray(response.data) ? response.data : response.data.results || []
+        );
         setLoading(false);
       })
       .catch((error) => {
@@ -46,3 +49,4 @@ function ApparatusTable() {
 }
 
 export default ApparatusTable;
+

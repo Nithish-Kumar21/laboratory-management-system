@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import ChemicalTable from './ChemicalTable';
-import ApparatusTable from './ApparatusTable';
-import LowStockAlert from './LowStockAlert';
-import api from './utils/api';
+import React, { useEffect, useState } from 'react';
+import ApparatusTable from '../components/tables/ApparatusTable';
+import ChemicalTable from '../components/tables/ChemicalTable';
+import LowStockAlert from '../components/LowStockAlert';
+import api from '../utils/api';
 import './Inventory.css';
 
 function Inventory() {
@@ -14,14 +14,19 @@ function Inventory() {
     try {
       const [chemRes, appRes] = await Promise.all([
         api.get('/low_stock_chemicals/'),
-        api.get('/low_stock_apparatus/')
+        api.get('/low_stock_apparatus/'),
       ]);
-      const chemData = Array.isArray(chemRes.data) ? chemRes.data : chemRes.data.results || [];
-      const appData = Array.isArray(appRes.data) ? appRes.data : appRes.data.results || [];
+      const chemData = Array.isArray(chemRes.data)
+        ? chemRes.data
+        : chemRes.data.results || [];
+      const appData = Array.isArray(appRes.data)
+        ? appRes.data
+        : appRes.data.results || [];
 
       setHasLowStockChem(chemData.length > 0);
       setHasLowStockApp(appData.length > 0);
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.error('Error checking tab low stock:', err);
     }
   };
@@ -44,7 +49,9 @@ function Inventory() {
       <h2>Inventory</h2>
       <div className="inventory-tabs">
         <button
-          className={activeTab === 'chemical' ? "tab-btn tab-btn--active" : "tab-btn"}
+          className={
+            activeTab === 'chemical' ? 'tab-btn tab-btn--active' : 'tab-btn'
+          }
           onClick={() => setActiveTab('chemical')}
           style={{ position: 'relative' }}
         >
@@ -52,7 +59,9 @@ function Inventory() {
           {hasLowStockChem && <span className="tab-dot"></span>}
         </button>
         <button
-          className={activeTab === 'apparatus' ? "tab-btn tab-btn--active" : "tab-btn"}
+          className={
+            activeTab === 'apparatus' ? 'tab-btn tab-btn--active' : 'tab-btn'
+          }
           onClick={() => setActiveTab('apparatus')}
           style={{ position: 'relative' }}
         >
@@ -61,7 +70,6 @@ function Inventory() {
         </button>
       </div>
 
-      {/* Low Stock Alert - Context aware */}
       <LowStockAlert activeTab={activeTab} />
 
       <div className="inventory-content">
@@ -72,3 +80,4 @@ function Inventory() {
 }
 
 export default Inventory;
+

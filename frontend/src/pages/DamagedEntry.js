@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaPlus } from 'react-icons/fa';
-import { useAuth } from './context/AuthContext';
-import api from './utils/api';
-import AddStockRegisterModal from './AddStockRegisterModal';
-import './StockRegister.css';
+import { useAuth } from '../context/AuthContext';
+import api from '../utils/api';
+import AddDamagedEntryModal from '../components/modals/AddDamagedEntryModal';
+import './DamagedEntry.css';
 
-function StockRegister() {
-  const [stockEntries, setStockEntries] = useState([]);
+function DamagedEntry() {
+  const [damagedEntries, setDamagedEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -16,11 +16,14 @@ function StockRegister() {
 
   const canAddEntry = isAdmin || isStoreKeeper;
 
-  const fetchStockEntries = () => {
+  const fetchDamagedEntries = () => {
     setLoading(true);
-    api.get('/stock_register/')
+    api
+      .get('/damaged_entry/')
       .then((response) => {
-        setStockEntries(Array.isArray(response.data) ? response.data : response.data.results || []);
+        setDamagedEntries(
+          Array.isArray(response.data) ? response.data : response.data.results || []
+        );
         setLoading(false);
       })
       .catch((error) => {
@@ -34,24 +37,24 @@ function StockRegister() {
       navigate('/');
       return;
     }
-    fetchStockEntries();
+    fetchDamagedEntries();
   }, [isStaff, navigate]);
 
   const handleRowClick = (id) => {
-    navigate(`/stock-register/${id}`);
+    navigate(`/damaged-entry/${id}`);
   };
 
   const handleModalSuccess = () => {
-    fetchStockEntries(); // Refresh the list
+    fetchDamagedEntries();
   };
 
-  if (loading) return <p>Loading stock register...</p>;
+  if (loading) return <p>Loading damaged entries...</p>;
   if (error) return <p>Error: {error}</p>;
 
   return (
-    <div className="stock-register-page">
+    <div className="damaged-entry-page">
       <div className="page-header">
-        <h2>Stock Register</h2>
+        <h2>Damaged Entry</h2>
         {canAddEntry && (
           <button className="add-entry-btn" onClick={() => setIsModalOpen(true)}>
             <FaPlus /> Add New Entry
@@ -62,21 +65,25 @@ function StockRegister() {
       <table className="minimal-table clickable-table">
         <thead>
           <tr>
-            <th>Invoice Number</th>
-            <th>Date of Entry</th>
+            <th>Staff</th>
+            <th>Class</th>
+            <th>Date</th>
+            <th>Caused By</th>
           </tr>
         </thead>
         <tbody>
-          {stockEntries.map((entry) => (
+          {damagedEntries.map((entry) => (
             <tr key={entry.id} onClick={() => handleRowClick(entry.id)}>
-              <td>{entry.invoice_number}</td>
+              <td>{entry.staff}</td>
+              <td>{entry.class_name}</td>
               <td>{entry.date}</td>
+              <td>{entry.caused_by}</td>
             </tr>
           ))}
         </tbody>
       </table>
 
-      <AddStockRegisterModal
+      <AddDamagedEntryModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSuccess={handleModalSuccess}
@@ -85,4 +92,5 @@ function StockRegister() {
   );
 }
 
-export default StockRegister;
+export default DamagedEntry;
+

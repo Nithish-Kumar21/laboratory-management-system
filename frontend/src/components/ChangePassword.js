@@ -15,8 +15,6 @@ const ChangePassword = () => {
   const location = useLocation();
   const { updateUser } = useAuth();
 
-  console.log('ChangePassword Component Rendering');
-
   const isForced = location.state?.forced || false;
 
   const handleSubmit = async (e) => {
@@ -38,7 +36,7 @@ const ChangePassword = () => {
     setLoading(true);
 
     try {
-      const response = await api.post('/users/change-password/', {
+      await api.post('/users/change-password/', {
         old_password: oldPassword,
         new_password: newPassword,
         confirm_password: confirmPassword,
@@ -85,8 +83,6 @@ const ChangePassword = () => {
       setLoading(false);
     }
   };
-
-  console.log('ChangePassword rendering with state:', { isForced, error, success });
 
   return (
     <div style={{ padding: '50px', backgroundColor: 'white', minHeight: '100vh', color: 'black' }}>

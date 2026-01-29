@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
-import Sidebar from './Sidebar';
+import Sidebar from './layout/Sidebar';
 import ProtectedRoute from './components/ProtectedRoute';
 
 // Authentication Components
@@ -16,20 +16,20 @@ import UserManagement from './components/UserManagement';
 import UserProfile from './components/UserProfile';
 
 // Existing Components
-import Home from './Home';
-import Inventory from './Inventory';
-import StockRegister from './StockRegister';
-import StockRegisterDetail from './StockRegisterDetail';
-import IssueRegister from './IssueRegister';
-import DamagedEntry from './DamagedEntry';
-import DamagedEntryDetail from './DamagedEntryDetail';
+import Home from './pages/Home';
+import Inventory from './pages/Inventory';
+import StockRegister from './pages/StockRegister';
+import StockRegisterDetail from './pages/StockRegisterDetail';
+import IssueRegister from './pages/IssueRegister';
+import DamagedEntry from './pages/DamagedEntry';
+import DamagedEntryDetail from './pages/DamagedEntryDetail';
 import Settings from './components/Settings';
 import LowStockToast from './components/LowStockToast';
 
-import './App.css';
+import './styles/App.css';
 
 function AppContent() {
-  const { isAuthenticated, loading } = useAuth();
+  const { loading } = useAuth();
 
   if (loading) {
     return <div style={{ padding: '20px', textAlign: 'center' }}>Loading...</div>;
@@ -59,7 +59,7 @@ function AppContent() {
 
                     {/* Admin Only */}
                     <Route
-                      path="/users"
+                      path="users"
                       element={
                         <ProtectedRoute adminOnly>
                           <UserManagement />

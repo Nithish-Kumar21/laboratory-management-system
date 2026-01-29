@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FaExclamationTriangle, FaTimes } from 'react-icons/fa';
 import api from '../utils/api';
 import './LowStockToast.css';
@@ -6,8 +6,20 @@ import './LowStockToast.css';
 function LowStockToast() {
     const [show, setShow] = useState(false);
     const [lowStockCount, setLowStockCount] = useState(0);
+    const lowStockCountRef = useRef(0);
+    const hideTimerRef = useRef(null);
 
-    const checkLowStock = async () => {
+    useEffect(() => {
+        lowStockCountRef.current = lowStockCount;
+    }, [lowStockCount]);
+
+    useEffect(() => {
+        return () => {
+            if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+        };
+    }, []);
+
+    const checkLowStock = useCallback(async () => {
         try {
             const [chemRes, appRes] = await Promise.all([
                 api.get('/low_stock_chemicals/'),
@@ -18,11 +30,12 @@ function LowStockToast() {
             const appData = Array.isArray(appRes.data) ? appRes.data : appRes.data.results || [];
             const total = chemData.length + appData.length;
 
-            if (total > 0 && total !== lowStockCount) {
+            if (total > 0 && total !== lowStockCountRef.current) {
                 setLowStockCount(total);
                 setShow(true);
                 // Auto hide after 5 seconds
-                setTimeout(() => setShow(false), 5000);
+                if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+                hideTimerRef.current = setTimeout(() => setShow(false), 5000);
             } else if (total === 0) {
                 setLowStockCount(0);
                 setShow(false);
@@ -30,7 +43,7 @@ function LowStockToast() {
         } catch (err) {
             console.error('Error checking low stock:', err);
         }
-    };
+    }, []);
 
     useEffect(() => {
         // Initial check
@@ -56,7 +69,7 @@ function LowStockToast() {
             window.removeEventListener('storage', handleStorage);
             clearInterval(interval);
         };
-    }, [lowStockCount]);
+    }, [checkLowStock]);
 
     if (!show) return null;
 
