@@ -47,8 +47,6 @@ Create a PostgreSQL database and update `backend/backend/settings.py` with your 
 - Dharani
 - Gowtham
 - Sarathy
-- Anbu Selvan
-- Sharath
 - Nithish Kumar
 
 ## Development Status
