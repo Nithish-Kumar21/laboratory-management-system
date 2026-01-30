@@ -144,7 +144,8 @@
 
 .stock-register-table .sort-arrow-char {
   display: inline;
-  padding: 0 2px;
+  margin-left: 2px;
+  padding: 0;
   border: none;
   background: none;
   color: inherit;
