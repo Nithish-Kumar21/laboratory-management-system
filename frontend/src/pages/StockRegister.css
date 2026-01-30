@@ -119,12 +119,15 @@
   box-shadow: 0 4px 10px rgba(39, 174, 96, 0.4);
 }
 
-/* Sort arrow and dropdown in table header */
+/* Sort arrow and dropdown in table header - override minimal-table overflow so dropdown is not clipped */
+.minimal-table.stock-register-table,
 .stock-register-table {
   overflow: visible;
 }
 
-.stock-register-table thead {
+.stock-register-table thead,
+.stock-register-table thead tr,
+.stock-register-table thead th {
   overflow: visible;
 }
 
