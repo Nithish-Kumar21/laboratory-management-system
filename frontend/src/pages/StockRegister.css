@@ -130,30 +130,24 @@
   background: transparent;
 }
 
-.stock-register-table .sort-arrow-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  border: 1px solid #cbd5e0;
-  border-radius: 6px;
-  background: #fff;
-  color: #2c3e50;
+.stock-register-table .sort-arrow-char {
+  display: inline;
+  padding: 0 2px;
+  border: none;
+  background: none;
+  color: inherit;
+  font-size: 1em;
   cursor: pointer;
-  transition: border-color 0.2s, background 0.2s;
+  vertical-align: middle;
+  line-height: 1;
 }
 
-.stock-register-table .sort-arrow-btn:hover,
-.stock-register-table .sort-arrow-btn:focus {
-  border-color: #3752a6;
-  background: #f0f4ff;
+.stock-register-table .sort-arrow-char:hover {
+  opacity: 0.8;
+}
+
+.stock-register-table .sort-arrow-char:focus {
   outline: none;
-}
-
-.stock-register-table .sort-arrow-icon {
-  font-size: 0.9rem;
 }
 
 .stock-register-table .sort-dropdown-menu {
@@ -251,16 +245,8 @@
   box-shadow: 0 4px 10px rgba(56, 142, 60, 0.4);
 }
 
-:root.dark-mode .stock-register-table .sort-arrow-btn {
-  background: #2d2d2d;
-  color: #e0e0e0;
-  border-color: #4a4a4a;
-}
-
-:root.dark-mode .stock-register-table .sort-arrow-btn:hover,
-:root.dark-mode .stock-register-table .sort-arrow-btn:focus {
-  border-color: #4a9eff;
-  background: #3a3a3a;
+:root.dark-mode .stock-register-table .sort-arrow-char {
+  color: inherit;
 }
 
 :root.dark-mode .stock-register-table .sort-dropdown-menu {
