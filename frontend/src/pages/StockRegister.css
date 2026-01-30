@@ -120,6 +120,14 @@
 }
 
 /* Sort arrow and dropdown in table header */
+.stock-register-table {
+  overflow: visible;
+}
+
+.stock-register-table thead {
+  overflow: visible;
+}
+
 .stock-register-table .sort-th {
   position: relative;
   width: 1%;
@@ -128,6 +136,7 @@
   padding: 8px 12px;
   border: none;
   background: transparent;
+  overflow: visible;
 }
 
 .stock-register-table .sort-arrow-char {
@@ -156,13 +165,14 @@
   left: 0;
   margin: 4px 0 0;
   padding: 6px 0;
-  min-width: 200px;
+  min-width: 220px;
   list-style: none;
   background: #fff;
   border: 1px solid #cbd5e0;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 100;
+  z-index: 1000;
+  overflow: visible;
 }
 
 .stock-register-table .sort-dropdown-menu li {
