@@ -173,6 +173,9 @@ SIMPLE_JWT = {
 # Custom User Model
 AUTH_USER_MODEL = 'users.User'
 
+# Use custom backend so login uses employee_id and lockout works
+AUTHENTICATION_BACKENDS = ['users.backends.EmployeeIDBackend']
+
 # Frontend URL for password reset links
 FRONTEND_URL = "http://localhost:3001"
 DEFAULT_FROM_EMAIL = "noreply@labmanagement.com"
