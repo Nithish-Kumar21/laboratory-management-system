@@ -1,6 +1,8 @@
 """
 Create a new stock register entry (invoice + chemical/apparatus items).
 Run from backend folder: python create_stock_register_entry.py
+
+Ensure migrations are applied first: python manage.py migrate
 """
 import os
 import django
