@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'available_apparatus',
-                'managed': False,
+                'managed': True,
             },
         ),
         migrations.CreateModel(
@@ -36,7 +36,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'available_chemicals',
-                'managed': False,
+                'managed': True,
             },
         ),
         migrations.CreateModel(
@@ -50,7 +50,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'low_stock_apparatus',
-                'managed': False,
+                'managed': True,
             },
         ),
         migrations.CreateModel(
@@ -64,7 +64,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'low_stock_chemicals',
-                'managed': False,
+                'managed': True,
             },
         ),
     ]

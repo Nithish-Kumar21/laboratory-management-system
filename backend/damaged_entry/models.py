@@ -9,7 +9,7 @@ class DamagedEntry(models.Model):
 
     class Meta:
         db_table = 'damaged_entry'
-        managed = False  # Let PostgreSQL handle auto-increment
+        managed = True
 
     def __str__(self):
         return f"{self.staff} - {self.date}"
@@ -27,7 +27,7 @@ class DamagedItem(models.Model):
 
     class Meta:
         db_table = 'damaged_item'
-        managed = False  # Let PostgreSQL handle auto-increment
+        managed = True
 
     def __str__(self):
         return f"{self.apparatus_name} - {self.damaged_entry.staff}"
