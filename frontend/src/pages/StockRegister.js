@@ -109,7 +109,7 @@ function StockRegister() {
         <thead>
           <tr>
             <th className="sort-th" ref={invoiceDropdownRef}>
-              Invoice number
+              Invoice number{'\u00A0\u00A0\u00A0'}
               <button
                 ref={invoiceButtonRef}
                 type="button"
@@ -125,7 +125,7 @@ function StockRegister() {
               </button>
             </th>
             <th className="sort-th" ref={dateDropdownRef}>
-              Date
+              Date{'\u00A0\u00A0\u00A0'}
               <button
                 ref={dateButtonRef}
                 type="button"
