@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaPlus, FaChevronDown } from 'react-icons/fa';
+import { FaPlus } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import AddStockRegisterModal from '../components/modals/AddStockRegisterModal';
@@ -92,11 +92,11 @@ function StockRegister() {
       <table className="minimal-table clickable-table stock-register-table">
         <thead>
           <tr>
-            <th>Invoice Number</th>
             <th className="sort-th" ref={invoiceDropdownRef}>
+              Invoice Number{' '}
               <button
                 type="button"
-                className="sort-arrow-btn"
+                className="sort-arrow-char"
                 onClick={(e) => {
                   e.stopPropagation();
                   setOpenDropdown(openDropdown === 'invoice' ? null : 'invoice');
@@ -104,7 +104,7 @@ function StockRegister() {
                 aria-label="Sort by invoice number"
                 aria-expanded={openDropdown === 'invoice'}
               >
-                <FaChevronDown className="sort-arrow-icon" />
+                ⌄
               </button>
               {openDropdown === 'invoice' && (
                 <ul className="sort-dropdown-menu" onClick={(e) => e.stopPropagation()}>
@@ -121,11 +121,11 @@ function StockRegister() {
                 </ul>
               )}
             </th>
-            <th>Date of Entry</th>
             <th className="sort-th" ref={dateDropdownRef}>
+              Date of Entry{' '}
               <button
                 type="button"
-                className="sort-arrow-btn"
+                className="sort-arrow-char"
                 onClick={(e) => {
                   e.stopPropagation();
                   setOpenDropdown(openDropdown === 'date' ? null : 'date');
@@ -133,7 +133,7 @@ function StockRegister() {
                 aria-label="Sort by date"
                 aria-expanded={openDropdown === 'date'}
               >
-                <FaChevronDown className="sort-arrow-icon" />
+                ⌄
               </button>
               {openDropdown === 'date' && (
                 <ul className="sort-dropdown-menu" onClick={(e) => e.stopPropagation()}>
@@ -156,9 +156,7 @@ function StockRegister() {
           {stockEntries.map((entry) => (
             <tr key={entry.id} onClick={() => handleRowClick(entry.id)}>
               <td>{entry.invoice_number}</td>
-              <td />
               <td>{entry.date}</td>
-              <td />
             </tr>
           ))}
         </tbody>
