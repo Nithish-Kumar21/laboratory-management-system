@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaPlus } from 'react-icons/fa';
+import { FaPlus, FaChevronDown } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import AddStockRegisterModal from '../components/modals/AddStockRegisterModal';
@@ -12,8 +12,22 @@ function StockRegister() {
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [ordering, setOrdering] = useState('-date');
+  const [openDropdown, setOpenDropdown] = useState(null); // 'invoice' | 'date' | null
+  const dropdownRef = useRef(null);
   const navigate = useNavigate();
   const { isAdmin, isStoreKeeper, isStaff } = useAuth();
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setOpenDropdown(null);
+      }
+    };
+    if (openDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [openDropdown]);
 
   const canAddEntry = isAdmin || isStoreKeeper;
 
@@ -42,14 +56,14 @@ function StockRegister() {
     fetchStockEntries();
   }, [isStaff, navigate, ordering]);
 
-  const handleInvoiceSort = (e) => {
-    const value = e.target.value;
-    setOrdering(value || '-date'); // default: date latest first
+  const handleInvoiceSort = (value) => {
+    setOrdering(value || '-date');
+    setOpenDropdown(null);
   };
 
-  const handleDateSort = (e) => {
-    const value = e.target.value;
+  const handleDateSort = (value) => {
     setOrdering(value || '-date');
+    setOpenDropdown(null);
   };
 
   const handleRowClick = (id) => {
@@ -78,32 +92,62 @@ function StockRegister() {
         <thead>
           <tr>
             <th>Invoice Number</th>
-            <th className="sort-th">
-              <select
-                className="sort-dropdown"
-                value={ordering === 'invoice_number' || ordering === '-invoice_number' ? ordering : ''}
-                onChange={handleInvoiceSort}
-                onClick={(e) => e.stopPropagation()}
+            <th className="sort-th" ref={dropdownRef}>
+              <button
+                type="button"
+                className="sort-arrow-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpenDropdown(openDropdown === 'invoice' ? null : 'invoice');
+                }}
                 aria-label="Sort by invoice number"
+                aria-expanded={openDropdown === 'invoice'}
               >
-                <option value="">—</option>
-                <option value="invoice_number">Ascending</option>
-                <option value="-invoice_number">Descending</option>
-              </select>
+                <FaChevronDown className="sort-arrow-icon" />
+              </button>
+              {openDropdown === 'invoice' && (
+                <ul className="sort-dropdown-menu" onClick={(e) => e.stopPropagation()}>
+                  <li>
+                    <button type="button" onClick={() => handleInvoiceSort('invoice_number')}>
+                      Ascending to descending
+                    </button>
+                  </li>
+                  <li>
+                    <button type="button" onClick={() => handleInvoiceSort('-invoice_number')}>
+                      Descending to ascending
+                    </button>
+                  </li>
+                </ul>
+              )}
             </th>
             <th>Date of Entry</th>
-            <th className="sort-th">
-              <select
-                className="sort-dropdown"
-                value={ordering === 'date' || ordering === '-date' ? ordering : ''}
-                onChange={handleDateSort}
-                onClick={(e) => e.stopPropagation()}
+            <th className="sort-th" ref={dropdownRef}>
+              <button
+                type="button"
+                className="sort-arrow-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpenDropdown(openDropdown === 'date' ? null : 'date');
+                }}
                 aria-label="Sort by date"
+                aria-expanded={openDropdown === 'date'}
               >
-                <option value="">—</option>
-                <option value="-date">Latest to oldest</option>
-                <option value="date">Oldest to latest</option>
-              </select>
+                <FaChevronDown className="sort-arrow-icon" />
+              </button>
+              {openDropdown === 'date' && (
+                <ul className="sort-dropdown-menu" onClick={(e) => e.stopPropagation()}>
+                  <li>
+                    <button type="button" onClick={() => handleDateSort('-date')}>
+                      Latest to oldest
+                    </button>
+                  </li>
+                  <li>
+                    <button type="button" onClick={() => handleDateSort('date')}>
+                      Oldest to latest
+                    </button>
+                  </li>
+                </ul>
+              )}
             </th>
           </tr>
         </thead>
