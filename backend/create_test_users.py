@@ -1,7 +1,30 @@
+"""
+Create test users so you can log in.
+Run from backend folder: python create_test_users.py
+Then log in with employee ID and password below.
+"""
+import os
+import django
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
+django.setup()
+
 from django.contrib.auth import get_user_model
+
 User = get_user_model()
 
 users_to_create = [
+    {
+        'employee_id': 'admin',
+        'full_name': 'Admin User',
+        'email': 'admin@test.com',
+        'password': 'admin@123456',
+        'role': 'admin',
+        'phone': '+910000000000',
+        'designation': 'Administrator',
+        'department': 'B.Sc Chemistry',
+        'password_must_change': False
+    },
     {
         'employee_id': 'test_hod',
         'full_name': 'Test HOD',
@@ -37,11 +60,18 @@ users_to_create = [
     }
 ]
 
-for user_data in users_to_create:
-    employee_id = user_data['employee_id']
-    if not User.objects.filter(employee_id=employee_id).exists():
-        password = user_data.pop('password')
-        user = User.objects.create_user(password=password, **user_data)
-        print(f"Created user: {employee_id} ({user_data['role']})")
-    else:
-        print(f"User {employee_id} already exists.")
+if __name__ == '__main__':
+    print("Creating test users (run migrations first if tables don't exist: python manage.py migrate)\n")
+    for user_data in users_to_create:
+        employee_id = user_data['employee_id']
+        if not User.objects.filter(employee_id=employee_id).exists():
+            password = user_data.pop('password')
+            user = User.objects.create_user(password=password, **user_data)
+            print(f"Created user: {employee_id} (password: see below)")
+        else:
+            print(f"User {employee_id} already exists.")
+    print("\nYou can log in with:")
+    print("  Employee ID: admin       Password: admin@123456")
+    print("  Employee ID: test_hod    Password: hod@123456")
+    print("  Employee ID: test_store_keeper  Password: storekeeper@123456")
+    print("  Employee ID: test_staff  Password: staff@123456")
