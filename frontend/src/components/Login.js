@@ -69,7 +69,7 @@ const Login = () => {
 
             <form onSubmit={handleSubmit} style={styles.form}>
               <div style={styles.formGroup}>
-                <label style={styles.label}>Username</label>
+                <label style={styles.label}>Employee ID</label>
                 <input
                   type="text"
                   value={username}
@@ -78,7 +78,7 @@ const Login = () => {
                   style={styles.input}
                   disabled={loading}
                   autoFocus
-                  placeholder="Enter employee ID"
+                  placeholder="Enter employee ID (e.g. admin)"
                 />
               </div>
 
