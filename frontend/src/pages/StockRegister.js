@@ -11,6 +11,7 @@ function StockRegister() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [ordering, setOrdering] = useState('-date');
   const navigate = useNavigate();
   const { isAdmin, isStoreKeeper, isStaff } = useAuth();
 
@@ -18,8 +19,9 @@ function StockRegister() {
 
   const fetchStockEntries = () => {
     setLoading(true);
+    const params = ordering ? { ordering } : {};
     api
-      .get('/stock_register/')
+      .get('/stock_register/', { params })
       .then((response) => {
         setStockEntries(
           Array.isArray(response.data) ? response.data : response.data.results || []
@@ -38,7 +40,17 @@ function StockRegister() {
       return;
     }
     fetchStockEntries();
-  }, [isStaff, navigate]);
+  }, [isStaff, navigate, ordering]);
+
+  const handleInvoiceSort = (e) => {
+    const value = e.target.value;
+    setOrdering(value || '-date'); // default: date latest first
+  };
+
+  const handleDateSort = (e) => {
+    const value = e.target.value;
+    setOrdering(value || '-date');
+  };
 
   const handleRowClick = (id) => {
     navigate(`/stock-register/${id}`);
@@ -62,18 +74,46 @@ function StockRegister() {
         )}
       </div>
 
-      <table className="minimal-table clickable-table">
+      <table className="minimal-table clickable-table stock-register-table">
         <thead>
           <tr>
             <th>Invoice Number</th>
+            <th className="sort-th">
+              <select
+                className="sort-dropdown"
+                value={ordering === 'invoice_number' || ordering === '-invoice_number' ? ordering : ''}
+                onChange={handleInvoiceSort}
+                onClick={(e) => e.stopPropagation()}
+                aria-label="Sort by invoice number"
+              >
+                <option value="">—</option>
+                <option value="invoice_number">Ascending</option>
+                <option value="-invoice_number">Descending</option>
+              </select>
+            </th>
             <th>Date of Entry</th>
+            <th className="sort-th">
+              <select
+                className="sort-dropdown"
+                value={ordering === 'date' || ordering === '-date' ? ordering : ''}
+                onChange={handleDateSort}
+                onClick={(e) => e.stopPropagation()}
+                aria-label="Sort by date"
+              >
+                <option value="">—</option>
+                <option value="-date">Latest to oldest</option>
+                <option value="date">Oldest to latest</option>
+              </select>
+            </th>
           </tr>
         </thead>
         <tbody>
           {stockEntries.map((entry) => (
             <tr key={entry.id} onClick={() => handleRowClick(entry.id)}>
               <td>{entry.invoice_number}</td>
+              <td />
               <td>{entry.date}</td>
+              <td />
             </tr>
           ))}
         </tbody>

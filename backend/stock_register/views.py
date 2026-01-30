@@ -19,10 +19,19 @@ class StockRegisterViewSet(viewsets.ModelViewSet):
     List view: Shows invoice number, date, and supplier name.
     Detail view: Includes all chemical and apparatus items with make.
     Create: Accepts nested chemical and apparatus items with make and supplier_name.
+    List supports ?ordering=invoice_number|-invoice_number|date|-date for sorting.
     """
-    queryset = StockRegister.objects.all().order_by('-date')
+    queryset = StockRegister.objects.all()
     permission_classes = [StockRegisterPermission]
-    
+    ordering_fields = ['invoice_number', 'date']
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        ordering = self.request.query_params.get('ordering')
+        if ordering in ('invoice_number', '-invoice_number', 'date', '-date'):
+            return qs.order_by(ordering)
+        return qs.order_by('-date')
+
     def get_serializer_class(self):
         if self.action == 'create':
             return StockRegisterCreateSerializer
