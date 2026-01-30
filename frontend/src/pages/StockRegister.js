@@ -13,15 +13,16 @@ function StockRegister() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [ordering, setOrdering] = useState('-date');
   const [openDropdown, setOpenDropdown] = useState(null); // 'invoice' | 'date' | null
-  const dropdownRef = useRef(null);
+  const invoiceDropdownRef = useRef(null);
+  const dateDropdownRef = useRef(null);
   const navigate = useNavigate();
   const { isAdmin, isStoreKeeper, isStaff } = useAuth();
 
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setOpenDropdown(null);
-      }
+      const inInvoice = invoiceDropdownRef.current?.contains(e.target);
+      const inDate = dateDropdownRef.current?.contains(e.target);
+      if (!inInvoice && !inDate) setOpenDropdown(null);
     };
     if (openDropdown) {
       document.addEventListener('mousedown', handleClickOutside);
@@ -92,7 +93,7 @@ function StockRegister() {
         <thead>
           <tr>
             <th>Invoice Number</th>
-            <th className="sort-th" ref={dropdownRef}>
+            <th className="sort-th" ref={invoiceDropdownRef}>
               <button
                 type="button"
                 className="sort-arrow-btn"
@@ -121,7 +122,7 @@ function StockRegister() {
               )}
             </th>
             <th>Date of Entry</th>
-            <th className="sort-th" ref={dropdownRef}>
+            <th className="sort-th" ref={dateDropdownRef}>
               <button
                 type="button"
                 className="sort-arrow-btn"
