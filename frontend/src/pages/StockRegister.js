@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { FaPlus } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
@@ -13,16 +14,31 @@ function StockRegister() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [ordering, setOrdering] = useState('-date');
   const [openDropdown, setOpenDropdown] = useState(null); // 'invoice' | 'date' | null
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const invoiceDropdownRef = useRef(null);
   const dateDropdownRef = useRef(null);
+  const invoiceButtonRef = useRef(null);
+  const dateButtonRef = useRef(null);
+  const menuRef = useRef(null);
   const navigate = useNavigate();
   const { isAdmin, isStoreKeeper, isStaff } = useAuth();
+
+  useEffect(() => {
+    if (openDropdown === 'invoice' && invoiceButtonRef.current) {
+      const rect = invoiceButtonRef.current.getBoundingClientRect();
+      setMenuPosition({ top: rect.bottom + 4, left: rect.left });
+    } else if (openDropdown === 'date' && dateButtonRef.current) {
+      const rect = dateButtonRef.current.getBoundingClientRect();
+      setMenuPosition({ top: rect.bottom + 4, left: rect.left });
+    }
+  }, [openDropdown]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
       const inInvoice = invoiceDropdownRef.current?.contains(e.target);
       const inDate = dateDropdownRef.current?.contains(e.target);
-      if (!inInvoice && !inDate) setOpenDropdown(null);
+      const inMenu = menuRef.current?.contains(e.target);
+      if (!inInvoice && !inDate && !inMenu) setOpenDropdown(null);
     };
     if (openDropdown) {
       document.addEventListener('mousedown', handleClickOutside);
@@ -95,6 +111,7 @@ function StockRegister() {
             <th className="sort-th" ref={invoiceDropdownRef}>
               Invoice Number{' '}
               <button
+                ref={invoiceButtonRef}
                 type="button"
                 className="sort-arrow-char"
                 onClick={(e) => {
@@ -106,24 +123,11 @@ function StockRegister() {
               >
                 ⌄
               </button>
-              {openDropdown === 'invoice' && (
-                <ul className="sort-dropdown-menu" onClick={(e) => e.stopPropagation()}>
-                  <li>
-                    <button type="button" onClick={() => handleInvoiceSort('invoice_number')}>
-                      Ascending to descending
-                    </button>
-                  </li>
-                  <li>
-                    <button type="button" onClick={() => handleInvoiceSort('-invoice_number')}>
-                      Descending to ascending
-                    </button>
-                  </li>
-                </ul>
-              )}
             </th>
             <th className="sort-th" ref={dateDropdownRef}>
               Date of Entry{' '}
               <button
+                ref={dateButtonRef}
                 type="button"
                 className="sort-arrow-char"
                 onClick={(e) => {
@@ -135,20 +139,6 @@ function StockRegister() {
               >
                 ⌄
               </button>
-              {openDropdown === 'date' && (
-                <ul className="sort-dropdown-menu" onClick={(e) => e.stopPropagation()}>
-                  <li>
-                    <button type="button" onClick={() => handleDateSort('-date')}>
-                      Latest to oldest
-                    </button>
-                  </li>
-                  <li>
-                    <button type="button" onClick={() => handleDateSort('date')}>
-                      Oldest to latest
-                    </button>
-                  </li>
-                </ul>
-              )}
             </th>
           </tr>
         </thead>
@@ -161,6 +151,62 @@ function StockRegister() {
           ))}
         </tbody>
       </table>
+
+      {openDropdown === 'invoice' &&
+        createPortal(
+          <div
+            ref={menuRef}
+            className="sort-dropdown-menu sort-dropdown-menu-portal"
+            style={{
+              position: 'fixed',
+              top: menuPosition.top,
+              left: menuPosition.left,
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <ul>
+              <li>
+                <button type="button" onClick={() => handleInvoiceSort('invoice_number')}>
+                  Ascending to descending
+                </button>
+              </li>
+              <li>
+                <button type="button" onClick={() => handleInvoiceSort('-invoice_number')}>
+                  Descending to ascending
+                </button>
+              </li>
+            </ul>
+          </div>,
+          document.body
+        )}
+
+      {openDropdown === 'date' &&
+        createPortal(
+          <div
+            ref={menuRef}
+            className="sort-dropdown-menu sort-dropdown-menu-portal"
+            style={{
+              position: 'fixed',
+              top: menuPosition.top,
+              left: menuPosition.left,
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <ul>
+              <li>
+                <button type="button" onClick={() => handleDateSort('-date')}>
+                  Latest to oldest
+                </button>
+              </li>
+              <li>
+                <button type="button" onClick={() => handleDateSort('date')}>
+                  Oldest to latest
+                </button>
+              </li>
+            </ul>
+          </div>,
+          document.body
+        )}
 
       <AddStockRegisterModal
         isOpen={isModalOpen}
