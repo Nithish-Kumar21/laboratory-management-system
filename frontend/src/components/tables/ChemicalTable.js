@@ -29,18 +29,18 @@ function ChemicalTable() {
       <thead>
         <tr>
           <th>Chemical Name</th>
-          <th>Available Quantity (mL)</th>
-          <th>Reorder Level (mL)</th>
-          <th>Last Updated</th>
+          <th>Stock <span className="hide-mobile">(mL)</span></th>
+          <th>Reorder <span className="hide-mobile">Level</span></th>
+          <th>Updated</th>
         </tr>
       </thead>
       <tbody>
         {chemicals.map((item) => (
           <tr key={item.id}>
-            <td>{item.chemical_name}</td>
-            <td>{item.available_quantity_ml}</td>
-            <td>{item.reorder_level}</td>
-            <td>{item.last_updated}</td>
+            <td data-label="Chemical">{item.chemical_name}</td>
+            <td data-label="Stock">{item.available_quantity_ml}</td>
+            <td data-label="Reorder">{item.reorder_level}</td>
+            <td data-label="Updated">{item.last_updated}</td>
           </tr>
         ))}
       </tbody>

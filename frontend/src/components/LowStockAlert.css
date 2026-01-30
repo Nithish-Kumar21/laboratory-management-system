@@ -1,70 +1,115 @@
 .low-stock-alert {
-  margin: 20px 0;
-  border-radius: 8px;
+  margin: 0 0 25px 0;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
+  box-shadow: 0 4px 15px rgba(239, 83, 80, 0.15);
+  border: 1px solid rgba(239, 83, 80, 0.2);
+  font-family: 'Inter', sans-serif;
 }
 
 .alert-header {
-  background: #e74c3c;
+  background: linear-gradient(135deg, #ef5350 0%, #d32f2f 100%);
   color: white;
-  padding: 15px 20px;
+  padding: 14px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
-  transition: background 0.3s;
+  transition: all 0.3s ease;
 }
 
 .alert-header:hover {
-  background: #c0392b;
+  filter: brightness(1.05);
 }
 
 .alert-title {
-  font-size: 1.05rem;
-  font-weight: 600;
+  font-size: 0.95rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .alert-toggle {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.15);
   border: none;
+  border-radius: 6px;
   color: white;
-  font-size: 1.2rem;
-  cursor: pointer;
-  padding: 5px;
+  padding: 6px;
   display: flex;
   align-items: center;
+  transition: background 0.2s;
+}
+
+.alert-header:hover .alert-toggle {
+  background: rgba(255, 255, 255, 0.25);
 }
 
 .alert-content {
   background: #fff;
-  padding: 0;
-  border: 2px solid #e74c3c;
-  border-top: none;
+  border-top: 1px solid rgba(239, 83, 80, 0.1);
+  overflow-x: auto;
 }
 
 .low-stock-table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 500px;
 }
 
 .low-stock-table th,
 .low-stock-table td {
-  padding: 12px 15px;
+  padding: 12px 20px;
   text-align: left;
+  font-size: 0.85rem;
 }
 
 .low-stock-table th {
-  background: #fadbd8;
-  color: #c0392b;
-  font-weight: 600;
-  border-bottom: 2px solid #e74c3c;
+  background: #fff5f5;
+  color: #c62828;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-bottom: 2px solid #ffebee;
 }
 
-.low-stock-table tr:nth-child(even) {
-  background: #fef5f4;
+.low-stock-table td {
+  border-bottom: 1px solid #fff5f5;
+  color: #555;
 }
 
 .low-stock-table tr:hover {
-  background: #fadbd8;
+  background: #fffafa;
+}
+
+/* Red Pulsing Animation for the header */
+@keyframes alert-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 83, 80, 0.4);
+  }
+
+  70% {
+    box-shadow: 0 0 0 10px rgba(239, 83, 80, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 83, 80, 0);
+  }
+}
+
+
+
+@media (max-width: 600px) {
+  .alert-header {
+    padding: 12px 15px;
+  }
+
+  .alert-title {
+    font-size: 0.85rem;
+  }
+
+  .low-stock-table th,
+  .low-stock-table td {
+    padding: 10px 15px;
+  }
 }

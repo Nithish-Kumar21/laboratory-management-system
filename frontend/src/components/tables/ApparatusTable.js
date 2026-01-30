@@ -29,18 +29,18 @@ function ApparatusTable() {
       <thead>
         <tr>
           <th>Apparatus Name</th>
-          <th>Available Quantity (pieces)</th>
-          <th>Reorder Level</th>
-          <th>Last Updated</th>
+          <th>Stock <span className="hide-mobile">(pcs)</span></th>
+          <th>Reorder <span className="hide-mobile">Level</span></th>
+          <th>Updated</th>
         </tr>
       </thead>
       <tbody>
         {apparatus.map((item) => (
           <tr key={item.id}>
-            <td>{item.apparatus_name}</td>
-            <td>{item.available_quantity_pieces}</td>
-            <td>{item.reorder_level}</td>
-            <td>{item.last_updated}</td>
+            <td data-label="Apparatus">{item.apparatus_name}</td>
+            <td data-label="Stock">{item.available_quantity_pieces}</td>
+            <td data-label="Reorder">{item.reorder_level}</td>
+            <td data-label="Updated">{item.last_updated}</td>
           </tr>
         ))}
       </tbody>

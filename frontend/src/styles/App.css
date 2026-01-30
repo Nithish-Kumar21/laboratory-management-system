@@ -78,11 +78,11 @@
 .sidebar-nav a {
   display: flex;
   align-items: center;
-  padding: 15px 20px;
+  padding: 16px 20px;
   color: #ecf0f1;
   text-decoration: none;
   transition: all 0.3s;
-  border-left: 3px solid transparent;
+  border-left: 4px solid transparent;
 }
 
 .sidebar-nav a:hover {
@@ -218,13 +218,14 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px;
+  padding: 12px;
   background: rgba(255, 255, 255, 0.1);
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   color: white;
   cursor: pointer;
-  transition: background 0.3s;
+  transition: all 0.3s;
+  width: 100%;
 }
 
 .user-menu-trigger:hover {
@@ -399,4 +400,99 @@
 
 :root.dark-mode .main-content::-webkit-scrollbar-thumb:hover {
   background: #666;
+}
+
+
+/* Responsive Layout */
+@media (max-width: 768px) {
+  :root {
+    --sidebar-width: 280px;
+    --sidebar-collapsed-width: 0px;
+  }
+
+  .app-container {
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 1000;
+    box-shadow: 10px 0 15px rgba(0, 0, 0, 0.1);
+    transform: translateX(0);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .sidebar.collapsed {
+    transform: translateX(-100%);
+    width: var(--sidebar-width);
+    /* Keep width same but hide it */
+  }
+
+  .main-content {
+    width: 100vw;
+    margin-left: 0 !important;
+    padding-top: 60px;
+    /* Space for mobile header/toggle */
+  }
+
+  /* Mobile Toggle Button (Sticky) */
+  .mobile-toggle-header {
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+    height: 60px;
+    background: #1b5e20;
+    color: white;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 900;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+
+  .mobile-toggle-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    margin-right: 15px;
+    display: flex;
+    align-items: center;
+  }
+
+  .mobile-header-title {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: 1.2rem;
+  }
+
+  /* Sidebar Backdrop */
+  .sidebar-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+    z-index: 950;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+  }
+
+  .sidebar.collapsed+.sidebar-backdrop {
+    display: none;
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-toggle-header {
+    display: none;
+  }
 }

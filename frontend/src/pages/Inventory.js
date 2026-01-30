@@ -53,7 +53,6 @@ function Inventory() {
             activeTab === 'chemical' ? 'tab-btn tab-btn--active' : 'tab-btn'
           }
           onClick={() => setActiveTab('chemical')}
-          style={{ position: 'relative' }}
         >
           Chemical
           {hasLowStockChem && <span className="tab-dot"></span>}
@@ -63,7 +62,6 @@ function Inventory() {
             activeTab === 'apparatus' ? 'tab-btn tab-btn--active' : 'tab-btn'
           }
           onClick={() => setActiveTab('apparatus')}
-          style={{ position: 'relative' }}
         >
           Apparatus
           {hasLowStockApp && <span className="tab-dot"></span>}
@@ -73,7 +71,9 @@ function Inventory() {
       <LowStockAlert activeTab={activeTab} />
 
       <div className="inventory-content">
-        {activeTab === 'chemical' ? <ChemicalTable /> : <ApparatusTable />}
+        <div className="table-responsive">
+          {activeTab === 'chemical' ? <ChemicalTable /> : <ApparatusTable />}
+        </div>
       </div>
     </div>
   );
