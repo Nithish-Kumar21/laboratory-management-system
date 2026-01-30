@@ -121,7 +121,7 @@ function StockRegister() {
                 aria-label="Sort by invoice number"
                 aria-expanded={openDropdown === 'invoice'}
               >
-                ⌄
+                ▼
               </button>
             </th>
             <th className="sort-th" ref={dateDropdownRef}>
@@ -137,7 +137,7 @@ function StockRegister() {
                 aria-label="Sort by date"
                 aria-expanded={openDropdown === 'date'}
               >
-                ⌄
+                ▼
               </button>
             </th>
           </tr>
