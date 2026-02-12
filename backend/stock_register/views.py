@@ -38,7 +38,11 @@ class StockRegisterViewSet(viewsets.ModelViewSet):
         elif self.action == 'retrieve':
             return StockRegisterDetailSerializer
         return StockRegisterListSerializer
-    
+
+    @transaction.atomic
+    def perform_create(self, serializer):
+        serializer.save()
+
     @action(detail=False, methods=['get'])
     def chemical_names(self, request):
         """Get list of unique chemical names for autocomplete"""
