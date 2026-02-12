@@ -13,6 +13,19 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
+            name='StockRegister',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('invoice_number', models.CharField(max_length=50, unique=True)),
+                ('date', models.DateField()),
+                ('supplier_name', models.CharField(blank=True, max_length=200, null=True)),
+            ],
+            options={
+                'db_table': 'stock_register',
+                'managed': True,
+            },
+        ),
+        migrations.CreateModel(
             name='ApparatusItem',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
@@ -39,19 +52,6 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'chemical_item',
-                'managed': True,
-            },
-        ),
-        migrations.CreateModel(
-            name='StockRegister',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('invoice_number', models.CharField(max_length=50, unique=True)),
-                ('date', models.DateField()),
-                ('supplier_name', models.CharField(blank=True, max_length=200, null=True)),
-            ],
-            options={
-                'db_table': 'stock_register',
                 'managed': True,
             },
         ),
