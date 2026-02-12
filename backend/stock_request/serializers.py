@@ -68,12 +68,15 @@ class StockRequestCreateSerializer(serializers.ModelSerializer):
 class StockRequestListSerializer(serializers.ModelSerializer):
     requested_by_name = serializers.CharField(source='requested_by.full_name', read_only=True)
     requested_by_id = serializers.CharField(source='requested_by.employee_id', read_only=True)
+    chemical_items = ChemicalItemSerializer(many=True, read_only=True)
+    apparatus_items = ApparatusItemSerializer(many=True, read_only=True)
 
     class Meta:
         model = StockRequest
         fields = [
             'id', 'status', 'reason', 'created_at',
-            'requested_by_name', 'requested_by_id'
+            'requested_by_name', 'requested_by_id',
+            'chemical_items', 'apparatus_items'
         ]
 
 

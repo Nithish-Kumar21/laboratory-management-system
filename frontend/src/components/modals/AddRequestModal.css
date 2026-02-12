@@ -1,0 +1,92 @@
+.add-request-overlay .add-request-modal {
+  max-width: 700px;
+}
+
+.add-request-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.add-request-textarea:focus {
+  outline: none;
+  border-color: #3498db;
+}
+
+.add-request-item-row {
+  grid-template-columns: 2fr 1fr 40px !important;
+}
+
+.request-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  background: #fff;
+}
+
+.request-card.pending {
+  border-left: 4px solid #f39c12;
+}
+
+.request-card.accepted {
+  border-left: 4px solid #27ae60;
+}
+
+.request-card.rejected {
+  border-left: 4px solid #e74c3c;
+}
+
+.request-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.request-card-meta {
+  font-size: 0.9rem;
+  color: #7f8c8d;
+}
+
+.request-card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.request-card-actions button {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: opacity 0.2s;
+}
+
+.request-card-actions button:hover {
+  opacity: 0.9;
+}
+
+.request-card-actions .btn-accept {
+  background: #27ae60;
+  color: white;
+}
+
+.request-card-actions .btn-reject {
+  background: #e74c3c;
+  color: white;
+}
+
+.request-items-list {
+  font-size: 0.9rem;
+  margin-top: 8px;
+  padding-left: 16px;
+}
+
+.request-items-list li {
+  margin: 4px 0;
+}
