@@ -26,6 +26,9 @@ class StockRequestViewSet(viewsets.ModelViewSet):
         qs = super().get_queryset()
         if self.request.user.role == 'staff':
             return qs.filter(requested_by=self.request.user)
+        status_filter = self.request.query_params.get('status')
+        if status_filter in ('pending', 'accepted', 'rejected'):
+            return qs.filter(status=status_filter)
         return qs
 
     def perform_create(self, serializer):
