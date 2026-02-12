@@ -1,180 +1,152 @@
-.stock-register-page,
-.stock-detail-page {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 20px;
+.stock-register-page {
+    padding: 20px 0;
 }
 
-.stock-register-page h2,
-.stock-detail-page h2 {
-  color: #2c3e50;
-  margin-bottom: 20px;
+.search-bar-container {
+    display: flex;
+    align-items: center;
+    padding: 15px 25px;
+    margin-bottom: 30px;
+    gap: 15px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
 }
 
-/* Clickable table rows */
-.clickable-table tbody tr {
-  cursor: pointer;
-  transition: background-color 0.2s;
+.search-icon {
+    color: var(--text-muted);
+    font-size: 1.2rem;
 }
 
-.clickable-table tbody tr:hover {
-  background: #e3f2fd !important;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+.search-input {
+    border: none;
+    background: transparent;
+    color: var(--text-main);
+    font-size: 1rem;
+    width: 100%;
 }
 
-/* Entry info box */
-.entry-info {
-  background: #f7f8fa;
-  padding: 15px 20px;
-  border-radius: 8px;
-  margin-bottom: 30px;
-  border-left: 4px solid #3752a6;
+.search-input:focus {
+    outline: none;
 }
 
-.entry-info p {
-  margin: 8px 0;
-  font-size: 1.05rem;
-  color: #2c3e50;
+.stock-list-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
 
-.entry-info strong {
-  color: #3752a6;
-  margin-right: 10px;
+.stock-card {
+    display: flex;
+    align-items: center;
+    padding: 16px 24px;
+    gap: 24px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    border: 1px solid var(--border);
 }
 
-/* Section headings */
-.stock-detail-page h3 {
-  color: #3752a6;
-  margin-top: 30px;
-  margin-bottom: 15px;
-  font-size: 1.2rem;
-  border-bottom: 2px solid #e0e0e0;
-  padding-bottom: 8px;
+.stock-card:hover {
+    transform: translateX(8px);
+    border-color: var(--primary);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
 
-/* Back Button */
-.back-button {
-  position: fixed;
-  top: 20px;
-  left: 270px;
-  /* Default: next to expanded sidebar */
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  border: 2px solid #2c3e50;
-  background: white;
-  color: #2c3e50;
-  font-size: 1.2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: left 0.3s ease, background 0.3s, transform 0.3s;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  z-index: 100;
+.stock-card-icon {
+    width: 56px;
+    height: 56px;
+    background: var(--primary-glow);
+    color: var(--primary);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
 }
 
-.back-button:hover {
-  background: #2c3e50;
-  color: white;
-  transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+.stock-card-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 40px;
 }
 
-.back-button:active {
-  transform: scale(0.95);
+.stock-card-main-info {
+    flex: 1;
 }
 
-.stock-detail-page {
-  position: relative;
-  padding: 20px 20px 20px 90px;
+.stock-card-main-info h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: var(--text-main);
 }
 
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
+.stock-card-main-info .supplier {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 0;
 }
 
-.add-entry-btn {
-  background: #27ae60;
-  color: white;
-  border: none;
-  padding: 12px 20px;
-  border-radius: 6px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  transition: background 0.3s;
-  box-shadow: 0 2px 6px rgba(39, 174, 96, 0.3);
+.stock-card-details {
+    display: flex;
+    gap: 30px;
 }
 
-.add-entry-btn:hover {
-  background: #229954;
-  box-shadow: 0 4px 10px rgba(39, 174, 96, 0.4);
+.stock-card-details span {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    white-space: nowrap;
 }
 
-/* ============================================ */
-/* DARK MODE STYLES */
-/* ============================================ */
-
-:root.dark-mode .stock-register-page,
-:root.dark-mode .stock-detail-page {
-  background-color: #1a1a1a;
-  color: #e0e0e0;
+.stock-card-actions {
+    display: flex;
+    align-items: center;
 }
 
-:root.dark-mode .stock-register-page h2,
-:root.dark-mode .stock-detail-page h2 {
-  color: #e0e0e0;
+.btn-view {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--primary-glow);
+    color: var(--primary);
+    border: 1px solid var(--primary);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
-:root.dark-mode .clickable-table tbody tr:hover {
-  background: #2a4a6a !important;
+.btn-view:hover {
+    background: var(--primary);
+    color: white;
 }
 
-:root.dark-mode .entry-info {
-  background: #2d2d2d;
-  border-left-color: #4a9eff;
+.arrow-icon {
+    color: var(--border);
+    transition: var(--transition);
 }
 
-:root.dark-mode .entry-info p {
-  color: #e0e0e0;
+.stock-card:hover .arrow-icon {
+    color: var(--primary);
+    transform: translateX(5px);
 }
 
-:root.dark-mode .entry-info strong {
-  color: #4a9eff;
+.empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 100px 0;
+    color: var(--text-muted);
 }
 
-:root.dark-mode .stock-detail-page h3 {
-  color: #4a9eff;
-  border-bottom-color: #3a3a3a;
+@media (max-width: 768px) {
+    .stock-list-grid {
+        grid-template-columns: 1fr;
+    }
 }
-
-:root.dark-mode .back-button {
-  background: #2d2d2d;
-  color: #e0e0e0;
-  border-color: #4a4a4a;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-:root.dark-mode .back-button:hover {
-  background: #3a3a3a;
-  color: #4a9eff;
-}
-
-:root.dark-mode .add-entry-btn {
-  background: #388e3c;
-  box-shadow: 0 2px 6px rgba(56, 142, 60, 0.3);
-}
-
-:root.dark-mode .add-entry-btn:hover {
-  background: #2e7d32;
-  box-shadow: 0 4px 10px rgba(56, 142, 60, 0.4);
-}
-

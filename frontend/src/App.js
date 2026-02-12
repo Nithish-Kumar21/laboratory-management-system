@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import TopBar from './layout/TopBar';
 import Sidebar from './layout/Sidebar';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -30,10 +31,28 @@ import './styles/App.css';
 
 function AppContent() {
   const { loading } = useAuth();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 1024);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+      if (mobile) {
+        setIsSidebarOpen(false);
+      } else {
+        setIsSidebarOpen(window.innerWidth > 1024);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   if (loading) {
     return <div style={{ padding: '20px', textAlign: 'center' }}>Loading...</div>;
   }
+
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
   return (
     <Router>
@@ -44,42 +63,50 @@ function AppContent() {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/change-password" element={<ProtectedRoute><ChangePassword /></ProtectedRoute>} />
 
-        {/* Protected Routes with Sidebar Layout */}
+        {/* Protected Routes with Hybrid Layout */}
         <Route
           path="/*"
           element={
             <ProtectedRoute>
-              <div className="app-container">
-                <Sidebar />
-                <LowStockToast />
-                <div className="main-content">
-                  <Routes>
-                    <Route path="" element={<Home />} />
-                    <Route path="profile" element={<UserProfile />} />
+              <div className={`app-layout ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+                <TopBar onToggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
+                <Sidebar isOpen={isSidebarOpen} isMobile={isMobile} />
 
-                    {/* Admin Only */}
-                    <Route
-                      path="users"
-                      element={
-                        <ProtectedRoute adminOnly>
-                          <UserManagement />
-                        </ProtectedRoute>
-                      }
-                    />
+                {isMobile && isSidebarOpen && (
+                  <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)} />
+                )}
 
-                    <Route path="settings" element={<Settings />} />
+                <div className="main-content-area">
+                  <LowStockToast />
+                  <div className="page-container">
+                    <Routes>
+                      <Route path="" element={<Home />} />
+                      <Route path="profile" element={<UserProfile />} />
 
-                    {/* Existing Routes */}
-                    <Route path="inventory" element={<Inventory />} />
-                    <Route path="stock-register" element={<StockRegister />} />
-                    <Route path="stock-register/:id" element={<StockRegisterDetail />} />
-                    <Route path="issue-register" element={<IssueRegister />} />
-                    <Route path="damaged-entry" element={<DamagedEntry />} />
-                    <Route path="damaged-entry/:id" element={<DamagedEntryDetail />} />
+                      {/* Admin Only */}
+                      <Route
+                        path="users"
+                        element={
+                          <ProtectedRoute adminOnly>
+                            <UserManagement />
+                          </ProtectedRoute>
+                        }
+                      />
 
-                    {/* Catch all - redirect to home */}
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                  </Routes>
+                      <Route path="settings" element={<Settings />} />
+
+                      {/* Existing Routes */}
+                      <Route path="inventory" element={<Inventory />} />
+                      <Route path="stock-register" element={<StockRegister />} />
+                      <Route path="stock-register/:id" element={<StockRegisterDetail />} />
+                      <Route path="issue-register" element={<IssueRegister />} />
+                      <Route path="damaged-entry" element={<DamagedEntry />} />
+                      <Route path="damaged-entry/:id" element={<DamagedEntryDetail />} />
+
+                      {/* Catch all - redirect to home */}
+                      <Route path="*" element={<Navigate to="/" replace />} />
+                    </Routes>
+                  </div>
                 </div>
               </div>
             </ProtectedRoute>
@@ -99,3 +126,5 @@ function App() {
 }
 
 export default App;
+
+

@@ -1,444 +1,349 @@
-import React, { useEffect, useState } from 'react';
-import { FaPlus, FaTimes, FaTrash } from 'react-icons/fa';
+import React, { useEffect, useState, useRef } from 'react';
+import { FaPlusCircle, FaTimes, FaTrashAlt, FaFlask, FaBoxes, FaTags } from 'react-icons/fa';
 import api from '../../utils/api';
 import './AddStockRegisterModal.css';
 
 function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
-  const [formData, setFormData] = useState({
-    invoice_number: '',
-    date: new Date().toISOString().split('T')[0],
-    supplier_name: '',
-  });
-
-  const [chemicalItems, setChemicalItems] = useState([]);
-  const [apparatusItems, setApparatusItems] = useState([]);
-  const [errors, setErrors] = useState({});
-  const [submitting, setSubmitting] = useState(false);
-
-  const [chemicalNames, setChemicalNames] = useState([]);
-  const [apparatusNames, setApparatusNames] = useState([]);
-  const [showChemicalSuggestions, setShowChemicalSuggestions] = useState({});
-  const [showApparatusSuggestions, setShowApparatusSuggestions] = useState({});
-
-  useEffect(() => {
-    if (isOpen) {
-      api
-        .get('/stock_register/chemical_names/')
-        .then((response) =>
-          setChemicalNames(Array.isArray(response.data) ? response.data : response.data.results || [])
-        )
-        .catch((err) => console.error('Error fetching chemical names:', err));
-
-      api
-        .get('/stock_register/apparatus_names/')
-        .then((response) =>
-          setApparatusNames(Array.isArray(response.data) ? response.data : response.data.results || [])
-        )
-        .catch((err) => console.error('Error fetching apparatus names:', err));
-    }
-  }, [isOpen]);
-
-  if (!isOpen) return null;
-
-  const addChemicalRow = () => {
-    setChemicalItems([...chemicalItems, { chemical_name: '', quantity_ml: '', rate: '', make: '' }]);
-  };
-
-  const addApparatusRow = () => {
-    setApparatusItems([
-      ...apparatusItems,
-      { apparatus_name: '', quantity_pieces: '', rate: '', make: '' },
-    ]);
-  };
-
-  const removeChemicalRow = (index) => {
-    setChemicalItems(chemicalItems.filter((_, i) => i !== index));
-  };
-
-  const removeApparatusRow = (index) => {
-    setApparatusItems(apparatusItems.filter((_, i) => i !== index));
-  };
-
-  const updateChemicalItem = (index, field, value) => {
-    const updated = [...chemicalItems];
-    updated[index][field] = value;
-    setChemicalItems(updated);
-
-    if (field === 'chemical_name') {
-      setShowChemicalSuggestions({ ...showChemicalSuggestions, [index]: true });
-    }
-  };
-
-  const updateApparatusItem = (index, field, value) => {
-    const updated = [...apparatusItems];
-    updated[index][field] = value;
-    setApparatusItems(updated);
-
-    if (field === 'apparatus_name') {
-      setShowApparatusSuggestions({ ...showApparatusSuggestions, [index]: true });
-    }
-  };
-
-  const selectChemicalSuggestion = (index, name) => {
-    updateChemicalItem(index, 'chemical_name', name);
-    setShowChemicalSuggestions({ ...showChemicalSuggestions, [index]: false });
-  };
-
-  const selectApparatusSuggestion = (index, name) => {
-    updateApparatusItem(index, 'apparatus_name', name);
-    setShowApparatusSuggestions({ ...showApparatusSuggestions, [index]: false });
-  };
-
-  const filterSuggestions = (items, query) => {
-    if (!query) return items;
-    return items.filter((item) => item.toLowerCase().includes(query.toLowerCase()));
-  };
-
-  const validate = () => {
-    const newErrors = {};
-
-    if (!formData.invoice_number.trim()) newErrors.invoice_number = 'Invoice number is required';
-    if (!formData.date) newErrors.date = 'Date is required';
-    if (!formData.supplier_name.trim()) newErrors.supplier_name = 'Supplier name is required';
-
-    if (chemicalItems.length === 0 && apparatusItems.length === 0) {
-      newErrors.items = 'At least one chemical or apparatus item must be added';
-    }
-
-    chemicalItems.forEach((item, index) => {
-      if (!item.chemical_name.trim()) newErrors[`chemical_name_${index}`] = 'Chemical name is required';
-      if (!item.quantity_ml || parseFloat(item.quantity_ml) <= 0) {
-        newErrors[`chemical_quantity_${index}`] = 'Quantity must be greater than 0';
-      }
-      if (!item.rate || parseFloat(item.rate) <= 0) {
-        newErrors[`chemical_rate_${index}`] = 'Rate must be greater than 0';
-      }
-      if (!item.make.trim()) newErrors[`chemical_make_${index}`] = 'Make is required';
+    const [formData, setFormData] = useState({
+        invoice_number: '',
+        date: new Date().toISOString().split('T')[0],
+        supplier_name: '',
     });
 
-    apparatusItems.forEach((item, index) => {
-      if (!item.apparatus_name.trim()) newErrors[`apparatus_name_${index}`] = 'Apparatus name is required';
-      if (!item.quantity_pieces || parseInt(item.quantity_pieces) <= 0) {
-        newErrors[`apparatus_quantity_${index}`] = 'Quantity must be greater than 0';
-      }
-      if (!item.rate || parseFloat(item.rate) <= 0) {
-        newErrors[`apparatus_rate_${index}`] = 'Rate must be greater than 0';
-      }
-      if (!item.make.trim()) newErrors[`apparatus_make_${index}`] = 'Make is required';
-    });
+    const [chemicalItems, setChemicalItems] = useState([{ chemical_name: '', quantity_ml: '', rate: '', make: '' }]);
+    const [apparatusItems, setApparatusItems] = useState([{ apparatus_name: '', quantity_pieces: '', rate: '', make: '' }]);
+    const [submitting, setSubmitting] = useState(false);
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+    const [chemicalNames, setChemicalNames] = useState([]);
+    const [apparatusNames, setApparatusNames] = useState([]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validate()) return;
+    const [showChemicalSuggestions, setShowChemicalSuggestions] = useState({});
+    const [showApparatusSuggestions, setShowApparatusSuggestions] = useState({});
+    const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
 
-    setSubmitting(true);
+    const [position, setPosition] = useState({ x: 0, y: 0 });
+    const [isDragging, setIsDragging] = useState(false);
+    const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
-    const payload = {
-      invoice_number: formData.invoice_number,
-      date: formData.date,
-      supplier_name: formData.supplier_name,
-      chemical_items: chemicalItems.map((item) => ({
-        chemical_name: item.chemical_name,
-        quantity_ml: parseFloat(item.quantity_ml),
-        rate: parseFloat(item.rate),
-        make: item.make,
-      })),
-      apparatus_items: apparatusItems.map((item) => ({
-        apparatus_name: item.apparatus_name,
-        quantity_pieces: parseInt(item.quantity_pieces),
-        rate: parseFloat(item.rate),
-        make: item.make,
-      })),
+    const modalRef = useRef(null);
+    const scrollRef = useRef(null);
+
+    useEffect(() => {
+        if (isOpen) {
+            setPosition({ x: 0, y: 0 }); // Reset position when opened
+            api.get('/available_chemicals/names/')
+                .then(res => setChemicalNames(Array.isArray(res.data) ? res.data : []))
+                .catch(err => console.error(err));
+            api.get('/available_apparatus/names/')
+                .then(res => setApparatusNames(Array.isArray(res.data) ? res.data : []))
+                .catch(err => console.error(err));
+        }
+    }, [isOpen]);
+
+    useEffect(() => {
+        const handleMouseMove = (e) => {
+            if (isDragging) {
+                setPosition({
+                    x: e.clientX - dragStart.x,
+                    y: e.clientY - dragStart.y
+                });
+            }
+        };
+        const handleMouseUp = () => setIsDragging(false);
+
+        if (isDragging) {
+            window.addEventListener('mousemove', handleMouseMove);
+            window.addEventListener('mouseup', handleMouseUp);
+        }
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [isDragging, dragStart]);
+
+    const onMouseDown = (e) => {
+        // Only drag if clicking the header itself (not buttons inside it)
+        if (e.target.closest('.modal-close')) return;
+        if (e.target.closest('.modal-header')) {
+            setIsDragging(true);
+            setDragStart({
+                x: e.clientX - position.x,
+                y: e.clientY - position.y
+            });
+        }
     };
 
-    try {
-      await api.post('/stock_register/', payload);
-      window.dispatchEvent(new Event('inventory-updated'));
-      localStorage.setItem('inventory-updated', Date.now());
-      onSuccess();
-      resetForm();
-      onClose();
-    } catch (error) {
-      const errorData = error.response?.data;
-      let errorMessage = 'Failed to create entry. ';
+    // Auto-scroll to bottom functionality for flexibility
+    const scrollToBottom = () => {
+        if (scrollRef.current) {
+            setTimeout(() => {
+                scrollRef.current.scrollTo({
+                    top: scrollRef.current.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }, 50);
+        }
+    };
 
-      if (errorData) {
-        if (errorData.invoice_number) errorMessage += errorData.invoice_number[0];
-        else if (errorData.error) errorMessage += errorData.error;
-        else errorMessage += JSON.stringify(errorData);
-      } else {
-        errorMessage += error.message || 'Unknown error occurred.';
-      }
+    const addChemicalRow = () => {
+        setChemicalItems([...chemicalItems, { chemical_name: '', quantity_ml: '', rate: '', make: '' }]);
+        scrollToBottom();
+    };
 
-      setErrors({ submit: errorMessage });
-    } finally {
-      setSubmitting(false);
-    }
-  };
+    const addApparatusRow = () => {
+        setApparatusItems([...apparatusItems, { apparatus_name: '', quantity_pieces: '', rate: '', make: '' }]);
+        scrollToBottom();
+    };
 
-  const resetForm = () => {
-    setFormData({
-      invoice_number: '',
-      date: new Date().toISOString().split('T')[0],
-      supplier_name: '',
-    });
-    setChemicalItems([]);
-    setApparatusItems([]);
-    setErrors({});
-  };
+    const handleKeyDown = (e) => {
+        const { key, target } = e;
+        const chemRowIdx = Object.keys(showChemicalSuggestions).find(idx => showChemicalSuggestions[idx]);
+        const appRowIdx = Object.keys(showApparatusSuggestions).find(idx => showApparatusSuggestions[idx]);
+        const isShowing = chemRowIdx !== undefined || appRowIdx !== undefined;
 
-  return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>Add New Stock Register Entry</h2>
-          <button className="modal-close" onClick={onClose}>
-            <FaTimes />
-          </button>
+        if (isShowing) {
+            const type = chemRowIdx !== undefined ? 'chemical' : 'apparatus';
+            const rowIdx = type === 'chemical' ? chemRowIdx : appRowIdx;
+            const query = type === 'chemical' ? chemicalItems[rowIdx].chemical_name : apparatusItems[rowIdx].apparatus_name;
+            const options = type === 'chemical' ? chemicalNames.filter(n => n.toLowerCase().includes(query.toLowerCase())) : apparatusNames.filter(n => n.toLowerCase().includes(query.toLowerCase()));
+
+            if (key === 'ArrowDown') { e.preventDefault(); setActiveSuggestionIndex(prev => Math.min(prev + 1, options.length - 1)); return; }
+            if (key === 'ArrowUp') { e.preventDefault(); setActiveSuggestionIndex(prev => Math.max(prev - 1, 0)); return; }
+            if (key === 'Enter' && activeSuggestionIndex >= 0) {
+                e.preventDefault();
+                const val = options[activeSuggestionIndex];
+                if (type === 'chemical') selectChemical(rowIdx, val); else selectApparatus(rowIdx, val);
+                return;
+            }
+            if (key === 'Escape' || key === 'Tab') { setShowChemicalSuggestions({}); setShowApparatusSuggestions({}); return; }
+        }
+
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter'].includes(key)) {
+            if (!modalRef.current) return;
+            const inputs = Array.from(modalRef.current.querySelectorAll('input:not([type="hidden"])'));
+            const index = inputs.indexOf(target);
+            if (index === -1) return;
+
+            const perRow = 4;
+            const header = 3;
+
+            const focusNext = (nextIdx) => {
+                if (inputs[nextIdx]) {
+                    e.preventDefault();
+                    inputs[nextIdx].focus();
+                    if (inputs[nextIdx].type !== 'number' && inputs[nextIdx].select) inputs[nextIdx].select();
+                }
+            };
+
+            if (key === 'ArrowDown' || (key === 'Enter' && !e.shiftKey)) {
+                focusNext(index < header ? index + 1 : index + perRow);
+            } else if (key === 'ArrowUp') {
+                focusNext(index < header ? index - 1 : index - perRow);
+            } else if (key === 'ArrowRight') {
+                let canMove = target.type !== 'text';
+                if (!canMove) try { canMove = target.selectionEnd === target.value.length; } catch (e) { canMove = true; }
+                if (canMove) focusNext(index + 1);
+            } else if (key === 'ArrowLeft') {
+                let canMove = target.type !== 'text';
+                if (!canMove) try { canMove = target.selectionStart === 0; } catch (e) { canMove = true; }
+                if (canMove) focusNext(index - 1);
+            }
+        }
+    };
+
+    const selectChemical = (i, n) => {
+        const next = [...chemicalItems]; next[i].chemical_name = n; setChemicalItems(next);
+        setShowChemicalSuggestions({}); setActiveSuggestionIndex(-1);
+        // Auto-focus the next field (Quantity)
+        setTimeout(() => {
+            if (modalRef.current) {
+                const inputs = Array.from(modalRef.current.querySelectorAll('input:not([type="hidden"])'));
+                const currentIndex = inputs.findIndex(inp => inp.value === n); // Approximate, or use better logic
+                // Reliable way: find the quantity input for THIS row
+                const rowInputs = modalRef.current.querySelectorAll('.grid-row');
+                const targetRow = rowInputs[i];
+                if (targetRow) {
+                    const quantityInput = targetRow.querySelectorAll('input')[1];
+                    if (quantityInput) quantityInput.focus();
+                }
+            }
+        }, 10);
+    };
+
+    const selectApparatus = (i, n) => {
+        const next = [...apparatusItems]; next[i].apparatus_name = n; setApparatusItems(next);
+        setShowApparatusSuggestions({}); setActiveSuggestionIndex(-1);
+        // Auto-focus the next field (Quantity)
+        setTimeout(() => {
+            if (modalRef.current) {
+                const rowInputs = modalRef.current.querySelectorAll('.grid-row');
+                // Note: Apparatus is in the second items-section
+                const sections = modalRef.current.querySelectorAll('.items-section');
+                const appSection = sections[1];
+                if (appSection) {
+                    const rows = appSection.querySelectorAll('.grid-row');
+                    const targetRow = rows[i];
+                    if (targetRow) {
+                        const quantityInput = targetRow.querySelectorAll('input')[1];
+                        if (quantityInput) quantityInput.focus();
+                    }
+                }
+            }
+        }, 10);
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (submitting) return;
+        setSubmitting(true);
+        try {
+            const payload = {
+                ...formData,
+                chemical_items: chemicalItems.filter(it => it.chemical_name).map(it => ({ ...it, quantity_ml: parseFloat(it.quantity_ml), rate: parseFloat(it.rate), make: it.make })),
+                apparatus_items: apparatusItems.filter(it => it.apparatus_name).map(it => ({ ...it, quantity_pieces: parseInt(it.quantity_pieces), rate: parseFloat(it.rate), make: it.make }))
+            };
+            await api.post('/stock_register/', payload);
+            window.dispatchEvent(new Event('inventory-updated'));
+            onSuccess();
+            onClose();
+            setChemicalItems([{ chemical_name: '', quantity_ml: '', rate: '', make: '' }]);
+            setApparatusItems([{ apparatus_name: '', quantity_pieces: '', rate: '', make: '' }]);
+            setFormData({ invoice_number: '', date: new Date().toISOString().split('T')[0], supplier_name: '' });
+        } catch (err) {
+            alert('Error: ' + (err.response?.data?.error || 'Validation failed'));
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="modal-overlay" onClick={onClose}>
+            <div className="modal-content flexible animate-up"
+                onClick={e => e.stopPropagation()}
+                ref={modalRef}
+                style={{ transform: `translate(${position.x}px, ${position.y}px)` }}>
+                <div className="modal-header" onMouseDown={onMouseDown}>
+                    <h2><FaTags style={{ color: 'var(--primary)' }} /> Secure Stock Entry</h2>
+                    <button className="modal-close" onClick={onClose}><FaTimes /></button>
+                </div>
+
+                <form onSubmit={handleSubmit} onKeyDown={handleKeyDown}>
+                    <div className="modal-body" ref={scrollRef}>
+                        <div className="form-header-card">
+                            <div className="form-group">
+                                <label>Invoice Number</label>
+                                <input type="text" value={formData.invoice_number} required placeholder="INV-REF-001"
+                                    onChange={e => setFormData({ ...formData, invoice_number: e.target.value })} />
+                            </div>
+                            <div className="form-group">
+                                <label>Date Received</label>
+                                <input type="date" value={formData.date} required
+                                    onChange={e => setFormData({ ...formData, date: e.target.value })} />
+                            </div>
+                            <div className="form-group">
+                                <label>Supplier Details</label>
+                                <input type="text" value={formData.supplier_name} required placeholder="Vendor full name..."
+                                    onChange={e => setFormData({ ...formData, supplier_name: e.target.value })} />
+                            </div>
+                        </div>
+
+                        <div className="items-section">
+                            <div className="section-header">
+                                <h3><FaFlask /> Chemical Materials</h3>
+                                <button type="button" className="btn-add-line" onClick={addChemicalRow}>
+                                    <FaPlusCircle /> Add Line
+                                </button>
+                            </div>
+
+                            <div className="grid-matrix-header">
+                                <span>Material Name</span>
+                                <span>Qty (ML)</span>
+                                <span>Rate (₹)</span>
+                                <span>Make / Brand</span>
+                                <span></span>
+                            </div>
+
+                            {chemicalItems.map((it, i) => (
+                                <div key={i} className="grid-row animate-fade">
+                                    <div className="autocomplete-wrapper">
+                                        <input type="text" placeholder="Item name..." value={it.chemical_name} required autoComplete="off"
+                                            onChange={e => {
+                                                const next = [...chemicalItems]; next[i].chemical_name = e.target.value; setChemicalItems(next);
+                                                setShowChemicalSuggestions({ [i]: true }); setActiveSuggestionIndex(-1);
+                                            }}
+                                            onFocus={() => { setShowChemicalSuggestions({ [i]: true }); setActiveSuggestionIndex(-1); }}
+                                            onBlur={() => setTimeout(() => setShowChemicalSuggestions({}), 250)} />
+                                        {showChemicalSuggestions[i] && it.chemical_name && (
+                                            <div className="suggestions-dropdown">
+                                                {chemicalNames.filter(n => n.toLowerCase().includes(it.chemical_name.toLowerCase())).map((n, idx) => (
+                                                    <div key={idx} className={`suggestion-item ${activeSuggestionIndex === idx ? 'active' : ''}`}
+                                                        onMouseDown={() => selectChemical(i, n)}>{n}</div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <input type="number" step="0.01" placeholder="Quantity" value={it.quantity_ml} required onChange={e => { const next = [...chemicalItems]; next[i].quantity_ml = e.target.value; setChemicalItems(next); }} />
+                                    <input type="number" step="0.01" placeholder="Price" value={it.rate} required onChange={e => { const next = [...chemicalItems]; next[i].rate = e.target.value; setChemicalItems(next); }} />
+                                    <input type="text" placeholder="Make" value={it.make} required onChange={e => { const next = [...chemicalItems]; next[i].make = e.target.value; setChemicalItems(next); }} />
+                                    <button type="button" className="btn-row-del" onClick={() => setChemicalItems(chemicalItems.filter((_, idx) => idx !== i))} title="Remove line"><FaTrashAlt /></button>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="items-section">
+                            <div className="section-header">
+                                <h3><FaBoxes /> Apparatus Materials</h3>
+                                <button type="button" className="btn-add-line" onClick={addApparatusRow}>
+                                    <FaPlusCircle /> Add Line
+                                </button>
+                            </div>
+
+                            <div className="grid-matrix-header">
+                                <span>Material Name</span>
+                                <span>Qty (PCS)</span>
+                                <span>Rate (₹)</span>
+                                <span>Make / Brand</span>
+                                <span></span>
+                            </div>
+
+                            {apparatusItems.map((it, i) => (
+                                <div key={i} className="grid-row animate-fade">
+                                    <div className="autocomplete-wrapper">
+                                        <input type="text" placeholder="Item name..." value={it.apparatus_name} required autoComplete="off"
+                                            onChange={e => {
+                                                const next = [...apparatusItems]; next[i].apparatus_name = e.target.value; setApparatusItems(next);
+                                                setShowApparatusSuggestions({ [i]: true }); setActiveSuggestionIndex(-1);
+                                            }}
+                                            onFocus={() => { setShowApparatusSuggestions({ [i]: true }); setActiveSuggestionIndex(-1); }}
+                                            onBlur={() => setTimeout(() => setShowApparatusSuggestions({}), 250)} />
+                                        {showApparatusSuggestions[i] && it.apparatus_name && (
+                                            <div className="suggestions-dropdown">
+                                                {apparatusNames.filter(n => n.toLowerCase().includes(it.apparatus_name.toLowerCase())).map((n, idx) => (
+                                                    <div key={idx} className={`suggestion-item ${activeSuggestionIndex === idx ? 'active' : ''}`}
+                                                        onMouseDown={() => selectApparatus(i, n)}>{n}</div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <input type="number" placeholder="Quantity" value={it.quantity_pieces} required onChange={e => { const next = [...apparatusItems]; next[i].quantity_pieces = e.target.value; setApparatusItems(next); }} />
+                                    <input type="number" step="0.01" placeholder="Price" value={it.rate} required onChange={e => { const next = [...apparatusItems]; next[i].rate = e.target.value; setApparatusItems(next); }} />
+                                    <input type="text" placeholder="Make" value={it.make} required onChange={e => { const next = [...apparatusItems]; next[i].make = e.target.value; setApparatusItems(next); }} />
+                                    <button type="button" className="btn-row-del" onClick={() => setApparatusItems(apparatusItems.filter((_, idx) => idx !== i))} title="Remove line"><FaTrashAlt /></button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="modal-footer">
+                        <button type="button" className="btn-cancel" onClick={onClose}>Discard</button>
+                        <button type="submit" className="btn-submit" disabled={submitting}>{submitting ? 'Verifying...' : 'Finalize Stock Entry'}</button>
+                    </div>
+                </form>
+            </div>
         </div>
-
-        <form onSubmit={handleSubmit}>
-          <div className="modal-body">
-            <div className="form-row">
-              <div className="form-group">
-                <label>Invoice Number *</label>
-                <input
-                  type="text"
-                  value={formData.invoice_number}
-                  onChange={(e) => setFormData({ ...formData, invoice_number: e.target.value })}
-                  className={errors.invoice_number ? 'error' : ''}
-                  placeholder="Enter invoice number"
-                />
-                {errors.invoice_number && <span className="error-text">{errors.invoice_number}</span>}
-              </div>
-
-              <div className="form-group">
-                <label>Date *</label>
-                <input
-                  type="date"
-                  value={formData.date}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  className={errors.date ? 'error' : ''}
-                />
-                {errors.date && <span className="error-text">{errors.date}</span>}
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label>Supplier Name *</label>
-              <input
-                type="text"
-                value={formData.supplier_name}
-                onChange={(e) => setFormData({ ...formData, supplier_name: e.target.value })}
-                className={errors.supplier_name ? 'error' : ''}
-                placeholder="Enter supplier name"
-              />
-              {errors.supplier_name && <span className="error-text">{errors.supplier_name}</span>}
-            </div>
-
-            {errors.items && <div className="error-banner">{errors.items}</div>}
-
-            <div className="items-section">
-              <div className="section-header">
-                <h3>Chemical List</h3>
-                <button type="button" className="add-row-btn" onClick={addChemicalRow}>
-                  <FaPlus /> Add Chemical
-                </button>
-              </div>
-
-              {chemicalItems.map((item, index) => (
-                <div key={index} className="item-row">
-                  <div className="autocomplete-wrapper">
-                    <input
-                      type="text"
-                      placeholder="Chemical name"
-                      value={item.chemical_name}
-                      onChange={(e) => updateChemicalItem(index, 'chemical_name', e.target.value)}
-                      onFocus={() => setShowChemicalSuggestions({ ...showChemicalSuggestions, [index]: true })}
-                      onBlur={() =>
-                        setTimeout(
-                          () => setShowChemicalSuggestions({ ...showChemicalSuggestions, [index]: false }),
-                          200
-                        )
-                      }
-                      className={errors[`chemical_name_${index}`] ? 'error' : ''}
-                    />
-                    {showChemicalSuggestions[index] && item.chemical_name && (
-                      <div className="suggestions-dropdown">
-                        {filterSuggestions(chemicalNames, item.chemical_name).map((name, i) => (
-                          <div
-                            key={i}
-                            className="suggestion-item"
-                            onMouseDown={() => selectChemicalSuggestion(index, name)}
-                          >
-                            {name}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {errors[`chemical_name_${index}`] && (
-                      <span className="error-text">{errors[`chemical_name_${index}`]}</span>
-                    )}
-                  </div>
-
-                  <div>
-                    <input
-                      type="number"
-                      step="0.01"
-                      placeholder="Quantity (mL)"
-                      value={item.quantity_ml}
-                      onChange={(e) => updateChemicalItem(index, 'quantity_ml', e.target.value)}
-                      className={errors[`chemical_quantity_${index}`] ? 'error' : ''}
-                    />
-                    {errors[`chemical_quantity_${index}`] && (
-                      <span className="error-text">{errors[`chemical_quantity_${index}`]}</span>
-                    )}
-                  </div>
-
-                  <div>
-                    <input
-                      type="number"
-                      step="0.01"
-                      placeholder="Rate"
-                      value={item.rate}
-                      onChange={(e) => updateChemicalItem(index, 'rate', e.target.value)}
-                      className={errors[`chemical_rate_${index}`] ? 'error' : ''}
-                    />
-                    {errors[`chemical_rate_${index}`] && (
-                      <span className="error-text">{errors[`chemical_rate_${index}`]}</span>
-                    )}
-                  </div>
-
-                  <div>
-                    <input
-                      type="text"
-                      placeholder="Make"
-                      value={item.make}
-                      onChange={(e) => updateChemicalItem(index, 'make', e.target.value)}
-                      className={errors[`chemical_make_${index}`] ? 'error' : ''}
-                    />
-                    {errors[`chemical_make_${index}`] && (
-                      <span className="error-text">{errors[`chemical_make_${index}`]}</span>
-                    )}
-                  </div>
-
-                  <button type="button" className="delete-row-btn" onClick={() => removeChemicalRow(index)}>
-                    <FaTrash />
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            <div className="items-section">
-              <div className="section-header">
-                <h3>Apparatus List</h3>
-                <button type="button" className="add-row-btn" onClick={addApparatusRow}>
-                  <FaPlus /> Add Apparatus
-                </button>
-              </div>
-
-              {apparatusItems.map((item, index) => (
-                <div key={index} className="item-row">
-                  <div className="autocomplete-wrapper">
-                    <input
-                      type="text"
-                      placeholder="Apparatus name"
-                      value={item.apparatus_name}
-                      onChange={(e) => updateApparatusItem(index, 'apparatus_name', e.target.value)}
-                      onFocus={() => setShowApparatusSuggestions({ ...showApparatusSuggestions, [index]: true })}
-                      onBlur={() =>
-                        setTimeout(
-                          () => setShowApparatusSuggestions({ ...showApparatusSuggestions, [index]: false }),
-                          200
-                        )
-                      }
-                      className={errors[`apparatus_name_${index}`] ? 'error' : ''}
-                    />
-                    {showApparatusSuggestions[index] && item.apparatus_name && (
-                      <div className="suggestions-dropdown">
-                        {filterSuggestions(apparatusNames, item.apparatus_name).map((name, i) => (
-                          <div
-                            key={i}
-                            className="suggestion-item"
-                            onMouseDown={() => selectApparatusSuggestion(index, name)}
-                          >
-                            {name}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {errors[`apparatus_name_${index}`] && (
-                      <span className="error-text">{errors[`apparatus_name_${index}`]}</span>
-                    )}
-                  </div>
-
-                  <div>
-                    <input
-                      type="number"
-                      placeholder="Quantity (pieces)"
-                      value={item.quantity_pieces}
-                      onChange={(e) => updateApparatusItem(index, 'quantity_pieces', e.target.value)}
-                      className={errors[`apparatus_quantity_${index}`] ? 'error' : ''}
-                    />
-                    {errors[`apparatus_quantity_${index}`] && (
-                      <span className="error-text">{errors[`apparatus_quantity_${index}`]}</span>
-                    )}
-                  </div>
-
-                  <div>
-                    <input
-                      type="number"
-                      step="0.01"
-                      placeholder="Rate"
-                      value={item.rate}
-                      onChange={(e) => updateApparatusItem(index, 'rate', e.target.value)}
-                      className={errors[`apparatus_rate_${index}`] ? 'error' : ''}
-                    />
-                    {errors[`apparatus_rate_${index}`] && (
-                      <span className="error-text">{errors[`apparatus_rate_${index}`]}</span>
-                    )}
-                  </div>
-
-                  <div>
-                    <input
-                      type="text"
-                      placeholder="Make"
-                      value={item.make}
-                      onChange={(e) => updateApparatusItem(index, 'make', e.target.value)}
-                      className={errors[`apparatus_make_${index}`] ? 'error' : ''}
-                    />
-                    {errors[`apparatus_make_${index}`] && (
-                      <span className="error-text">{errors[`apparatus_make_${index}`]}</span>
-                    )}
-                  </div>
-
-                  <button type="button" className="delete-row-btn" onClick={() => removeApparatusRow(index)}>
-                    <FaTrash />
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            {errors.submit && <div className="error-banner">{errors.submit}</div>}
-          </div>
-
-          <div className="modal-footer">
-            <button type="button" className="btn-cancel" onClick={onClose}>
-              Cancel
-            </button>
-            <button type="submit" className="btn-submit" disabled={submitting}>
-              {submitting ? 'Submitting...' : 'Submit'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
+    );
 }
 
 export default AddStockRegisterModal;
-

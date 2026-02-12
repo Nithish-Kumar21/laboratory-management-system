@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { FaArrowLeft, FaTrash } from 'react-icons/fa';
+import { FaArrowLeft, FaTrash, FaExclamationTriangle, FaTools, FaCalendarAlt, FaUserTie, FaGraduationCap } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
-import './DamagedEntry.css';
+import './DamagedEntryDetail.css';
 
 function DamagedEntryDetail() {
   const { id } = useParams();
@@ -15,119 +15,98 @@ function DamagedEntryDetail() {
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    if (isStaff) {
-      navigate('/');
-      return;
-    }
-    api
-      .get(`/damaged_entry/${id}/`)
-      .then((response) => {
-        setDamagedEntry(response.data);
-        setLoading(false);
-      })
-      .catch((error) => {
-        setError(error.response?.data?.error || error.message || 'Network response was not ok');
-        setLoading(false);
-      });
+    if (isStaff) { navigate('/'); return; }
+    api.get(`/damaged_entry/${id}/`)
+      .then(res => { setDamagedEntry(res.data); setLoading(false); })
+      .catch(err => { setError(err.response?.data?.error || 'Load failed'); setLoading(false); });
   }, [id, isStaff, navigate]);
 
-  const handleBack = () => {
-    navigate('/damaged-entry');
-  };
-
   const handleDelete = async () => {
-    if (
-      window.confirm(
-        'Are you sure you want to delete this entry? This will also add the damaged quantities back to the inventory.'
-      )
-    ) {
+    if (window.confirm('Delete this entry? Inventory will be reverted.')) {
       setDeleting(true);
       try {
         await api.delete(`/damaged_entry/${id}/`);
         window.dispatchEvent(new Event('inventory-updated'));
-        localStorage.setItem('inventory-updated', Date.now());
-        alert('Entry deleted successfully');
         navigate('/damaged-entry');
       } catch (err) {
-        alert('Failed to delete entry: ' + (err.response?.data?.error || err.message));
-      } finally {
-        setDeleting(false);
-      }
+        alert(err.response?.data?.error || 'Delete failed');
+      } finally { setDeleting(false); }
     }
   };
 
-  if (loading) return <p>Loading details...</p>;
-  if (error) return <p>Error: {error}</p>;
-  if (!damagedEntry) return <p>No data found</p>;
+  if (loading) return <div className="loading-spinner"></div>;
+  if (error) return <div className="error-message">{error}</div>;
+  if (!damagedEntry) return null;
 
   return (
-    <div className="damaged-detail-page">
-      <button className="back-button" onClick={handleBack}>
-        <FaArrowLeft />
-      </button>
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2>Damaged Entry</h2>
-        {isStoreKeeper && (
-          <button
-            className="delete-entry-btn"
-            onClick={handleDelete}
-            disabled={deleting}
-            style={{
-              backgroundColor: '#dc3545',
-              color: 'white',
-              border: 'none',
-              padding: '8px 15px',
-              borderRadius: '4px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              cursor: 'pointer',
-            }}
-          >
-            <FaTrash /> {deleting ? 'Deleting...' : 'Delete Entry'}
-          </button>
-        )}
+    <div className="damaged-detail-page animate-up">
+      <div className="detail-header">
+        <button className="back-button" onClick={() => navigate('/damaged-entry')}>
+          <FaArrowLeft />
+        </button>
+        <div className="header-title-box">
+          <h2>Incident Report Details</h2>
+          <p>ENTRY ID: #{damagedEntry.id}</p>
+        </div>
       </div>
 
-      <div className="entry-info">
-        <p>
-          <strong>Staff:</strong> {damagedEntry.staff}
-        </p>
-        <p>
-          <strong>Class:</strong> {damagedEntry.class_name}
-        </p>
-        <p>
-          <strong>Date:</strong> {damagedEntry.date}
-        </p>
-        <p>
-          <strong>Caused By:</strong> {damagedEntry.caused_by}
-        </p>
-        <p>
-          <strong>Details:</strong> {damagedEntry.details}
-        </p>
+      <div className="detail-info-grid">
+        <div className="info-card card">
+          <label><FaUserTie /> Responsible Staff</label>
+          <span>{damagedEntry.staff}</span>
+        </div>
+        <div className="info-card card">
+          <label><FaGraduationCap /> Class / Division</label>
+          <span>{damagedEntry.class_name}</span>
+        </div>
+        <div className="info-card card">
+          <label><FaCalendarAlt /> Date of Incident</label>
+          <span>{damagedEntry.date}</span>
+        </div>
+        <div className="info-card card">
+          <label>Caused By</label>
+          <span>{damagedEntry.caused_by}</span>
+        </div>
+        <div className="info-card card details-full-width">
+          <label>Investigation Details</label>
+          <span>{damagedEntry.details}</span>
+        </div>
       </div>
 
-      {damagedEntry.damaged_items && damagedEntry.damaged_items.length > 0 && (
-        <>
-          <h3>Damaged Apparatus List</h3>
-          <table className="detail-table">
-            <thead>
-              <tr>
-                <th>Apparatus Name</th>
-                <th>Quantity</th>
-              </tr>
-            </thead>
-            <tbody>
-              {damagedEntry.damaged_items.map((item) => (
-                <tr key={item.id}>
-                  <td>{item.apparatus_name}</td>
-                  <td>{item.quantity}</td>
+      {damagedEntry.damaged_items?.length > 0 && (
+        <div className="items-section animate-fade">
+          <h3><FaTools /> Damaged Apparatus List</h3>
+          <div className="card no-padding">
+            <table className="detail-table">
+              <thead>
+                <tr>
+                  <th>Apparatus Name</th>
+                  <th>Quantity Broken</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </>
+              </thead>
+              <tbody>
+                {damagedEntry.damaged_items.map(it => (
+                  <tr key={it.id}>
+                    <td className="item-name">{it.apparatus_name}</td>
+                    <td><span className="qty-badge">{it.quantity} pcs</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {isStoreKeeper && (
+        <div className="delete-action-box">
+          <div className="delete-text">
+            <h4><FaExclamationTriangle /> Admin Actions</h4>
+            <p>Removing this record will add the damaged quantities back to the available inventory.</p>
+          </div>
+          <button className="btn-delete-danger" onClick={handleDelete} disabled={deleting}>
+            <FaTrash /> {deleting ? 'Reverting...' : 'Delete Incident Report'}
+          </button>
+        </div>
       )}
     </div>
   );

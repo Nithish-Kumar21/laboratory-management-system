@@ -23,6 +23,11 @@ class AvailableChemicalViewSet(viewsets.ModelViewSet):
     permission_classes = [InventoryPermission]
     http_method_names = ['get', 'patch', 'head', 'options']
 
+    @action(detail=False, methods=['get'])
+    def names(self, request):
+        names = AvailableChemical.objects.values_list('chemical_name', flat=True).distinct().order_by('chemical_name')
+        return Response(list(names))
+
 class AvailableApparatusViewSet(viewsets.ModelViewSet):
     """
     API endpoint for viewing and updating available apparatus.
@@ -31,6 +36,11 @@ class AvailableApparatusViewSet(viewsets.ModelViewSet):
     serializer_class = AvailableApparatusSerializer
     permission_classes = [InventoryPermission]
     http_method_names = ['get', 'patch', 'head', 'options']
+
+    @action(detail=False, methods=['get'])
+    def names(self, request):
+        names = AvailableApparatus.objects.values_list('apparatus_name', flat=True).distinct().order_by('apparatus_name')
+        return Response(list(names))
 
 class LowStockChemicalViewSet(viewsets.ReadOnlyModelViewSet):
     """

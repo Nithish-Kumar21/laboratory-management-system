@@ -1,6 +1,6 @@
 .low-stock-toast {
     position: fixed;
-    top: 20px;
+    bottom: 20px;
     right: 20px;
     background: #fff;
     border-left: 6px solid #e74c3c;
@@ -15,16 +15,48 @@
 }
 
 .toast-icon {
-    background: #fadbd8;
+    background: linear-gradient(135deg, #ffd7d7 0%, #fadbd8 100%);
     color: #e74c3c;
-    width: 40px;
-    height: 40px;
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
+    font-size: 1.3rem;
     flex-shrink: 0;
+    box-shadow: 0 4px 10px rgba(231, 76, 60, 0.2);
+    animation: ring 2s infinite ease-in-out;
+}
+
+@keyframes ring {
+    0% {
+        transform: rotate(0);
+    }
+
+    10% {
+        transform: rotate(15deg);
+    }
+
+    20% {
+        transform: rotate(-15deg);
+    }
+
+    30% {
+        transform: rotate(10deg);
+    }
+
+    40% {
+        transform: rotate(-10deg);
+    }
+
+    50% {
+        transform: rotate(0);
+    }
+
+    100% {
+        transform: rotate(0);
+    }
 }
 
 .toast-message {

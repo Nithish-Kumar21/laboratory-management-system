@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { FaLock, FaKey, FaShieldAlt, FaExclamationTriangle, FaCheckCircle, FaArrowLeft } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
+import './ChangePassword.css';
 
 const ChangePassword = () => {
   const [oldPassword, setOldPassword] = useState('');
@@ -22,7 +24,6 @@ const ChangePassword = () => {
     setError('');
     setSuccess('');
 
-    // Validation
     if (newPassword !== confirmPassword) {
       setError('New passwords do not match');
       return;
@@ -34,7 +35,6 @@ const ChangePassword = () => {
     }
 
     setLoading(true);
-
     try {
       await api.post('/users/change-password/', {
         old_password: oldPassword,
@@ -42,7 +42,6 @@ const ChangePassword = () => {
         confirm_password: confirmPassword,
       });
 
-      // Update user in context to remove password_must_change flag
       const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
       storedUser.password_must_change = false;
       updateUser(storedUser);
@@ -53,31 +52,14 @@ const ChangePassword = () => {
       }, 1500);
     } catch (err) {
       const errorData = err.response?.data;
-      console.error('Change password error:', errorData);
       if (errorData) {
-        if (typeof errorData === 'string') {
-          setError(errorData);
-        } else if (errorData.error) {
-          setError(errorData.error);
-        } else if (errorData.old_password) {
-          setError(`Old Password: ${errorData.old_password[0]}`);
-        } else if (errorData.new_password) {
-          setError(`New Password: ${errorData.new_password[0]}`);
-        } else if (errorData.confirm_password) {
-          setError(`Confirm Password: ${errorData.confirm_password[0]}`);
-        } else {
-          // Handle other field errors or fallback
-          const firstEntry = Object.entries(errorData)[0];
-          if (firstEntry) {
-            const [field, messages] = firstEntry;
-            const message = Array.isArray(messages) ? messages[0] : messages;
-            setError(`${field}: ${message}`);
-          } else {
-            setError('Failed to change password');
-          }
-        }
+        if (typeof errorData === 'string') setError(errorData);
+        else if (errorData.error) setError(errorData.error);
+        else if (errorData.old_password) setError(`Old Password: ${errorData.old_password[0]}`);
+        else if (errorData.new_password) setError(`New Password: ${errorData.new_password[0]}`);
+        else setError('Failed to change password. Please check your entries.');
       } else {
-        setError('Failed to change password');
+        setError('Network error. Please try again.');
       }
     } finally {
       setLoading(false);
@@ -85,68 +67,103 @@ const ChangePassword = () => {
   };
 
   return (
-    <div style={{ padding: '50px', backgroundColor: 'white', minHeight: '100vh', color: 'black' }}>
-      <h1>Change Password Page</h1>
-      <p>If you see this, the component is rendering.</p>
-
-      {error && <div style={styles.error}>{error}</div>}
-      {success && <div style={styles.success}>{success}</div>}
-
-      <form onSubmit={handleSubmit} style={styles.form}>
-        <div style={styles.formGroup}>
-          <label style={styles.label}>Current Password</label>
-          <input
-            type="password"
-            value={oldPassword}
-            onChange={(e) => setOldPassword(e.target.value)}
-            required
-            style={styles.input}
-            disabled={loading}
-            autoFocus
-          />
+    <div className="change-password-container animate-fade">
+      <div className="change-password-card animate-up">
+        <div className="change-password-header">
+          <div className="change-password-icon-box">
+            <FaShieldAlt />
+          </div>
+          <h1>Security Update</h1>
+          {isForced ? (
+            <p>For your security, you must update your temporary password before proceeding.</p>
+          ) : (
+            <p>Change your account password to keep your laboratory data secure.</p>
+          )}
         </div>
 
-        <div style={styles.formGroup}>
-          <label style={styles.label}>New Password</label>
-          <input
-            type="password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            required
-            style={styles.input}
-            disabled={loading}
-            minLength="8"
-          />
-        </div>
-
-        <div style={styles.formGroup}>
-          <label style={styles.label}>Confirm New Password</label>
-          <input
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-            style={styles.input}
-            disabled={loading}
-            minLength="8"
-          />
-        </div>
-
-        <button type="submit" style={styles.button} disabled={loading}>
-          {loading ? 'Changing...' : 'Change Password'}
-        </button>
-
-        {!isForced && (
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            style={styles.cancelButton}
-            disabled={loading}
-          >
-            Cancel
-          </button>
+        {error && (
+          <div className="alert-box alert-error">
+            <FaExclamationTriangle /> {error}
+          </div>
         )}
-      </form>
+        {success && (
+          <div className="alert-box alert-success">
+            <FaCheckCircle /> {success}
+          </div>
+        )}
+        {isForced && !error && (
+          <div className="alert-box alert-warning">
+            <FaLock /> Password update required.
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="change-password-form">
+          <div className="input-group">
+            <label><FaKey /> Current Password</label>
+            <div className="input-with-icon">
+              <FaLock className="field-icon" />
+              <input
+                type="password"
+                value={oldPassword}
+                onChange={(e) => setOldPassword(e.target.value)}
+                required
+                placeholder="Enter current password"
+                disabled={loading}
+                autoFocus
+              />
+            </div>
+          </div>
+
+          <div className="input-group">
+            <label><FaShieldAlt /> New Password</label>
+            <div className="input-with-icon">
+              <FaLock className="field-icon" />
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+                placeholder="At least 8 characters"
+                disabled={loading}
+                minLength="8"
+              />
+            </div>
+          </div>
+
+          <div className="input-group">
+            <label><FaCheckCircle /> Confirm New Password</label>
+            <div className="input-with-icon">
+              <FaLock className="field-icon" />
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                placeholder="Repeat new password"
+                disabled={loading}
+                minLength="8"
+              />
+            </div>
+          </div>
+
+          <div className="change-password-actions">
+            <button type="submit" className="btn-primary" disabled={loading}>
+              {loading ? 'Processing...' : 'Update Password'}
+            </button>
+
+            {!isForced && (
+              <button
+                type="button"
+                onClick={() => navigate(-1)}
+                className="btn-secondary"
+                disabled={loading}
+              >
+                <FaArrowLeft style={{ marginRight: '8px' }} /> Back to Profile
+              </button>
+            )}
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

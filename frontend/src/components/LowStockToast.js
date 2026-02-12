@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { FaExclamationTriangle, FaTimes } from 'react-icons/fa';
+import { FaBell, FaTimes } from 'react-icons/fa';
 import api from '../utils/api';
 import './LowStockToast.css';
 
@@ -76,7 +76,7 @@ function LowStockToast() {
     return (
         <div className="low-stock-toast animate-slide-in">
             <div className="toast-icon">
-                <FaExclamationTriangle />
+                <FaBell />
             </div>
             <div className="toast-message">
                 <strong>Low Stock Warning</strong>

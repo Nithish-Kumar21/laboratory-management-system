@@ -68,10 +68,11 @@ function LowStockAlert({ activeTab }) {
     <div className="low-stock-alert">
       <div className="alert-header" onClick={() => setIsExpanded(!isExpanded)}>
         <span className="alert-title">
-          ⚠️ Low Stock Alert - {currentLowStock.length} item(s) need reordering
+          <span className="alert-icon-ring"></span>
+          Low Stock Warning - {currentLowStock.length} item(s) need attention
         </span>
         <button className="alert-toggle">
-          {isExpanded ? <FaChevronUp /> : <FaChevronDown />}
+          {isExpanded ? 'Hide Details' : 'View Items'}
         </button>
       </div>
 
@@ -83,14 +84,14 @@ function LowStockAlert({ activeTab }) {
                 {activeTab === 'chemical' ? (
                   <>
                     <th>Chemical Name</th>
-                    <th>Current Quantity (mL)</th>
-                    <th>Reorder Level (mL)</th>
+                    <th>Stock (mL)</th>
+                    <th>Minimum</th>
                   </>
                 ) : (
                   <>
                     <th>Apparatus Name</th>
-                    <th>Current Quantity (pieces)</th>
-                    <th>Reorder Level</th>
+                    <th>Stock (pcs)</th>
+                    <th>Minimum</th>
                   </>
                 )}
               </tr>
@@ -101,13 +102,13 @@ function LowStockAlert({ activeTab }) {
                   {activeTab === 'chemical' ? (
                     <>
                       <td>{item.chemical_name}</td>
-                      <td>{item.current_quantity_ml}</td>
+                      <td><span className="qty-pill">{item.current_quantity_ml}</span></td>
                       <td>{item.reorder_level}</td>
                     </>
                   ) : (
                     <>
                       <td>{item.apparatus_name}</td>
-                      <td>{item.current_quantity_pieces}</td>
+                      <td><span className="qty-pill">{item.current_quantity_pieces}</span></td>
                       <td>{item.reorder_level}</td>
                     </>
                   )}

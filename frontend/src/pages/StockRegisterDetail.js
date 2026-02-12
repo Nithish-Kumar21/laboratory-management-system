@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { FaArrowLeft, FaTrash } from 'react-icons/fa';
+import { FaArrowLeft, FaTrash, FaFlask, FaBoxes, FaExclamationTriangle } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import './StockRegisterDetail.css';
@@ -15,142 +15,121 @@ function StockRegisterDetail() {
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    if (isStaff) {
-      navigate('/');
-      return;
-    }
-    api
-      .get(`/stock_register/${id}/`)
-      .then((response) => {
-        setStockRegister(response.data);
-        setLoading(false);
-      })
-      .catch((error) => {
-        setError(error.response?.data?.error || error.message || 'Network response was not ok');
-        setLoading(false);
-      });
+    if (isStaff) { navigate('/'); return; }
+    api.get(`/stock_register/${id}/`)
+      .then(res => { setStockRegister(res.data); setLoading(false); })
+      .catch(err => { setError(err.response?.data?.error || 'Load failed'); setLoading(false); });
   }, [id, isStaff, navigate]);
 
-  const handleBack = () => {
-    navigate('/stock-register');
-  };
-
   const handleDelete = async () => {
-    if (
-      window.confirm(
-        'Are you sure you want to delete this entry? This will also update the inventory quantities.'
-      )
-    ) {
+    if (window.confirm('Delete this entry? Inventory will be reverted.')) {
       setDeleting(true);
       try {
         await api.delete(`/stock_register/${id}/`);
         window.dispatchEvent(new Event('inventory-updated'));
-        localStorage.setItem('inventory-updated', Date.now());
-        alert('Entry deleted successfully');
         navigate('/stock-register');
       } catch (err) {
-        alert('Failed to delete entry: ' + (err.response?.data?.error || err.message));
-      } finally {
-        setDeleting(false);
-      }
+        alert(err.response?.data?.error || 'Delete failed');
+      } finally { setDeleting(false); }
     }
   };
 
-  if (loading) return <div className="loading-message">Loading details...</div>;
-  if (error) return <div className="error-message">Error: {error}</div>;
-  if (!stockRegister) return <div className="error-message">No data found</div>;
+  if (loading) return <div className="loading-spinner"></div>;
+  if (error) return <div className="error-message">{error}</div>;
+  if (!stockRegister) return null;
 
   return (
-    <div className="stock-detail-page">
-      <button className="back-button" onClick={handleBack} title="Back to Stock Register">
-        <FaArrowLeft />
-      </button>
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2>Stock Register</h2>
-        {isStoreKeeper && (
-          <button
-            className="delete-entry-btn"
-            onClick={handleDelete}
-            disabled={deleting}
-            style={{
-              backgroundColor: '#dc3545',
-              color: 'white',
-              border: 'none',
-              padding: '8px 15px',
-              borderRadius: '4px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              cursor: 'pointer',
-            }}
-          >
-            <FaTrash /> {deleting ? 'Deleting...' : 'Delete Entry'}
-          </button>
-        )}
+    <div className="stock-detail-page animate-up">
+      <div className="detail-header">
+        <button className="back-button" onClick={() => navigate('/stock-register')}>
+          <FaArrowLeft />
+        </button>
+        <div className="header-title-box">
+          <h2>Stock Entry Details</h2>
+          <p>REF: {stockRegister.invoice_number}</p>
+        </div>
       </div>
 
-      <div className="entry-info">
-        <p>
-          <strong>Invoice No.:</strong> {stockRegister.invoice_number}
-        </p>
-        <p>
-          <strong>Date of Entry:</strong> {stockRegister.date}
-        </p>
-        <p>
-          <strong>Supplier:</strong> {stockRegister.supplier_name}
-        </p>
+      <div className="detail-info-grid">
+        <div className="info-card card">
+          <label>Invoice Number</label>
+          <span>{stockRegister.invoice_number}</span>
+        </div>
+        <div className="info-card card">
+          <label>Date of Entry</label>
+          <span>{stockRegister.date}</span>
+        </div>
+        <div className="info-card card">
+          <label>Supplier / Vendor</label>
+          <span>{stockRegister.supplier_name || 'Generic Vendor'}</span>
+        </div>
       </div>
 
-      {stockRegister.chemical_items && stockRegister.chemical_items.length > 0 && (
-        <div className="items-section">
-          <h3>Chemical List</h3>
-          <table className="detail-table">
-            <thead>
-              <tr>
-                <th>Chemical Name</th>
-                <th>Quantity (mL)</th>
-                <th>Rate</th>
-                <th>Make</th>
-              </tr>
-            </thead>
-            <tbody>
-              {stockRegister.chemical_items.map((item) => (
-                <tr key={item.id}>
-                  <td>{item.chemical_name}</td>
-                  <td>{item.quantity_ml}</td>
-                  <td>{item.rate}</td>
-                  <td>{item.make}</td>
+      {stockRegister.chemical_items?.length > 0 && (
+        <div className="items-section animate-fade">
+          <h3><FaFlask /> Chemical Acquisitions</h3>
+          <div className="card no-padding">
+            <table className="detail-table">
+              <thead>
+                <tr>
+                  <th>Chemical Name</th>
+                  <th>Quantity</th>
+                  <th>Rate</th>
+                  <th>Make</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {stockRegister.chemical_items.map(it => (
+                  <tr key={it.id}>
+                    <td className="item-name">{it.chemical_name}</td>
+                    <td><span className="qty-badge">{it.quantity_ml} ml</span></td>
+                    <td>₹{it.rate}</td>
+                    <td>{it.make}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
-      {stockRegister.apparatus_items && stockRegister.apparatus_items.length > 0 && (
-        <div className="items-section">
-          <h3>Apparatus List</h3>
-          <table className="detail-table">
-            <thead>
-              <tr>
-                <th>Apparatus Name</th>
-                <th>Quantity (pieces)</th>
-                <th>Rate</th>
-                <th>Make</th>
-              </tr>
-            </thead>
-            <tbody>
-              {stockRegister.apparatus_items.map((item) => (
-                <tr key={item.id}>
-                  <td>{item.apparatus_name}</td>
-                  <td>{item.quantity_pieces}</td>
-                  <td>{item.rate}</td>
-                  <td>{item.make}</td>
+      {stockRegister.apparatus_items?.length > 0 && (
+        <div className="items-section animate-fade" style={{ animationDelay: '0.1s' }}>
+          <h3><FaBoxes /> Apparatus Acquisitions</h3>
+          <div className="card no-padding">
+            <table className="detail-table">
+              <thead>
+                <tr>
+                  <th>Apparatus Name</th>
+                  <th>Quantity</th>
+                  <th>Rate</th>
+                  <th>Make</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {stockRegister.apparatus_items.map(it => (
+                  <tr key={it.id}>
+                    <td className="item-name">{it.apparatus_name}</td>
+                    <td><span className="qty-badge">{it.quantity_pieces} pcs</span></td>
+                    <td>₹{it.rate}</td>
+                    <td>{it.make}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {isStoreKeeper && (
+        <div className="delete-action-box">
+          <div className="delete-text">
+            <h4><FaExclamationTriangle /> Danger Zone</h4>
+            <p>Deleting this record will irreversibly undo inventory adjustments.</p>
+          </div>
+          <button className="btn-delete-danger" onClick={handleDelete} disabled={deleting}>
+            <FaTrash /> {deleting ? 'Removing...' : 'Permanently Delete Entry'}
+          </button>
         </div>
       )}
     </div>
@@ -158,4 +137,3 @@ function StockRegisterDetail() {
 }
 
 export default StockRegisterDetail;
-

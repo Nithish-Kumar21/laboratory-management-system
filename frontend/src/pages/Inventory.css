@@ -1,258 +1,132 @@
 .inventory-page {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 30px 20px;
-  animation: fadeIn 0.5s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.inventory-page h2 {
-  color: #1b5e20;
-  font-size: 2rem;
-  font-weight: 800;
-  margin-bottom: 30px;
-  position: relative;
-  display: inline-block;
-  font-family: 'Outfit', sans-serif;
-}
-
-.inventory-page h2::after {
-  content: '';
-  position: absolute;
-  bottom: -8px;
-  left: 0;
-  width: 50px;
-  height: 4px;
-  background: #2e7d32;
-  border-radius: 2px;
-}
-
-.inventory-tabs {
   display: flex;
-  gap: 10px;
-  margin-bottom: 25px;
-  background: #f1f8e9;
-  padding: 6px;
-  border-radius: 12px;
-  width: fit-content;
+  flex-direction: column;
+  gap: 16px;
 }
 
-.tab-btn {
-  font-family: 'Inter', sans-serif;
-  padding: 12px 28px;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: #558b2f;
-  cursor: pointer;
-  font-size: 1rem;
-  font-weight: 600;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+.page-header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 8px;
+  margin-bottom: 8px;
 }
 
-.tab-btn--active {
-  background: #2e7d32;
-  color: white;
-  box-shadow: 0 4px 12px rgba(46, 125, 50, 0.25);
+.page-title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.02em;
 }
 
-.tab-btn:hover:not(.tab-btn--active) {
-  background: rgba(46, 125, 50, 0.08);
-}
-
-.inventory-content {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
-  border: 1px solid #e8f5e9;
-}
-
-/* Responsive Table Wrapper */
-.table-responsive {
-  width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.minimal-table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 600px;
-}
-
-.minimal-table th,
-.minimal-table td {
-  padding: 16px 20px;
-  text-align: left;
+.page-subtitle {
+  color: var(--text-muted);
   font-size: 0.95rem;
-  border-bottom: 1px solid #f0f4f0;
+  margin-top: 4px;
 }
 
-.minimal-table th {
-  background: #f9fbf9;
-  color: #2e7d32;
+.status-badge {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.8rem;
   font-weight: 700;
   text-transform: uppercase;
-  font-size: 0.85rem;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.5px;
 }
 
-.minimal-table tr:hover {
-  background: #f1f8e9;
+.status-badge.success {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.2);
 }
 
-.tab-dot {
+.status-badge.warning {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+/* Tabs Styling */
+.inventory-tabs {
+  display: flex;
+  position: relative;
+  background-color: var(--bg-surface);
+  padding: 6px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  width: fit-content;
+  min-width: 300px;
+}
+
+.tab-item {
+  flex: 1;
+  padding: 10px 24px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: color 0.3s ease;
+}
+
+.tab-item.active {
+  color: var(--primary);
+}
+
+.tab-slider {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  width: calc(50% - 6px);
+  background-color: var(--primary-glow);
+  border: 1px solid var(--primary);
+  border-radius: calc(var(--radius-lg) - 4px);
+  transition: left 0.3s ease;
+}
+
+.tab-indicator {
   width: 8px;
   height: 8px;
-  background-color: #ef5350;
   border-radius: 50%;
-  box-shadow: 0 0 8px rgba(239, 83, 80, 0.6);
-  animation: pulse-tab-dot 1.5s infinite;
 }
 
-@keyframes pulse-tab-dot {
-  0% {
-    transform: scale(1);
-    opacity: 1;
-  }
-
-  50% {
-    transform: scale(1.4);
-    opacity: 0.6;
-  }
-
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
+.tab-indicator.warning {
+  background-color: #f59e0b;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
 }
 
-/* ============================================ */
-/* DARK MODE STYLES */
-/* ============================================ */
-
-:root.dark-mode .inventory-page h2 {
-  color: #81c784;
+.inventory-alert-box {
+  display: flex;
+  flex-direction: column;
 }
 
-:root.dark-mode .inventory-tabs {
-  background: #263238;
+.inventory-card {
+  padding: 0;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  min-height: 400px;
 }
 
-:root.dark-mode .tab-btn {
-  color: #a5d6a7;
+.table-responsive {
+  padding: 10px 25px 25px 25px;
 }
 
-:root.dark-mode .tab-btn--active {
-  background: #388e3c;
-  color: #ffffff;
-}
 
-:root.dark-mode .inventory-content {
-  background: #1e1e1e;
-  border-color: #333;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-}
-
-:root.dark-mode .minimal-table th {
-  background: #262626;
-  color: #81c784;
-  border-bottom-color: #333;
-}
-
-:root.dark-mode .minimal-table td {
-  color: #cfd8dc;
-  border-bottom-color: #2c2c2c;
-}
-
-:root.dark-mode .minimal-table tr:hover {
-  background: #2c2c2c;
-}
-
-/* ============================================ */
-/* RESPONSIVE BREAKPOINTS */
-/* ============================================ */
 
 @media (max-width: 768px) {
-  .inventory-page {
-    padding: 20px 15px;
-  }
-
-  .inventory-page h2 {
-    font-size: 1.6rem;
-    margin-bottom: 20px;
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
   }
 
   .inventory-tabs {
     width: 100%;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 5px;
   }
-
-  .tab-btn {
-    padding: 10px 15px;
-    justify-content: center;
-    font-size: 0.9rem;
-  }
-
-  .minimal-table th,
-  .minimal-table td {
-    padding: 12px 10px;
-    font-size: 0.85rem;
-    white-space: nowrap;
-    /* Keep it clean and use scrolling */
-  }
-
-  .minimal-table {
-    min-width: 600px;
-    /* Force it to stay a table */
-  }
-
-  .minimal-table th {
-    font-size: 0.75rem;
-    font-weight: 800;
-  }
-
-  .table-responsive {
-    overflow-x: auto;
-    border-radius: 12px;
-    background: white;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-  }
-
-  .hide-mobile {
-    display: none;
-  }
-}
-
-@media (max-width: 480px) {
-  .inventory-page h2 {
-    font-size: 1.4rem;
-  }
-}
-
-:root.dark-mode .minimal-table tr {
-  background: #1e1e1e;
-  border-color: #333;
-}
-
-:root.dark-mode .minimal-table td:first-child {
-  color: #81c784;
-  border-bottom-color: #2c2c2c;
 }
