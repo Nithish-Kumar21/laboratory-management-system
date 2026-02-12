@@ -107,10 +107,12 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
 
     chemicalItems.forEach((item, index) => {
       if (!item.chemical_name.trim()) newErrors[`chemical_name_${index}`] = 'Chemical name is required';
-      if (!item.quantity_ml || parseFloat(item.quantity_ml) <= 0) {
+      const qtyMl = parseFloat(item.quantity_ml);
+      if (!item.quantity_ml || isNaN(qtyMl) || qtyMl <= 0) {
         newErrors[`chemical_quantity_${index}`] = 'Quantity must be greater than 0';
       }
-      if (!item.rate || parseFloat(item.rate) <= 0) {
+      const rateMl = parseFloat(item.rate);
+      if (!item.rate || isNaN(rateMl) || rateMl <= 0) {
         newErrors[`chemical_rate_${index}`] = 'Rate must be greater than 0';
       }
       if (!item.make.trim()) newErrors[`chemical_make_${index}`] = 'Make is required';
@@ -118,10 +120,12 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
 
     apparatusItems.forEach((item, index) => {
       if (!item.apparatus_name.trim()) newErrors[`apparatus_name_${index}`] = 'Apparatus name is required';
-      if (!item.quantity_pieces || parseInt(item.quantity_pieces) <= 0) {
+      const qtyPieces = parseInt(item.quantity_pieces, 10);
+      if (!item.quantity_pieces || isNaN(qtyPieces) || qtyPieces <= 0) {
         newErrors[`apparatus_quantity_${index}`] = 'Quantity must be greater than 0';
       }
-      if (!item.rate || parseFloat(item.rate) <= 0) {
+      const rateApp = parseFloat(item.rate);
+      if (!item.rate || isNaN(rateApp) || rateApp <= 0) {
         newErrors[`apparatus_rate_${index}`] = 'Rate must be greater than 0';
       }
       if (!item.make.trim()) newErrors[`apparatus_make_${index}`] = 'Make is required';
@@ -138,20 +142,20 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
     setSubmitting(true);
 
     const payload = {
-      invoice_number: formData.invoice_number,
+      invoice_number: formData.invoice_number.trim(),
       date: formData.date,
-      supplier_name: formData.supplier_name,
+      supplier_name: formData.supplier_name.trim(),
       chemical_items: chemicalItems.map((item) => ({
-        chemical_name: item.chemical_name,
+        chemical_name: item.chemical_name.trim(),
         quantity_ml: parseFloat(item.quantity_ml),
         rate: parseFloat(item.rate),
-        make: item.make,
+        make: item.make.trim(),
       })),
       apparatus_items: apparatusItems.map((item) => ({
-        apparatus_name: item.apparatus_name,
-        quantity_pieces: parseInt(item.quantity_pieces),
+        apparatus_name: item.apparatus_name.trim(),
+        quantity_pieces: parseInt(item.quantity_pieces, 10),
         rate: parseFloat(item.rate),
-        make: item.make,
+        make: item.make.trim(),
       })),
     };
 
@@ -163,15 +167,48 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
       resetForm();
       onClose();
     } catch (error) {
+      console.error('Stock register submit error:', error?.response?.data || error);
       const errorData = error.response?.data;
+      const status = error.response?.status;
       let errorMessage = 'Failed to create entry. ';
 
-      if (errorData) {
-        if (errorData.invoice_number) errorMessage += errorData.invoice_number[0];
-        else if (errorData.error) errorMessage += errorData.error;
-        else errorMessage += JSON.stringify(errorData);
+      if (status === 403) {
+        errorMessage = 'You do not have permission to add stock register entries.';
+      } else if (status === 401) {
+        errorMessage = 'Please log in again. Your session may have expired.';
+      } else if (status === 404) {
+        errorMessage = 'API endpoint not found. Is the backend server running at http://127.0.0.1:8000?';
+      } else if (errorData) {
+        const parts = [];
+        if (errorData.invoice_number) parts.push(Array.isArray(errorData.invoice_number) ? errorData.invoice_number[0] : errorData.invoice_number);
+        if (errorData.error) parts.push(errorData.error);
+        if (errorData.detail) parts.push(typeof errorData.detail === 'string' ? errorData.detail : JSON.stringify(errorData.detail));
+        if (errorData.chemical_items) {
+          errorData.chemical_items.forEach((err, i) => {
+            Object.entries(err || {}).forEach(([k, v]) => {
+              if (Array.isArray(v)) parts.push(`Chemical ${i + 1} (${k}): ${v[0]}`);
+              else if (v) parts.push(`Chemical ${i + 1}: ${v}`);
+            });
+          });
+        }
+        if (errorData.apparatus_items) {
+          errorData.apparatus_items.forEach((err, i) => {
+            Object.entries(err || {}).forEach(([k, v]) => {
+              if (Array.isArray(v)) parts.push(`Apparatus ${i + 1} (${k}): ${v[0]}`);
+              else if (v) parts.push(`Apparatus ${i + 1}: ${v}`);
+            });
+          });
+        }
+        const nonFieldKeys = ['invoice_number', 'error', 'detail', 'chemical_items', 'apparatus_items'];
+        Object.entries(errorData).forEach(([k, v]) => {
+          if (!nonFieldKeys.includes(k) && v) {
+            const msg = Array.isArray(v) ? v[0] : (typeof v === 'string' ? v : JSON.stringify(v));
+            parts.push(`${k}: ${msg}`);
+          }
+        });
+        errorMessage += parts.length > 0 ? parts.join('. ') : JSON.stringify(errorData);
       } else {
-        errorMessage += error.message || 'Unknown error occurred.';
+        errorMessage += error.message || 'Unknown error occurred. Check the console for details.';
       }
 
       setErrors({ submit: errorMessage });
