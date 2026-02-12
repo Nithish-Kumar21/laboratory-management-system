@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'inventory',
     'stock_register',
     'damaged_entry',
+    'stock_request',
 ]
 
 MIDDLEWARE = [

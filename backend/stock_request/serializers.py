@@ -82,6 +82,9 @@ class StockRequestDetailSerializer(serializers.ModelSerializer):
     apparatus_items = ApparatusItemSerializer(many=True, read_only=True)
     requested_by_name = serializers.CharField(source='requested_by.full_name', read_only=True)
     requested_by_id = serializers.CharField(source='requested_by.employee_id', read_only=True)
+    reviewed_by_name = serializers.CharField(
+        source='reviewed_by.full_name', read_only=True, default=None
+    )
 
     class Meta:
         model = StockRequest
@@ -89,5 +92,5 @@ class StockRequestDetailSerializer(serializers.ModelSerializer):
             'id', 'status', 'reason', 'created_at',
             'requested_by_name', 'requested_by_id',
             'chemical_items', 'apparatus_items',
-            'reviewed_at', 'reviewed_by'
+            'reviewed_at', 'reviewed_by_name'
         ]
