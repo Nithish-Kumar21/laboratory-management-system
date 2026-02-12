@@ -178,25 +178,37 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
         errorMessage = 'Please log in again. Your session may have expired.';
       } else if (status === 404) {
         errorMessage = 'API endpoint not found. Is the backend server running at http://127.0.0.1:8000?';
-      } else if (errorData) {
+      } else if (status === 500) {
+        errorMessage = 'Server error: Database or backend issue. Run migrations (python manage.py migrate) and ensure the database file is not locked.';
+      } else if (typeof errorData === 'string') {
+        if (errorData.includes('OperationalError') || errorData.includes('database')) {
+          errorMessage = 'Database error. Run migrations: python manage.py migrate';
+        } else {
+          errorMessage = 'Server returned an error. Check the backend terminal for details.';
+        }
+      } else if (errorData && typeof errorData === 'object' && !Array.isArray(errorData)) {
         const parts = [];
         if (errorData.invoice_number) parts.push(Array.isArray(errorData.invoice_number) ? errorData.invoice_number[0] : errorData.invoice_number);
         if (errorData.error) parts.push(errorData.error);
         if (errorData.detail) parts.push(typeof errorData.detail === 'string' ? errorData.detail : JSON.stringify(errorData.detail));
-        if (errorData.chemical_items) {
+        if (errorData.chemical_items && Array.isArray(errorData.chemical_items)) {
           errorData.chemical_items.forEach((err, i) => {
-            Object.entries(err || {}).forEach(([k, v]) => {
-              if (Array.isArray(v)) parts.push(`Chemical ${i + 1} (${k}): ${v[0]}`);
-              else if (v) parts.push(`Chemical ${i + 1}: ${v}`);
-            });
+            if (err && typeof err === 'object') {
+              Object.entries(err).forEach(([k, v]) => {
+                if (Array.isArray(v)) parts.push(`Chemical ${i + 1} (${k}): ${v[0]}`);
+                else if (v) parts.push(`Chemical ${i + 1}: ${v}`);
+              });
+            }
           });
         }
-        if (errorData.apparatus_items) {
+        if (errorData.apparatus_items && Array.isArray(errorData.apparatus_items)) {
           errorData.apparatus_items.forEach((err, i) => {
-            Object.entries(err || {}).forEach(([k, v]) => {
-              if (Array.isArray(v)) parts.push(`Apparatus ${i + 1} (${k}): ${v[0]}`);
-              else if (v) parts.push(`Apparatus ${i + 1}: ${v}`);
-            });
+            if (err && typeof err === 'object') {
+              Object.entries(err).forEach(([k, v]) => {
+                if (Array.isArray(v)) parts.push(`Apparatus ${i + 1} (${k}): ${v[0]}`);
+                else if (v) parts.push(`Apparatus ${i + 1}: ${v}`);
+              });
+            }
           });
         }
         const nonFieldKeys = ['invoice_number', 'error', 'detail', 'chemical_items', 'apparatus_items'];
