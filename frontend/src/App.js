@@ -23,6 +23,7 @@ import StockRegisterDetail from './pages/StockRegisterDetail';
 import IssueRegister from './pages/IssueRegister';
 import DamagedEntry from './pages/DamagedEntry';
 import DamagedEntryDetail from './pages/DamagedEntryDetail';
+import StockRequest from './pages/StockRequest';
 import Settings from './components/Settings';
 import LowStockToast from './components/LowStockToast';
 
@@ -76,6 +77,7 @@ function AppContent() {
                     <Route path="issue-register" element={<IssueRegister />} />
                     <Route path="damaged-entry" element={<DamagedEntry />} />
                     <Route path="damaged-entry/:id" element={<DamagedEntryDetail />} />
+                    <Route path="requests" element={<StockRequest />} />
 
                     {/* Catch all - redirect to home */}
                     <Route path="*" element={<Navigate to="/" replace />} />

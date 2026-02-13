@@ -134,6 +134,15 @@ function Sidebar() {
           </>
         )}
 
+        {/* Requests - Visible to everyone, but content might differ */}
+        <Link
+          to="/requests"
+          className={location.pathname === '/requests' ? 'active' : ''}
+        >
+          <FaClipboardList className="nav-icon" />
+          {!isCollapsed && <span>Requests</span>}
+        </Link>
+
         {isAdmin && (
           <Link to="/users" className={location.pathname === '/users' ? 'active' : ''}>
             <FaUsers className="nav-icon" />

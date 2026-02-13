@@ -40,7 +40,8 @@ class StockRequestCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = StockRequest
-        fields = ['reason', 'chemical_items', 'apparatus_items']
+        fields = ['id', 'reason', 'chemical_items', 'apparatus_items', 'status', 'created_at']
+        read_only_fields = ['id', 'status', 'created_at']
 
     def validate(self, data):
         chemicals = data.get('chemical_items', [])
