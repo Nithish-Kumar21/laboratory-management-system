@@ -7,7 +7,7 @@ class StockRegister(models.Model):
 
     class Meta:
         db_table = 'stock_register'
-        managed = False  # ✅ Indexes managed by PostgreSQL, not Django
+        managed = True
 
     def __str__(self):
         return f"{self.invoice_number} - {self.supplier_name}"
@@ -27,7 +27,7 @@ class ChemicalItem(models.Model):
 
     class Meta:
         db_table = 'chemical_item'
-        managed = False  # ✅ Indexes managed by PostgreSQL
+        managed = True
 
     def __str__(self):
         return f"{self.chemical_name} ({self.make}) - {self.stock_register.invoice_number}"
@@ -47,7 +47,7 @@ class ApparatusItem(models.Model):
 
     class Meta:
         db_table = 'apparatus_item'
-        managed = False  # ✅ Indexes managed by PostgreSQL
+        managed = True
 
     def __str__(self):
         return f"{self.apparatus_name} ({self.make}) - {self.stock_register.invoice_number}"

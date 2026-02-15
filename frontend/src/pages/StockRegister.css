@@ -1,152 +1,152 @@
 .stock-register-page {
-    padding: 20px 0;
+  padding: 20px 0;
 }
 
 .search-bar-container {
-    display: flex;
-    align-items: center;
-    padding: 15px 25px;
-    margin-bottom: 30px;
-    gap: 15px;
-    background: var(--bg-surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
+  display: flex;
+  align-items: center;
+  padding: 15px 25px;
+  margin-bottom: 30px;
+  gap: 15px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
 }
 
 .search-icon {
-    color: var(--text-muted);
-    font-size: 1.2rem;
+  color: var(--text-muted);
+  font-size: 1.2rem;
 }
 
 .search-input {
-    border: none;
-    background: transparent;
-    color: var(--text-main);
-    font-size: 1rem;
-    width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--text-main);
+  font-size: 1rem;
+  width: 100%;
 }
 
 .search-input:focus {
-    outline: none;
+  outline: none;
 }
 
 .stock-list-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .stock-card {
-    display: flex;
-    align-items: center;
-    padding: 16px 24px;
-    gap: 24px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 16px 24px;
+  gap: 24px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  border: 1px solid var(--border);
 }
 
 .stock-card:hover {
-    transform: translateX(8px);
-    border-color: var(--primary);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  transform: translateX(8px);
+  border-color: var(--primary);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
 
 .stock-card-icon {
-    width: 56px;
-    height: 56px;
-    background: var(--primary-glow);
-    color: var(--primary);
-    border-radius: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
+  width: 56px;
+  height: 56px;
+  background: var(--primary-glow);
+  color: var(--primary);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
 }
 
 .stock-card-content {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 40px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 40px;
 }
 
 .stock-card-main-info {
-    flex: 1;
+  flex: 1;
 }
 
 .stock-card-main-info h3 {
-    font-size: 1.1rem;
-    font-weight: 700;
-    margin-bottom: 4px;
-    color: var(--text-main);
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: var(--text-main);
 }
 
 .stock-card-main-info .supplier {
-    color: var(--text-muted);
-    font-size: 0.9rem;
-    margin-bottom: 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-bottom: 0;
 }
 
 .stock-card-details {
-    display: flex;
-    gap: 30px;
+  display: flex;
+  gap: 30px;
 }
 
 .stock-card-details span {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.9rem;
-    color: var(--text-muted);
-    white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  white-space: nowrap;
 }
 
 .stock-card-actions {
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
 }
 
 .btn-view {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    background: var(--primary-glow);
-    color: var(--primary);
-    border: 1px solid var(--primary);
-    border-radius: 8px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--primary-glow);
+  color: var(--primary);
+  border: 1px solid var(--primary);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .btn-view:hover {
-    background: var(--primary);
-    color: white;
+  background: var(--primary);
+  color: white;
 }
 
 .arrow-icon {
-    color: var(--border);
-    transition: var(--transition);
+  color: var(--border);
+  transition: var(--transition);
 }
 
 .stock-card:hover .arrow-icon {
-    color: var(--primary);
-    transform: translateX(5px);
+  color: var(--primary);
+  transform: translateX(5px);
 }
 
 .empty-state {
-    grid-column: 1 / -1;
-    text-align: center;
-    padding: 100px 0;
-    color: var(--text-muted);
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 100px 0;
+  color: var(--text-muted);
 }
 
 @media (max-width: 768px) {
-    .stock-list-grid {
-        grid-template-columns: 1fr;
-    }
+  .stock-list-grid {
+    grid-template-columns: 1fr;
+  }
 }

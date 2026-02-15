@@ -28,15 +28,22 @@ class LoginView(APIView):
         password = request.data.get('password')
         
         if not username or not password:
-            return Response({'error': 'Username and password required'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Employee ID and password are required'}, status=status.HTTP_400_BAD_REQUEST)
         
-        user = authenticate(username=username, password=password)
+        # Check account lockout before authenticate (custom backend returns None for locked too)
+        try:
+            u = User.objects.get(employee_id=username)
+            if u.is_account_locked():
+                return Response({'error': 'Account is temporarily locked. Try again later.'}, status=status.HTTP_403_FORBIDDEN)
+            if not u.is_active:
+                return Response({'error': 'Account is inactive'}, status=status.HTTP_403_FORBIDDEN)
+        except User.DoesNotExist:
+            pass
+        
+        user = authenticate(request, username=username, password=password)
         
         if user is None:
-            return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
-        
-        if not user.is_active:
-            return Response({'error': 'Account is inactive'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'error': 'Invalid employee ID or password'}, status=status.HTTP_401_UNAUTHORIZED)
         
         # Generate JWT tokens
         refresh = RefreshToken.for_user(user)

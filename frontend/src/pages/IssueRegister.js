@@ -9,7 +9,7 @@ function IssueRegister() {
   const [issueEntries, setIssueEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const { isStaff } = useAuth();
+  const { isStaff, isStoreKeeper, isAdmin } = useAuth();
 
   useEffect(() => {
     if (isStaff) {
@@ -35,9 +35,11 @@ function IssueRegister() {
           <h1 className="page-title">Issue Register</h1>
           <p className="page-subtitle">Track items currently issued to staff and students for active sessions.</p>
         </div>
-        <button className="btn-primary" onClick={() => { }}>
-          <FaPlus /> Issue New Item
-        </button>
+        {(isStoreKeeper || isAdmin) && (
+          <button className="btn-primary" onClick={() => { }}>
+            <FaPlus /> Issue New Item
+          </button>
+        )}
       </div>
 
       {/* Table actions with search removed per user request */}
@@ -84,7 +86,9 @@ function IssueRegister() {
                       </span>
                     </td>
                     <td>
-                      <button className="btn-text" onClick={() => { }}>Manage Return</button>
+                      {(isStoreKeeper || isAdmin) && (
+                        <button className="btn-text" onClick={() => { }}>Manage Return</button>
+                      )}
                     </td>
                   </tr>
                 ))}

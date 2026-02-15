@@ -1,0 +1,328 @@
+.request-detail-page {
+    padding: 40px;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.detail-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 30px;
+    position: relative;
+}
+
+.header-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 12px;
+}
+
+.delete-request-btn,
+.edit-request-btn {
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 0.9rem;
+}
+
+.delete-request-btn {
+    background: rgba(239, 68, 68, 0.05);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.edit-request-btn {
+    background: rgba(63, 81, 181, 0.05);
+    color: #3f51b5;
+    border: 1px solid rgba(63, 81, 181, 0.2);
+}
+
+.delete-request-btn:hover:not(:disabled) {
+    background: #ef4444;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+
+.edit-request-btn:hover:not(:disabled) {
+    background: #3f51b5;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(63, 81, 181, 0.2);
+}
+
+.delete-request-btn:disabled,
+.edit-request-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.back-button {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    color: #1a1a1a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1.2rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.back-button:hover {
+    background: #3f51b5;
+    color: white;
+    border-color: #3f51b5;
+    transform: translateX(-6px);
+}
+
+.header-title-box h2 {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #1a1a1a;
+    margin: 0;
+}
+
+.header-title-box p {
+    color: #3f51b5;
+    font-weight: 700;
+    font-size: 0.95rem;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.detail-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.info-card {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-left: 4px solid #3f51b5;
+}
+
+.info-card label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.info-card span {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+.info-card small {
+    color: #888;
+    font-size: 0.8rem;
+}
+
+.detail-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.detail-status.status-pending {
+    background: #eef2ff;
+    color: #3f51b5;
+    border: 1px solid rgba(63, 81, 181, 0.2);
+}
+
+.detail-status.status-draft {
+    background: #eef2ff;
+    color: #4f46e5;
+    border: 1px solid rgba(79, 70, 229, 0.2);
+}
+
+.detail-status.status-success {
+    background: #e6f7ed;
+    color: #27ae60;
+    border: 1px solid rgba(39, 174, 96, 0.2);
+}
+
+.detail-status.status-danger {
+    background: #fdf2f2;
+    color: #e53935;
+    border: 1px solid rgba(229, 57, 51, 0.2);
+}
+
+.items-section {
+    margin-top: 40px;
+}
+
+.items-section h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.items-section h3 svg {
+    color: #3f51b5;
+}
+
+.no-padding {
+    padding: 0;
+    overflow: hidden;
+}
+
+.detail-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.detail-table th {
+    padding: 16px 24px;
+    background: #f8f9fa;
+    color: #666;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    text-align: left;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.detail-table td {
+    padding: 18px 24px;
+    border-bottom: 1px solid #f0f0f0;
+    color: #333;
+}
+
+.detail-table .item-name {
+    font-weight: 700;
+    color: #3f51b5;
+}
+
+.detail-table .qty-badge {
+    background: #f0f3ff;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-weight: 700;
+    color: #3f51b5;
+    border: 1px solid #d0d7f7;
+}
+
+.reason-section {
+    margin-top: 32px;
+    padding: 24px;
+}
+
+.reason-section h3 {
+    font-size: 1rem;
+    color: #666;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.reason-text {
+    line-height: 1.6;
+    color: #333;
+}
+
+.review-info-section p {
+    margin: 5px 0 0 0;
+    color: var(--text-main);
+}
+
+.approval-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+    padding: 20px;
+    background: var(--bg-surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    justify-content: flex-end;
+}
+
+.btn-approve,
+.btn-reject {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 24px;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 1rem;
+    border: none;
+}
+
+.btn-approve {
+    background: #10b981;
+    color: white;
+}
+
+.btn-approve:hover:not(:disabled) {
+    background: #059669;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.btn-reject {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.btn-reject:hover:not(:disabled) {
+    background: #ef4444;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.btn-approve:disabled,
+.btn-reject:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.review-info-section {
+    margin-top: 24px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-top: 1px solid #eee;
+}
+
+.review-info-section label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #888;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 4px;
+}

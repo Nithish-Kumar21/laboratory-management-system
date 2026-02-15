@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import StockRegister, ChemicalItem, ApparatusItem
+from inventory.models import AvailableChemical, AvailableApparatus
 
 
 
@@ -107,12 +108,24 @@ class StockRegisterCreateSerializer(serializers.ModelSerializer):
         # Create stock register entry (now includes supplier_name)
         stock_register = StockRegister.objects.create(**validated_data)
         
-        # Create chemical items (now includes make)
+        # Create chemical items and add to inventory
         for item_data in chemical_items_data:
-            ChemicalItem.objects.create(stock_register=stock_register, **item_data)
+            chem_item = ChemicalItem.objects.create(stock_register=stock_register, **item_data)
+            available, _ = AvailableChemical.objects.get_or_create(
+                chemical_name=chem_item.chemical_name,
+                defaults={'available_quantity_ml': 0, 'reorder_level': 0}
+            )
+            available.available_quantity_ml += chem_item.quantity_ml
+            available.save()
         
-        # Create apparatus items (now includes make)
+        # Create apparatus items and add to inventory
         for item_data in apparatus_items_data:
-            ApparatusItem.objects.create(stock_register=stock_register, **item_data)
+            app_item = ApparatusItem.objects.create(stock_register=stock_register, **item_data)
+            available, _ = AvailableApparatus.objects.get_or_create(
+                apparatus_name=app_item.apparatus_name,
+                defaults={'available_quantity_pieces': 0, 'reorder_level': 0}
+            )
+            available.available_quantity_pieces += app_item.quantity_pieces
+            available.save()
         
         return stock_register

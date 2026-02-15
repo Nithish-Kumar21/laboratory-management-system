@@ -7,7 +7,8 @@ import {
   FaFileAlt,
   FaHome,
   FaUsers,
-  FaSignOutAlt
+  FaSignOutAlt,
+  FaEdit
 } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
@@ -54,28 +55,28 @@ const Sidebar = ({ isOpen, isMobile }) => {
       path: '/inventory',
       label: 'Inventory',
       icon: FaBoxes,
-      show: true,
+      show: !isAdmin, // Hide for admin
       color: 'var(--dept-inventory)'
     },
     {
       path: '/stock-register',
       label: 'Stock Register',
       icon: FaClipboardList,
-      show: !isStaff,
+      show: !isStaff && !isAdmin, // Hide for staff and admin
       color: 'var(--dept-stock)'
     },
     {
       path: '/issue-register',
       label: 'Issue Register',
       icon: FaFileAlt,
-      show: !isStaff,
+      show: !isStaff && !isAdmin, // Hide for staff and admin
       color: 'var(--dept-issue)'
     },
     {
       path: '/damaged-entry',
       label: 'Damaged Entry',
       icon: FaExclamationTriangle,
-      show: !isStaff,
+      show: !isStaff && !isAdmin, // Hide for staff and admin
       color: 'var(--dept-damaged)'
     },
     {
@@ -84,6 +85,20 @@ const Sidebar = ({ isOpen, isMobile }) => {
       icon: FaUsers,
       show: isAdmin,
       color: 'var(--dept-users)'
+    },
+    {
+      path: '/requests',
+      label: 'Chemical Requests',
+      icon: FaClipboardList,
+      show: !isAdmin, // Hide for admin
+      color: '#3498db'
+    },
+    {
+      path: '/drafts',
+      label: 'My Drafts',
+      icon: FaEdit,
+      show: isStaff,
+      color: '#9b59b6'
     },
   ];
 

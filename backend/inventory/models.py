@@ -8,7 +8,7 @@ class AvailableChemical(models.Model):
 
     class Meta:
         db_table = 'available_chemicals'
-        managed = False
+        managed = True
 
     def __str__(self):
         return self.chemical_name
@@ -22,7 +22,7 @@ class AvailableApparatus(models.Model):
 
     class Meta:
         db_table = 'available_apparatus'
-        managed = False
+        managed = True
 
     def __str__(self):
         return self.apparatus_name
@@ -36,7 +36,7 @@ class LowStockChemical(models.Model):
 
     class Meta:
         db_table = 'low_stock_chemicals'
-        managed = False
+        managed = True
 
     def __str__(self):
         return f"{self.chemical_name} (Low Stock)"
@@ -50,7 +50,7 @@ class LowStockApparatus(models.Model):
 
     class Meta:
         db_table = 'low_stock_apparatus'
-        managed = False
+        managed = True
 
     def __str__(self):
         return f"{self.apparatus_name} (Low Stock)"

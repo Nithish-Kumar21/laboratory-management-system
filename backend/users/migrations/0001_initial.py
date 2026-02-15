@@ -84,7 +84,6 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'user_account',
-                'managed': False,
             },
         ),
         migrations.CreateModel(
@@ -103,7 +102,6 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'password_reset_token',
-                'managed': False,
             },
         ),
     ]

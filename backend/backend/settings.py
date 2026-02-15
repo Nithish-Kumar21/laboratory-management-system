@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'inventory',
     'stock_register',
     'damaged_entry',
+    'stock_request',
 ]
 
 MIDDLEWARE = [
@@ -67,12 +68,8 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # Database
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'postgres',
-        'USER': 'postgres',
-        'PASSWORD': 'postgres',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
@@ -113,6 +110,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3001",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -175,8 +174,11 @@ SIMPLE_JWT = {
 # Custom User Model
 AUTH_USER_MODEL = 'users.User'
 
+# Use custom backend so login uses employee_id and lockout works
+AUTHENTICATION_BACKENDS = ['users.backends.EmployeeIDBackend']
+
 # Frontend URL for password reset links
-FRONTEND_URL = "http://localhost:3000"
+FRONTEND_URL = "http://localhost:3001"
 DEFAULT_FROM_EMAIL = "noreply@labmanagement.com"
 
 # Logging Configuration
