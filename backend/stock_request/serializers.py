@@ -60,6 +60,33 @@ class StockRequestCreateSerializer(serializers.ModelSerializer):
         return stock_request
 
 
+class StockRequestUpdateSerializer(StockRequestCreateSerializer):
+    def update(self, instance, validated_data):
+        chemical_items_data = validated_data.pop('chemical_items', None)
+        
+        # Update fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        
+        # If status is changing to pending (re-request), clear reviewer info
+        if validated_data.get('status') == 'pending':
+            instance.reviewed_by = None
+            instance.reviewed_at = None
+            instance.viewed_by_requester = False
+            
+        instance.save()
+
+        # Update chemicals if provided
+        if chemical_items_data is not None:
+            # Delete old items
+            instance.chemical_items.all().delete()
+            # Create new items
+            for item_data in chemical_items_data:
+                StockRequestChemicalItem.objects.create(stock_request=instance, **item_data)
+
+        return instance
+
+
 class StockRequestListSerializer(serializers.ModelSerializer):
     requested_by_name = serializers.CharField(source='requested_by.full_name', read_only=True)
     requested_by_id = serializers.CharField(source='requested_by.employee_id', read_only=True)

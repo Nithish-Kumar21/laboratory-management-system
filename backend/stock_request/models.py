@@ -50,13 +50,23 @@ class StockRequest(models.Model):
             from django.utils import timezone
             current_year = timezone.now().year
             
-            # Get the count of requests created this year
-            year_requests = StockRequest.objects.filter(
+            # Get the last request created this year to determine the next sequence number
+            last_request = StockRequest.objects.filter(
                 created_at__year=current_year
-            ).count()
+            ).order_by('-request_id').first()
             
-            # Generate sequential number (starting from 1)
-            sequence_number = year_requests + 1
+            if last_request and last_request.request_id:
+                try:
+                    # Extract sequence number from REQ-YYYY-XXX
+                    last_sequence = int(last_request.request_id.split('-')[-1])
+                    sequence_number = last_sequence + 1
+                except (ValueError, IndexError):
+                    # Fallback if ID format is unexpected
+                    sequence_number = StockRequest.objects.filter(
+                        created_at__year=current_year
+                    ).count() + 1
+            else:
+                sequence_number = 1
             
             # Format: REQ-YYYY-XXX (e.g., REQ-2026-001, REQ-2026-123)
             self.request_id = f"REQ-{current_year}-{sequence_number:03d}"

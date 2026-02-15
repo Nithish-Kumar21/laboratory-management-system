@@ -21,7 +21,7 @@ class StockRequestPermission(permissions.BasePermission):
 
         # Staff: create, list own, delete own
         if role == 'staff':
-            return request.method in ['GET', 'POST', 'DELETE']
+            return request.method in ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
 
         # HOD: list, retrieve, accept, reject (custom actions), cannot delete
         if role == 'hod':

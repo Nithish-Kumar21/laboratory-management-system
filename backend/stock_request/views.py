@@ -7,6 +7,7 @@ from .serializers import (
     StockRequestCreateSerializer,
     StockRequestListSerializer,
     StockRequestDetailSerializer,
+    StockRequestUpdateSerializer,
 )
 from .permissions import StockRequestPermission
 
@@ -18,6 +19,8 @@ class StockRequestViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == 'create':
             return StockRequestCreateSerializer
+        elif self.action in ['update', 'partial_update']:
+            return StockRequestUpdateSerializer
         elif self.action in ['retrieve', 'accept', 'reject']:
             return StockRequestDetailSerializer
         return StockRequestListSerializer
