@@ -17,7 +17,7 @@ function StockRegister() {
 
   const fetchRegisters = async () => {
     try {
-      const res = await api.get('/stock_register/');
+      const res = await api.get('stock_register/');
       setStockRegisters(Array.isArray(res.data) ? res.data : res.data.results || []);
     } catch (err) {
       console.error('Error fetching stock registers:', err);
@@ -75,6 +75,8 @@ function StockRegister() {
             <div
               key={register.id}
               className="stock-card card animate-fade"
+              onClick={() => navigate(`/stock-register/${register.id}`)}
+              style={{ cursor: 'pointer' }}
             >
               <div className="stock-card-icon">
                 <FaFileInvoice />

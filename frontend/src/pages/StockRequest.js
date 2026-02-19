@@ -13,6 +13,8 @@ import {
     FaIdCard,
     FaFileInvoice,
     FaChevronRight,
+    FaClipboardList,
+    FaExclamationTriangle,
 } from 'react-icons/fa';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
@@ -21,14 +23,17 @@ import './StockRequest.css';
 import '../styles/App.css';
 
 const StockRequest = ({ draftsOnly = false }) => {
-    const { isStaff, isHOD } = useAuth();
+    const { isStaff, isHOD, isStoreKeeper } = useAuth();
     const navigate = useNavigate();
 
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] = useState(draftsOnly ? 'draft' : (isHOD ? 'pending' : 'all'));
+    const [statusFilter, setStatusFilter] = useState(
+        draftsOnly ? 'draft' : (isHOD ? 'pending' : (isStoreKeeper ? 'accepted' : 'all'))
+    );
+    const [hasActiveRequest, setHasActiveRequest] = useState(false);
 
     useEffect(() => {
         fetchRequests();
@@ -37,12 +42,12 @@ const StockRequest = ({ draftsOnly = false }) => {
     const fetchRequests = async () => {
         try {
             setLoading(true);
-            let url = '/stock_request/';
+            let url = 'stock_request/';
             const params = new URLSearchParams();
 
             if (draftsOnly) {
                 params.append('status', 'draft');
-            } else if (statusFilter !== 'all') {
+            } else {
                 params.append('status', statusFilter);
             }
 
@@ -54,6 +59,27 @@ const StockRequest = ({ draftsOnly = false }) => {
                 data = response.data;
             } else if (response.data.results && Array.isArray(response.data.results)) {
                 data = response.data.results;
+            }
+
+            // Calculate if any request is "active" (not completed and not rejected)
+            // Note: We use the full list for this check, but fetchRequests might be filtered.
+            // However, the backend for staff already returns all their requests.
+            // If the current view is status-filtered, we might miss the active one if it's not in the filter.
+            // So we should ideally fetch ALL once or check the data if statusFilter is 'all'.
+            // Actually, let's just use the current data if statusFilter is 'all', 
+            // but for reliability, if we are staff, we should check specifically.
+            if (isStaff) {
+                const active = data.some(r => r.status !== 'completed' && r.status !== 'rejected' && r.status !== 'draft');
+                // If the view is filtered, we might not see the active one.
+                // But the user usually stays on "All Status".
+                // To be safe, we can do a quick check if statusFilter is NOT 'all'
+                if (statusFilter !== 'all' && !active) {
+                    const allRes = await api.get('stock_request/');
+                    const allData = Array.isArray(allRes.data) ? allRes.data : allRes.data.results || [];
+                    setHasActiveRequest(allData.some(r => r.status !== 'completed' && r.status !== 'rejected' && r.status !== 'draft'));
+                } else {
+                    setHasActiveRequest(active);
+                }
             }
 
             // Strict Enforcement: If not in draftsOnly mode, ALWAYS filter out drafts
@@ -81,6 +107,12 @@ const StockRequest = ({ draftsOnly = false }) => {
         switch (status) {
             case 'accepted':
                 return <span className="status-badge-modern status-success"><FaCheckCircle /> Approved</span>;
+            case 'issued':
+                return <span className="status-badge-modern status-issued"><FaCheckCircle /> Issued</span>;
+            case 'reported':
+                return <span className="status-badge-modern status-reported"><FaClipboardList /> Reported</span>;
+            case 'completed':
+                return <span className="status-badge-modern status-completed"><FaCheckCircle /> Completed</span>;
             case 'rejected':
                 return <span className="status-badge-modern status-danger"><FaTimesCircle /> Rejected</span>;
             default:
@@ -115,9 +147,19 @@ const StockRequest = ({ draftsOnly = false }) => {
                     </div>
                 </div>
                 {isStaff && !draftsOnly && (
-                    <button className="btn-primary" onClick={() => setShowModal(true)}>
-                        <FaPlus /> New Request
-                    </button>
+                    <div className="header-actions">
+                        {hasActiveRequest && (
+                            <span className="active-request-warning">
+                                <FaExclamationTriangle /> You have an active request. New forms must be saved as drafts.
+                            </span>
+                        )}
+                        <button
+                            className="btn-primary"
+                            onClick={() => setShowModal(true)}
+                        >
+                            <FaPlus /> New Request
+                        </button>
+                    </div>
                 )}
             </div>
 
@@ -139,6 +181,9 @@ const StockRequest = ({ draftsOnly = false }) => {
                         <option value="all">All Status</option>
                         <option value="pending">Requested</option>
                         <option value="accepted">Approved</option>
+                        <option value="issued">Issued</option>
+                        <option value="reported">Reported</option>
+                        <option value="completed">Completed</option>
                         <option value="rejected">Rejected</option>
                     </select>
                 )}
@@ -149,7 +194,12 @@ const StockRequest = ({ draftsOnly = false }) => {
                     <div className="loading-spinner"></div>
                 ) : filteredRequests.length > 0 ? (
                     filteredRequests.map((req) => (
-                        <div key={req.id} className="stock-card card animate-fade">
+                        <div
+                            key={req.id}
+                            className="stock-card card animate-fade"
+                            onClick={() => navigate(`/requests/${req.id}`)}
+                            style={{ cursor: 'pointer' }}
+                        >
                             <div className="stock-card-icon">
                                 <FaFileInvoice />
                             </div>
@@ -160,7 +210,10 @@ const StockRequest = ({ draftsOnly = false }) => {
                                         <span className={`status-badge-compact ${req.status}`}>
                                             {req.status === 'pending' ? 'Requested' :
                                                 req.status === 'accepted' ? 'Approved' :
-                                                    req.status === 'draft' ? 'Drafted' : 'Rejected'}
+                                                    req.status === 'issued' ? 'Issued' :
+                                                        req.status === 'reported' ? 'Reported' :
+                                                            req.status === 'completed' ? 'Completed' :
+                                                                req.status === 'draft' ? 'Drafted' : 'Rejected'}
                                         </span>
                                     </div>
                                     <p className="supplier">{req.requested_by_name} • {req.class_name}</p>
@@ -195,6 +248,7 @@ const StockRequest = ({ draftsOnly = false }) => {
                 isOpen={showModal}
                 onClose={() => setShowModal(false)}
                 onSuccess={handleRequestSuccess}
+                hasActiveRequest={hasActiveRequest}
             />
         </div>
     );

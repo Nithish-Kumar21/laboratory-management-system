@@ -8,7 +8,7 @@ function ApparatusTable() {
 
   useEffect(() => {
     api
-      .get('/available_apparatus/')
+      .get('available_apparatus/')
       .then((response) => {
         setApparatus(
           Array.isArray(response.data) ? response.data : response.data.results || []

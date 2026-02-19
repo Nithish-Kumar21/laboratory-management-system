@@ -460,6 +460,21 @@ body {
   color: #f59e0b;
 }
 
+.status-issued {
+  background: rgba(2, 136, 209, 0.1);
+  color: #0288d1;
+}
+
+.status-reported {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+
+.status-completed {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
 .badge-status {
   padding: 6px 12px;
   border-radius: 8px;

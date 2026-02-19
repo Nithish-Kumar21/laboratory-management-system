@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://127.0.0.1:8000/api';
+const API_BASE_URL = 'http://127.0.0.1:8000/api/';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -13,10 +13,10 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     // Don't attach token for login requests
-    if (config.url === '/users/login/') {
-        return config;
+    if (config.url === 'users/login/') {
+      return config;
     }
-    
+
     const token = localStorage.getItem('access_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -34,8 +34,8 @@ api.interceptors.response.use(
 
     if (error.response?.status === 401 && !originalRequest._retry) {
       // If it was a login attempt that failed, don't retry, just fail
-      if (originalRequest.url === '/users/login/') {
-          return Promise.reject(error);
+      if (originalRequest.url === 'users/login/') {
+        return Promise.reject(error);
       }
 
       originalRequest._retry = true;
@@ -43,9 +43,9 @@ api.interceptors.response.use(
       try {
         const refreshToken = localStorage.getItem('refresh_token');
         if (!refreshToken) {
-            throw new Error('No refresh token available');
+          throw new Error('No refresh token available');
         }
-        
+
         const response = await axios.post(`${API_BASE_URL}/users/token/refresh/`, {
           refresh: refreshToken,
         });

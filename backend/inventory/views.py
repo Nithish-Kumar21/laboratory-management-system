@@ -23,6 +23,9 @@ class AvailableChemicalViewSet(viewsets.ModelViewSet):
     permission_classes = [InventoryPermission]
     http_method_names = ['get', 'patch', 'head', 'options']
 
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
     @action(detail=False, methods=['get'])
     def names(self, request):
         names = AvailableChemical.objects.values_list('chemical_name', flat=True).distinct().order_by('chemical_name')

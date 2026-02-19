@@ -27,7 +27,7 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
     useEffect(() => {
         if (isOpen) {
             setPosition({ x: 0, y: 0 });
-            api.get('/available_apparatus/names/')
+            api.get('available_apparatus/names/')
                 .then(res => setApparatusNames(Array.isArray(res.data) ? res.data : []))
                 .catch(err => console.error(err));
         }
@@ -165,7 +165,7 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
                     quantity: parseInt(it.quantity)
                 }))
             };
-            await api.post('/damaged_entry/', payload);
+            await api.post('damaged_entry/', payload);
             window.dispatchEvent(new Event('inventory-updated'));
             onSuccess();
             onClose();

@@ -14,8 +14,8 @@ function Inventory() {
   const checkLowStockStatus = async () => {
     try {
       const [chemRes, appRes] = await Promise.all([
-        api.get('/low_stock_chemicals/').catch(() => ({ data: [] })),
-        api.get('/low_stock_apparatus/').catch(() => ({ data: [] })),
+        api.get('low_stock_chemicals/').catch(() => ({ data: [] })),
+        api.get('low_stock_apparatus/').catch(() => ({ data: [] })),
       ]);
       const chemData = Array.isArray(chemRes.data) ? chemRes.data : chemRes.data.results || [];
       const appData = Array.isArray(appRes.data) ? appRes.data : appRes.data.results || [];

@@ -22,6 +22,7 @@ import Inventory from './pages/Inventory';
 import StockRegister from './pages/StockRegister';
 import StockRegisterDetail from './pages/StockRegisterDetail';
 import IssueRegister from './pages/IssueRegister';
+import IssueRegisterDetail from './pages/IssueRegisterDetail';
 import DamagedEntry from './pages/DamagedEntry';
 import DamagedEntryDetail from './pages/DamagedEntryDetail';
 import StockRequest from './pages/StockRequest';
@@ -102,6 +103,7 @@ function AppContent() {
                       <Route path="stock-register" element={<StockRegister />} />
                       <Route path="stock-register/:id" element={<StockRegisterDetail />} />
                       <Route path="issue-register" element={<IssueRegister />} />
+                      <Route path="issue-register/:id" element={<IssueRegisterDetail />} />
                       <Route path="damaged-entry" element={<DamagedEntry />} />
                       <Route path="damaged-entry/:id" element={<DamagedEntryDetail />} />
                       <Route path="requests" element={<StockRequest />} />

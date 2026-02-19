@@ -9,6 +9,9 @@ class StockRequest(models.Model):
         ('pending', 'Pending'),
         ('accepted', 'Accepted'),
         ('rejected', 'Rejected'),
+        ('issued', 'Issued'),
+        ('reported', 'Reported'),
+        ('completed', 'Completed'),
     ]
     
     CLASS_CHOICES = [
@@ -38,6 +41,16 @@ class StockRequest(models.Model):
         blank=True,
         related_name='reviewed_requests'
     )
+    issued_at = models.DateTimeField(null=True, blank=True)
+    issued_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='issued_requests'
+    )
+    reported_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
     viewed_by_requester = models.BooleanField(default=False)
 
     class Meta:
@@ -84,6 +97,7 @@ class StockRequestChemicalItem(models.Model):
     )
     chemical_name = models.CharField(max_length=64)
     quantity_ml = models.DecimalField(max_digits=10, decimal_places=2)
+    actual_used_quantity_ml = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
     class Meta:
         db_table = 'stock_request_chemical_item'
@@ -108,3 +122,48 @@ class StockRequestApparatusItem(models.Model):
 
     def __str__(self):
         return f"{self.apparatus_name} - {self.quantity_pieces} pcs"
+
+
+class IssueRegister(models.Model):
+    ir_id = models.AutoField(primary_key=True)
+    # Linking to my StockRequest instead of the legacy 'Requests' table if possible,
+    # or just leaving it for now. Actually, let's match inspectdb exactly for the table definition.
+    # But since I want to use it in my views, I'll define it so I can write to it.
+    staff_name = models.CharField(max_length=100)
+    class_field = models.CharField(db_column='class', max_length=50)
+    date = models.DateField()
+    status = models.CharField(max_length=20)
+
+    class Meta:
+        managed = False
+        db_table = 'issue_register'
+
+    def __str__(self):
+        return f"{self.ir_id} - {self.staff_name}"
+
+
+class IssueChemicals(models.Model):
+    ir = models.ForeignKey(IssueRegister, on_delete=models.CASCADE, related_name='chemicals')
+    chemical_name = models.CharField(max_length=64)
+    issued_quantity = models.DecimalField(max_digits=10, decimal_places=2)
+    actual_usage = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    # 'returned' and 'additional' are GENERATED ALWAYS in the DB.
+    # We omit them from the model fields to avoid Django trying to INSERT into them.
+    @property
+    def returned(self):
+        if self.actual_usage is not None and self.issued_quantity >= self.actual_usage:
+            return self.issued_quantity - self.actual_usage
+        return 0
+
+    @property
+    def additional(self):
+        if self.actual_usage is not None and self.actual_usage > self.issued_quantity:
+            return self.actual_usage - self.issued_quantity
+        return 0
+
+    class Meta:
+        managed = False
+        db_table = 'issue_chemicals'
+
+    def __str__(self):
+        return f"{self.chemical_name}"

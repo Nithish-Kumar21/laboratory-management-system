@@ -1,99 +1,105 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaPlus, FaHandHolding, FaUserTie } from 'react-icons/fa';
-import { useAuth } from '../context/AuthContext';
+import { FaSearch, FaFileInvoice, FaCalendarAlt, FaChevronRight, FaClipboardList, FaUser, FaGraduationCap } from 'react-icons/fa';
 import api from '../utils/api';
-import './IssueRegister.css';
+import './StockRegister.css'; // Reuse the grid and card styles
 
 function IssueRegister() {
-  const [issueEntries, setIssueEntries] = useState([]);
+  const [issueRegisters, setIssueRegisters] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
   const navigate = useNavigate();
-  const { isStaff, isStoreKeeper, isAdmin } = useAuth();
+
+  const fetchRegisters = async () => {
+    try {
+      const res = await api.get('/issue_register/');
+      setIssueRegisters(Array.isArray(res.data) ? res.data : res.data.results || []);
+    } catch (err) {
+      console.error('Error fetching issue register:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    if (isStaff) {
-      navigate('/');
-      return;
-    }
+    fetchRegisters();
+  }, []);
 
-    setLoading(true);
-    // Mimicking fetch - replace with real API when ready
-    setTimeout(() => {
-      setIssueEntries([
-        { id: 1, staff: 'Dr. Ramesh', items: 'Sulfuric Acid, Beakers', date: '2026-02-05', status: 'Active' },
-        { id: 2, staff: 'Asst. Prof. Sneha', items: 'Microscope, Slides', date: '2026-02-04', status: 'Returned' },
-      ]);
-      setLoading(false);
-    }, 600);
-  }, [isStaff, navigate]);
+  const filtered = (issueRegisters || []).filter(r =>
+  (r.staff_name?.toLowerCase().includes(search.toLowerCase()) ||
+    r.class_field?.toLowerCase().includes(search.toLowerCase()) ||
+    String(r.ir_id || '').includes(search))
+  );
 
   return (
-    <div className="issue-register-page animate-up">
+    <div className="stock-register-page dept-issue animate-up">
       <div className="page-header">
-        <div className="header-info">
-          <h1 className="page-title">Issue Register</h1>
-          <p className="page-subtitle">Track items currently issued to staff and students for active sessions.</p>
-        </div>
-        {(isStoreKeeper || isAdmin) && (
-          <button className="btn-primary" onClick={() => { }}>
-            <FaPlus /> Issue New Item
-          </button>
-        )}
-      </div>
-
-      {/* Table actions with search removed per user request */}
-      <div className="table-actions animate-fade">
-        <div className="action-buttons">
-          <span className="info-text">Showing latest issues</span>
+        <div className="dept-title-container">
+          <div className="dept-icon-box" style={{ color: 'var(--dept-issue)' }}>
+            <FaClipboardList />
+          </div>
+          <div>
+            <h1 className="page-title">Issue Register</h1>
+            <p className="page-subtitle">Historical log of all chemical issues and actual usage.</p>
+          </div>
         </div>
       </div>
 
-      <div className="table-card card animate-fade">
+      <div className="search-bar-container card">
+        <FaSearch className="search-icon" />
+        <input
+          type="text"
+          placeholder="Search by ID, Staff, or Class..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="search-input"
+        />
+      </div>
+
+      <div className="stock-list-grid">
         {loading ? (
-          <div className="loading-state"><div className="spinner"></div><p>Syncing issue logs...</p></div>
+          <div className="loading-spinner"></div>
+        ) : filtered.length > 0 ? (
+          filtered.map((register) => (
+            <div
+              key={register.ir_id}
+              className="stock-card card animate-fade"
+              onClick={() => navigate(`/issue-register/${register.ir_id}`)}
+              style={{ cursor: 'pointer' }}
+            >
+              <div className="stock-card-icon">
+                <FaFileInvoice />
+              </div>
+              <div className="stock-card-content">
+                <div className="stock-card-main-info">
+                  <h3>IR-#{register.ir_id}</h3>
+                  <p className="supplier"><FaUser /> {register.staff_name}</p>
+                  <p className="class-info" style={{ fontSize: '0.85rem', color: '#666' }}>
+                    <FaGraduationCap /> {register.class_field}
+                  </p>
+                </div>
+                <div className="stock-card-details">
+                  <span className="date">
+                    <FaCalendarAlt /> {register.date}
+                  </span>
+                  <span className="items-count">
+                    {register.chemicals?.length || 0} Chemicals
+                  </span>
+                </div>
+              </div>
+              <div className="stock-card-actions">
+                <button
+                  className="btn-view"
+                  onClick={() => navigate(`/issue-register/${register.ir_id}`)}
+                >
+                  View Details <FaChevronRight />
+                </button>
+              </div>
+            </div>
+          ))
         ) : (
-          <div className="table-container">
-            <table className="premium-table">
-              <thead>
-                <tr>
-                  <th>Issued To</th>
-                  <th>Items / Quantities</th>
-                  <th>Date Issued</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {issueEntries.map((entry) => (
-                  <tr key={entry.id} className="table-row-hover">
-                    <td>
-                      <div className="staff-info">
-                        <FaUserTie className="row-icon" />
-                        {entry.staff}
-                      </div>
-                    </td>
-                    <td>
-                      <div className="item-details">
-                        <FaHandHolding className="row-icon-small" />
-                        {entry.items}
-                      </div>
-                    </td>
-                    <td>{entry.date}</td>
-                    <td>
-                      <span className={`status-tag ${entry.status === 'Active' ? 'amber' : 'emerald'}`}>
-                        {entry.status}
-                      </span>
-                    </td>
-                    <td>
-                      {(isStoreKeeper || isAdmin) && (
-                        <button className="btn-text" onClick={() => { }}>Manage Return</button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="empty-state">
+            <p>No matching issue register entries found.</p>
           </div>
         )}
       </div>

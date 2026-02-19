@@ -8,7 +8,7 @@ function ChemicalTable() {
 
   useEffect(() => {
     api
-      .get('/available_chemicals/')
+      .get('available_chemicals/')
       .then((response) => {
         setChemicals(
           Array.isArray(response.data) ? response.data : response.data.results || []

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import StockRequest, StockRequestChemicalItem, StockRequestApparatusItem
+from .models import StockRequest, StockRequestChemicalItem, StockRequestApparatusItem, IssueRegister, IssueChemicals
 
 
 class ChemicalItemWriteSerializer(serializers.Serializer):
@@ -15,7 +15,7 @@ class ChemicalItemWriteSerializer(serializers.Serializer):
 class ChemicalItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = StockRequestChemicalItem
-        fields = ['id', 'chemical_name', 'quantity_ml']
+        fields = ['id', 'chemical_name', 'quantity_ml', 'actual_used_quantity_ml']
 
 
 class StockRequestCreateSerializer(serializers.ModelSerializer):
@@ -37,14 +37,15 @@ class StockRequestCreateSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         
         if status == 'pending' and user.role == 'staff':
-            # Check for existing pending request
-            has_pending = StockRequest.objects.filter(
+            # Check for ANY active request (not just pending)
+            active_statuses = ['pending', 'accepted', 'issued', 'reported']
+            has_active = StockRequest.objects.filter(
                 requested_by=user, 
-                status='pending'
+                status__in=active_statuses
             ).exists()
-            if has_pending:
+            if has_active:
                 raise serializers.ValidationError(
-                    "You already have a pending request. Please wait for it to be reviewed or save this as a draft."
+                    "You already have an active request. Complete your previous request first, or save this as a draft."
                 )
         
         return data
@@ -97,7 +98,8 @@ class StockRequestListSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'request_id', 'class_name', 'status', 'reason', 'created_at',
             'requested_by_name', 'requested_by_id',
-            'chemical_items'
+            'chemical_items',
+            'issued_at', 'reported_at', 'completed_at',
         ]
 
 
@@ -108,6 +110,9 @@ class StockRequestDetailSerializer(serializers.ModelSerializer):
     reviewed_by_name = serializers.CharField(
         source='reviewed_by.full_name', read_only=True, default=None
     )
+    issued_by_name = serializers.CharField(
+        source='issued_by.full_name', read_only=True, default=None
+    )
 
     class Meta:
         model = StockRequest
@@ -115,5 +120,45 @@ class StockRequestDetailSerializer(serializers.ModelSerializer):
             'id', 'request_id', 'class_name', 'status', 'reason', 'created_at', 'date',
             'requested_by_name', 'requested_by_id', 'requested_by',
             'chemical_items',
-            'reviewed_at', 'reviewed_by_name'
+            'reviewed_at', 'reviewed_by_name',
+            'issued_at', 'issued_by_name',
+            'reported_at', 'completed_at',
         ]
+
+
+class UsageReportItemSerializer(serializers.Serializer):
+    """Serializer for each item's actual usage report."""
+    id = serializers.IntegerField()
+    actual_used_quantity_ml = serializers.DecimalField(max_digits=10, decimal_places=2)
+
+    def validate_actual_used_quantity_ml(self, value):
+        if value < 0:
+            raise serializers.ValidationError("Actual used quantity cannot be negative")
+        return value
+
+
+class UsageReportSerializer(serializers.Serializer):
+    """Serializer for staff usage reporting."""
+    items = UsageReportItemSerializer(many=True)
+
+    def validate_items(self, value):
+        if not value:
+            raise serializers.ValidationError("At least one item must be reported")
+        return value
+
+
+class IssueChemicalsSerializer(serializers.ModelSerializer):
+    returned = serializers.ReadOnlyField()
+    additional = serializers.ReadOnlyField()
+
+    class Meta:
+        model = IssueChemicals
+        fields = ['id', 'chemical_name', 'issued_quantity', 'actual_usage', 'returned', 'additional']
+
+
+class IssueRegisterSerializer(serializers.ModelSerializer):
+    chemicals = IssueChemicalsSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = IssueRegister
+        fields = ['ir_id', 'staff_name', 'class_field', 'date', 'status', 'chemicals']

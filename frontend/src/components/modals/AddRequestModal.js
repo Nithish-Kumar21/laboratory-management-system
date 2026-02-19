@@ -48,7 +48,7 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
       }
 
       api
-        .get('/available_chemicals/')
+        .get('available_chemicals/')
         .then((res) => {
           const data = Array.isArray(res.data) ? res.data : res.data.results || [];
           setAvailableChemicals(data);
@@ -103,7 +103,7 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
     const payload = {
       class_name: formData.class_name,
       reason: formData.reason.trim(),
-      status: (directSubmit && (!hasActiveRequest || (editData && editData.status !== 'pending'))) ? 'pending' : 'draft',
+      status: (directSubmit && !hasActiveRequest) ? 'pending' : 'draft',
       chemical_items: chemicalItems.map((item) => ({
         chemical_name: item.chemical_name.trim(),
         quantity_ml: parseFloat(item.quantity_ml),
@@ -112,9 +112,9 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
 
     try {
       if (editData) {
-        await api.put(`/stock_request/${editData.id}/`, payload);
+        await api.put(`stock_request/${editData.id}/`, payload);
       } else {
-        await api.post('/stock_request/', payload);
+        await api.post('stock_request/', payload);
       }
       onSuccess();
       setFormData({
@@ -275,7 +275,7 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
               Cancel
             </button>
             <div className="footer-actions">
-              {!hasActiveRequest && !editData && (
+              {!editData && (
                 <button
                   type="button"
                   className="btn-draft"
@@ -287,17 +287,15 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
               )}
               <button
                 type="submit"
-                className="btn-primary-action"
-                disabled={submitting}
+                className={`btn-primary-action ${(hasActiveRequest && !editData) ? 'disabled' : ''}`}
+                disabled={submitting || (hasActiveRequest && !editData)}
                 onClick={(e) => handleAction(e, true)}
               >
                 {submitting
                   ? 'Processing...'
                   : editData
                     ? 'Update Request'
-                    : hasActiveRequest
-                      ? 'Save as Draft (Queue)'
-                      : 'Submit for Approval'}
+                    : 'Submit for Approval'}
               </button>
             </div>
           </div>

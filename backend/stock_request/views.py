@@ -2,14 +2,17 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils import timezone
-from .models import StockRequest
+from .models import StockRequest, StockRequestChemicalItem, IssueRegister, IssueChemicals
 from .serializers import (
     StockRequestCreateSerializer,
     StockRequestListSerializer,
     StockRequestDetailSerializer,
     StockRequestUpdateSerializer,
+    UsageReportSerializer,
+    IssueRegisterSerializer,
 )
 from .permissions import StockRequestPermission
+from inventory.models import AvailableChemical
 
 
 class StockRequestViewSet(viewsets.ModelViewSet):
@@ -37,40 +40,183 @@ class StockRequestViewSet(viewsets.ModelViewSet):
         role = self.request.user.role
         status_filter = self.request.query_params.get('status')
         
+        # 1. Handle Drafts specifically (always personal)
+        if status_filter == 'draft':
+            return qs.filter(requested_by=self.request.user, status='draft')
+
+        # 2. Role-based Filtering
         if role == 'staff':
+            # Staff: "THEIR forms only"
             qs = qs.filter(requested_by=self.request.user)
-            if status_filter in ('draft', 'pending', 'accepted', 'rejected'):
-                return qs.filter(status=status_filter)
-            # Default for staff LIST: hide drafts (unless retrieve action)
             if self.action == 'list':
-                return qs.exclude(status='draft')
+                if status_filter == 'all' or not status_filter:
+                    return qs.exclude(status='draft')
+                return qs.filter(status=status_filter)
             return qs
         
         if role == 'hod':
-            # HOD can also have their own drafts
-            if status_filter == 'draft':
-                return qs.filter(requested_by=self.request.user, status='draft')
-
             if self.action == 'list':
-                # HOD should primarily see others' requests for approval
-                if status_filter == 'pending' or not status_filter:
-                    qs = qs.exclude(requested_by=self.request.user)
-                    
                 if status_filter == 'all':
-                    return qs.exclude(status='draft')
-                if status_filter in ('pending', 'accepted', 'rejected'):
-                    return qs.filter(status=status_filter)
-                # Default to pending for HOD if no specific history group requested
-                return qs.filter(status='pending')
-            
-            # For retrieve or other actions, allow access (standard permissions handle isolation)
+                    # HOD: "their approved/rejected forms only"
+                    return qs.filter(reviewed_by=self.request.user).exclude(status='draft')
+                
+                if status_filter in ('pending', None):
+                    # Others' pending requests for approval
+                    return qs.filter(status='pending').exclude(requested_by=self.request.user)
+                
+                # If they explicitly filter by a history status, show only those THEY handled
+                if status_filter in ('accepted', 'rejected', 'issued', 'reported', 'completed'):
+                    return qs.filter(status=status_filter, reviewed_by=self.request.user)
+                
+                return qs.filter(status=status_filter)
             return qs
 
-        if status_filter in ('draft', 'pending', 'accepted', 'rejected'):
-            return qs.filter(status=status_filter)
-        if self.action == 'list':
+        if role == 'store_keeper':
+            if self.action == 'list':
+                if status_filter == 'all':
+                    # Store Keeper: "their issued forms only"
+                    return qs.filter(issued_by=self.request.user).exclude(status='draft')
+                
+                if status_filter in ('accepted', None):
+                    # Default: All approved requests waiting to be issued
+                    return qs.filter(status='accepted')
+                
+                # If they explicitly filter by history (issued/reported/completed), show only theirs
+                if status_filter in ('issued', 'reported', 'completed'):
+                    return qs.filter(status=status_filter, issued_by=self.request.user)
+                
+                return qs.filter(status=status_filter)
+            return qs
+
+        # Default for admin or other roles
+        if status_filter == 'all' or not status_filter:
             return qs.exclude(status='draft')
-        return qs
+        return qs.filter(status=status_filter)
+
+    @action(detail=True, methods=['post'])
+    def mark_as_issued(self, request, pk=None):
+        if request.user.role not in ['store_keeper', 'admin']:
+            return Response(
+                {'error': 'Only store keeper or admin can mark requests as issued'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        obj = self.get_object()
+        if obj.status != 'accepted':
+            return Response(
+                {'error': f'Only approved requests can be marked as issued. Current status: {obj.status}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        obj.status = 'issued'
+        obj.issued_at = timezone.now()
+        obj.issued_by = request.user
+        obj.save()
+
+        # DECREASE INVENTORY
+        # For each chemical item, reduce the available quantity
+        for item in obj.chemical_items.all():
+            try:
+                available_stock = AvailableChemical.objects.get(chemical_name=item.chemical_name)
+                available_stock.available_quantity_ml -= item.quantity_ml
+                available_stock.save()
+            except AvailableChemical.DoesNotExist:
+                # If chemical not found in inventory, log warning or ignore 
+                # (Ideally, request creation should validate existence, but for now we proceed)
+                pass
+
+        return Response(StockRequestDetailSerializer(obj).data)
+
+    @action(detail=True, methods=['post'])
+    def report_usage(self, request, pk=None):
+        """
+        Staff reports actual usage of chemicals.
+        """
+        obj = self.get_object()
+        if obj.requested_by != request.user:
+            return Response({'error': 'You can only report usage for your own requests'}, status=status.HTTP_403_FORBIDDEN)
+        
+        if obj.status != 'issued':
+            return Response({'error': f'Cannot report usage for request with status {obj.status}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = UsageReportSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        reported_items = {item['id']: item['actual_used_quantity_ml'] for item in serializer.validated_data['items']}
+        
+        # Verify all items in the request are being reported
+        request_items = {item.id for item in obj.chemical_items.all()}
+        if not set(reported_items.keys()).issubset(request_items):
+             return Response({'error': 'Invalid item IDs provided'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Update items with actual usage
+        for item in obj.chemical_items.all():
+            if item.id in reported_items:
+                item.actual_used_quantity_ml = reported_items[item.id]
+                item.save()
+        
+        obj.status = 'reported'
+        obj.reported_at = timezone.now()
+        obj.save()
+
+        return Response(StockRequestDetailSerializer(obj).data)
+
+
+    @action(detail=True, methods=['post'])
+    def mark_as_completed(self, request, pk=None):
+        """
+        Store Keeper marks request as completed, adjusts inventory, and logs to issue register.
+        """
+        if request.user.role not in ['store_keeper', 'admin']:
+             return Response({'error': 'Only store keeper can complete requests'}, status=status.HTTP_403_FORBIDDEN)
+
+        obj = self.get_object()
+        if obj.status != 'reported':
+             return Response({'error': 'Request must be in "reported" status to complete'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 1. Create Issue Register Entry
+        issue_register = IssueRegister.objects.create(
+            staff_name=obj.requested_by.full_name,
+            class_field=obj.class_name,
+            date=obj.date,
+            status='completed'
+        )
+
+        # 2. Process Items and Adjust Inventory
+        for item in obj.chemical_items.all():
+            if item.actual_used_quantity_ml is None:
+                actual = item.quantity_ml
+            else:
+                actual = item.actual_used_quantity_ml
+            
+            requested = item.quantity_ml
+            returned = max(0, requested - actual)
+            additional = max(0, actual - requested)
+
+            # Log item to legacy table 'issue_chemicals'
+            # Note: 'returned' and 'additional' are GENERATED ALWAYS columns in the DB.
+            IssueChemicals.objects.create(
+                ir=issue_register,
+                chemical_name=item.chemical_name,
+                issued_quantity=requested,
+                actual_usage=actual
+            )
+
+            # Adjust Inventory
+            try:
+                stock_item = AvailableChemical.objects.get(chemical_name=item.chemical_name)
+                if returned > 0:
+                    stock_item.available_quantity_ml += returned
+                if additional > 0:
+                    stock_item.available_quantity_ml -= additional
+                stock_item.save()
+            except AvailableChemical.DoesNotExist:
+                pass
+
+        obj.status = 'completed'
+        obj.completed_at = timezone.now()
+        obj.save()
+
+        return Response(StockRequestDetailSerializer(obj).data)
 
     @action(detail=False, methods=['get'], url_path='reviewed')
     def reviewed_requests(self, request):
@@ -124,14 +270,15 @@ class StockRequestViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Check for existing pending request
-        has_pending = StockRequest.objects.filter(
+        # Check for existing active request
+        active_statuses = ['pending', 'accepted', 'issued', 'reported']
+        has_active = StockRequest.objects.filter(
             requested_by=request.user, 
-            status='pending'
+            status__in=active_statuses
         ).exists()
-        if has_pending:
+        if has_active:
             return Response(
-                {'error': 'You already have a pending request. Please wait for it to be reviewed.'},
+                {'error': 'You already have an active request. Complete your previous request first.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -176,3 +323,10 @@ class StockRequestViewSet(viewsets.ModelViewSet):
         obj.reviewed_by = request.user
         obj.save()
         return Response(StockRequestDetailSerializer(obj).data)
+
+
+class IssueRegisterViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = IssueRegister.objects.all()
+    serializer_class = IssueRegisterSerializer
+    # Using the same permission as StockRequest for now (basically authenticated)
+    permission_classes = [StockRequestPermission]

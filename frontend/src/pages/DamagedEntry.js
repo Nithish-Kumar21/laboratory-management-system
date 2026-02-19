@@ -18,7 +18,7 @@ function DamagedEntry() {
   const fetchDamagedEntries = () => {
     setLoading(true);
     api
-      .get('/damaged_entry/')
+      .get('damaged_entry/')
       .then((response) => {
         setDamagedEntries(
           Array.isArray(response.data) ? response.data : response.data.results || []
@@ -92,7 +92,12 @@ function DamagedEntry() {
               </thead>
               <tbody>
                 {damagedEntries.map((entry) => (
-                  <tr key={entry.id} className="table-row-hover">
+                  <tr
+                    key={entry.id}
+                    className="table-row-hover"
+                    onClick={() => navigate(`/damaged-entry/${entry.id}`)}
+                    style={{ cursor: 'pointer' }}
+                  >
                     <td>
                       <div className="staff-info">
                         <FaUserShield className="row-icon" />

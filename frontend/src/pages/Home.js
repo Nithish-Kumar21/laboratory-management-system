@@ -35,10 +35,10 @@ function Home() {
   const fetchStats = async () => {
     try {
       const [chemRes, appRes, stockRes, damagedRes] = await Promise.all([
-        api.get('/chemicals/').catch(() => ({ data: [] })),
-        api.get('/apparatus/').catch(() => ({ data: [] })),
-        api.get('/stock_register/').catch(() => ({ data: [] })),
-        api.get('/damaged_entry/').catch(() => ({ data: [] })),
+        api.get('available_chemicals/').catch(() => ({ data: [] })),
+        api.get('available_apparatus/').catch(() => ({ data: [] })),
+        api.get('stock_register/').catch(() => ({ data: [] })),
+        api.get('damaged_entry/').catch(() => ({ data: [] })),
       ]);
 
       const getCount = (response) => {
