@@ -4,6 +4,7 @@ import { FaArrowLeft, FaArrowRight, FaFlask, FaIdCard, FaUser, FaGraduationCap, 
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import AddRequestModal from '../components/modals/AddRequestModal';
+import ConfirmDialog from '../components/ConfirmDialog';
 import './StockRequestDetail.css';
 
 function StockRequestDetail() {
@@ -64,111 +65,127 @@ function StockRequestDetail() {
         }
     }, [request]);
 
-    const handleAccept = async () => {
-        if (!window.confirm('Are you sure you want to approve this request?')) return;
-        try {
-            setActionLoading(true);
-            await api.post(`stock_request/${id}/accept/`);
-            fetchRequest();
-            // Trigger a notification update
-            window.dispatchEvent(new CustomEvent('inventory-updated'));
-        } catch (err) {
-            alert(err.response?.data?.error || 'Failed to approve');
-        } finally {
-            setActionLoading(false);
-        }
+    const [showRejectModal, setShowRejectModal] = useState(false);
+    const [rejectionReason, setRejectionReason] = useState('');
+    const [dialog, setDialog] = useState({ open: false, message: '', showCancel: true, variant: 'confirm', onConfirm: null });
+
+    const handleAccept = () => {
+        setDialog({
+            open: true,
+            message: 'Are you sure you want to approve this request?',
+            showCancel: true,
+            onConfirm: () => {
+                setDialog({ open: false });
+                setActionLoading(true);
+                api.post(`stock_request/${id}/accept/`)
+                    .then(() => { fetchRequest(); window.dispatchEvent(new CustomEvent('inventory-updated')); })
+                    .catch(err => setDialog({ open: true, message: err.response?.data?.error || 'Failed to approve', showCancel: false }))
+                    .finally(() => setActionLoading(false));
+            }
+        });
     };
 
     const handleReject = async () => {
-        if (!window.confirm('Are you sure you want to reject this request?')) return;
+        const reason = rejectionReason.trim();
+        if (!reason) {
+            setDialog({ open: true, message: 'Please provide a reason for rejection.', showCancel: false, onConfirm: () => setDialog({ open: false }) });
+            return;
+        }
+        setDialog({ open: false });
+        setActionLoading(true);
         try {
-            setActionLoading(true);
-            await api.post(`stock_request/${id}/reject/`);
+            await api.post(`stock_request/${id}/reject/`, { rejection_reason: reason });
+            setShowRejectModal(false);
+            setRejectionReason('');
             fetchRequest();
-            // Trigger a notification update
             window.dispatchEvent(new CustomEvent('inventory-updated'));
         } catch (err) {
-            alert(err.response?.data?.error || 'Failed to reject');
+            setDialog({ open: true, message: err.response?.data?.error || err.response?.data?.rejection_reason?.[0] || 'Failed to reject', showCancel: false });
         } finally {
             setActionLoading(false);
         }
     };
 
-    const handleMarkAsIssued = async () => {
-        if (!window.confirm('Are you sure you want to mark this request as issued? This will update the inventory.')) return;
-        try {
-            setActionLoading(true);
-            await api.post(`stock_request/${id}/mark_as_issued/`);
-            fetchRequest();
-            // Trigger a notification update
-            window.dispatchEvent(new CustomEvent('inventory-updated'));
-        } catch (err) {
-            alert(err.response?.data?.error || 'Failed to mark as issued');
-        } finally {
-            setActionLoading(false);
-        }
+    const handleMarkAsIssued = () => {
+        setDialog({
+            open: true,
+            message: 'Are you sure you want to mark this request as issued? This will update the inventory.',
+            showCancel: true,
+            onConfirm: () => {
+                setDialog({ open: false });
+                setActionLoading(true);
+                api.post(`stock_request/${id}/mark_as_issued/`)
+                    .then(() => { fetchRequest(); window.dispatchEvent(new CustomEvent('inventory-updated')); })
+                    .catch(err => setDialog({ open: true, message: err.response?.data?.error || 'Failed to mark as issued', showCancel: false }))
+                    .finally(() => setActionLoading(false));
+            }
+        });
     };
 
-    const handleReportUsage = async () => {
-        if (!window.confirm('Are you sure you want to report usage? This cannot be undone.')) return;
-        try {
-            setActionLoading(true);
-
-            const items = Object.keys(usageReport).map(id => ({
-                id: parseInt(id),
-                actual_used_quantity_ml: parseFloat(usageReport[id])
-            }));
-
-            await api.post(`stock_request/${id}/report_usage/`, { items });
-            fetchRequest();
-            window.dispatchEvent(new CustomEvent('inventory-updated'));
-        } catch (err) {
-            alert(err.response?.data?.error || 'Failed to report usage');
-        } finally {
-            setActionLoading(false);
-        }
+    const handleReportUsage = () => {
+        setDialog({
+            open: true,
+            message: 'Are you sure you want to report usage? This cannot be undone.',
+            showCancel: true,
+            onConfirm: () => {
+                setDialog({ open: false });
+                setActionLoading(true);
+                const items = Object.keys(usageReport).map(k => ({ id: parseInt(k), actual_used_quantity_ml: parseFloat(usageReport[k]) }));
+                api.post(`stock_request/${id}/report_usage/`, { items })
+                    .then(() => { fetchRequest(); window.dispatchEvent(new CustomEvent('inventory-updated')); })
+                    .catch(err => setDialog({ open: true, message: err.response?.data?.error || 'Failed to report usage', showCancel: false }))
+                    .finally(() => setActionLoading(false));
+            }
+        });
     };
 
-    const handleMarkAsCompleted = async () => {
-        if (!window.confirm('Are you sure you want to mark this request as completed? This will adjust inventory and log the transaction.')) return;
-        try {
-            setActionLoading(true);
-            await api.post(`stock_request/${id}/mark_as_completed/`);
-            fetchRequest();
-            window.dispatchEvent(new CustomEvent('inventory-updated'));
-        } catch (err) {
-            alert(err.response?.data?.error || 'Failed to complete request');
-        } finally {
-            setActionLoading(false);
-        }
+    const handleMarkAsCompleted = () => {
+        setDialog({
+            open: true,
+            message: 'Are you sure you want to mark this request as completed? This will adjust inventory and log the transaction.',
+            showCancel: true,
+            onConfirm: () => {
+                setDialog({ open: false });
+                setActionLoading(true);
+                api.post(`stock_request/${id}/mark_as_completed/`)
+                    .then(() => { fetchRequest(); window.dispatchEvent(new CustomEvent('inventory-updated')); })
+                    .catch(err => setDialog({ open: true, message: err.response?.data?.error || 'Failed to complete request', showCancel: false }))
+                    .finally(() => setActionLoading(false));
+            }
+        });
     };
 
-    const handleSend = async () => {
-        if (!window.confirm('Are you sure you want to submit this request for approval?')) return;
-        try {
-            setActionLoading(true);
-            await api.post(`stock_request/${id}/submit/`);
-            fetchRequest();
-            window.dispatchEvent(new CustomEvent('inventory-updated'));
-        } catch (err) {
-            alert(err.response?.data?.error || err.response?.data?.detail || 'Failed to submit');
-        } finally {
-            setActionLoading(false);
-        }
+    const handleSend = () => {
+        setDialog({
+            open: true,
+            message: 'Are you sure you want to submit this request for approval?',
+            showCancel: true,
+            onConfirm: () => {
+                setDialog({ open: false });
+                setActionLoading(true);
+                api.post(`stock_request/${id}/submit/`)
+                    .then(() => { fetchRequest(); window.dispatchEvent(new CustomEvent('inventory-updated')); })
+                    .catch(err => setDialog({ open: true, message: err.response?.data?.error || err.response?.data?.detail || 'Failed to submit', showCancel: false }))
+                    .finally(() => setActionLoading(false));
+            }
+        });
     };
 
-    const handleDelete = async () => {
-        if (!window.confirm('Are you sure you want to delete this request permanently?')) return;
-        try {
-            setActionLoading(true);
-            await api.delete(`stock_request/${id}/`);;
-            window.dispatchEvent(new CustomEvent('inventory-updated'));
-            navigate('/requests');
-        } catch (err) {
-            alert(err.response?.data?.error || 'Failed to delete');
-        } finally {
-            setActionLoading(false);
-        }
+    const handleDelete = () => {
+        setDialog({
+            open: true,
+            message: 'Are you sure you want to delete this request permanently?',
+            showCancel: true,
+            variant: 'danger',
+            onConfirm: () => {
+                setDialog({ open: false });
+                setActionLoading(true);
+                api.delete(`stock_request/${id}/`)
+                    .then(() => { window.dispatchEvent(new CustomEvent('inventory-updated')); navigate('/requests'); })
+                    .catch(err => setDialog({ open: true, message: err.response?.data?.error || 'Failed to delete', showCancel: false }))
+                    .finally(() => setActionLoading(false));
+            }
+        });
     };
 
     const getStatusBadge = (status) => {
@@ -205,22 +222,22 @@ function StockRequestDetail() {
                     <p><FaIdCard /> {request.request_id}</p>
                 </div>
                 <div className="header-actions">
-                    {(user?.employee_id === request.requested_by_id && ['draft', 'pending', 'rejected'].includes(request.status)) && (
+                    {(user?.employee_id === request.requested_by_id && (request.status === 'draft' || request.status === 'rejected')) && (
                         <button
                             className="edit-request-btn"
                             onClick={() => setShowEditModal(true)}
                             disabled={actionLoading}
-                            title="Edit Request"
+                            title="Edit Request (draft or rejected)"
                         >
                             <FaEdit /> Edit
                         </button>
                     )}
-                    {(user?.employee_id === request.requested_by_id && ['pending', 'draft', 'rejected'].includes(request.status)) && (
+                    {(user?.employee_id === request.requested_by_id && (request.status === 'draft' || request.status === 'pending' || request.status === 'rejected')) && (
                         <button
                             className="delete-request-btn"
                             onClick={handleDelete}
                             disabled={actionLoading}
-                            title="Delete Request"
+                            title="Delete Request (before approval or when rejected)"
                         >
                             <FaTrash /> {actionLoading ? 'Deleting...' : 'Delete'}
                         </button>
@@ -240,7 +257,7 @@ function StockRequestDetail() {
                 </div>
                 <div className="info-card card">
                     <label><FaCalendarAlt /> Date</label>
-                    <span>{new Date(request.created_at).toLocaleDateString()}</span>
+                    <span>{request.date ? new Date(request.date).toLocaleDateString() : new Date(request.created_at).toLocaleDateString()}</span>
                 </div>
                 <div className="info-card card">
                     <label>Status</label>
@@ -288,6 +305,9 @@ function StockRequestDetail() {
                     <ul className="history-list">
                         <li><strong>Requested:</strong> {new Date(request.created_at).toLocaleString()} by {request.requested_by_name}</li>
                         {request.reviewed_at && <li><strong>{request.status === 'rejected' ? 'Rejected' : 'Approved'}:</strong> {new Date(request.reviewed_at).toLocaleString()} by {request.reviewed_by_name}</li>}
+                        {request.status === 'rejected' && request.rejection_reason && (
+                            <li className="rejection-reason"><strong>Reason:</strong> {request.rejection_reason}</li>
+                        )}
                         {request.issued_at && <li><strong>Issued:</strong> {new Date(request.issued_at).toLocaleString()} by {request.issued_by_name}</li>}
                         {request.reported_at && <li><strong>Reported:</strong> {new Date(request.reported_at).toLocaleString()}</li>}
                         {request.completed_at && <li><strong>Completed:</strong> {new Date(request.completed_at).toLocaleString()}</li>}
@@ -450,10 +470,10 @@ function StockRequestDetail() {
                     <div className="approval-actions animate-fade">
                         <button
                             className="btn-reject"
-                            onClick={handleReject}
+                            onClick={() => setShowRejectModal(true)}
                             disabled={actionLoading}
                         >
-                            {actionLoading ? 'Processing...' : <><FaTimesCircle /> Reject Request</>}
+                            <FaTimesCircle /> Reject Request
                         </button>
                         <button
                             className="btn-approve"
@@ -465,6 +485,37 @@ function StockRequestDetail() {
                     </div>
                 )
             }
+
+            {/* Reject reason modal (HOD) */}
+            {showRejectModal && (
+                <div className="modal-overlay" onClick={() => setShowRejectModal(false)}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px' }}>
+                        <div className="modal-header">
+                            <h3>Reason for Rejection</h3>
+                            <button type="button" className="modal-close" onClick={() => setShowRejectModal(false)} aria-label="Close">×</button>
+                        </div>
+                        <div className="modal-body">
+                            <p className="section-helper-text">Please provide a reason before rejecting this request. The requester will see this reason.</p>
+                            <textarea
+                                value={rejectionReason}
+                                onChange={(e) => setRejectionReason(e.target.value)}
+                                placeholder="Enter reason for rejection..."
+                                rows={4}
+                                className="modern-textarea"
+                                style={{ width: '100%', marginTop: '8px' }}
+                            />
+                        </div>
+                        <div className="modal-footer" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                            <button type="button" className="btn-secondary" onClick={() => { setShowRejectModal(false); setRejectionReason(''); }} disabled={actionLoading}>
+                                Cancel
+                            </button>
+                            <button type="button" className="btn-reject" onClick={handleReject} disabled={actionLoading || !rejectionReason.trim()}>
+                                {actionLoading ? 'Processing...' : 'Reject Request'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {
                 isStoreKeeper && request.status === 'accepted' && (
@@ -505,6 +556,17 @@ function StockRequestDetail() {
                 onSuccess={fetchRequest}
                 editData={request}
                 hasActiveRequest={hasActiveRequest}
+            />
+
+            <ConfirmDialog
+                open={dialog.open}
+                message={dialog.message}
+                showCancel={dialog.showCancel}
+                confirmLabel="OK"
+                cancelLabel="Cancel"
+                variant={dialog.variant || 'confirm'}
+                onConfirm={() => { if (dialog.onConfirm) dialog.onConfirm(); else setDialog({ open: false }); }}
+                onCancel={() => setDialog({ open: false })}
             />
         </div>
     );

@@ -28,6 +28,35 @@ class StockRequestViewSet(viewsets.ModelViewSet):
             return StockRequestDetailSerializer
         return StockRequestListSerializer
 
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        # Allow editing in draft or rejected so staff can fix and resubmit
+        if instance.status not in ('draft', 'rejected'):
+            return Response(
+                {'error': 'Only draft or rejected requests can be edited.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return super().update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.status not in ('draft', 'rejected'):
+            return Response(
+                {'error': 'Only draft or rejected requests can be edited.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return super().partial_update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        # Staff can delete before HOD approval or after rejection
+        if instance.status not in ('draft', 'pending', 'rejected'):
+            return Response(
+                {'error': 'Requests can only be deleted before approval or when rejected.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return super().destroy(request, *args, **kwargs)
+
     @action(detail=False, methods=['get'])
     def pending_count(self, request):
         if request.user.role != 'hod':
@@ -312,6 +341,12 @@ class StockRequestViewSet(viewsets.ModelViewSet):
                 {'error': 'Only HOD can reject requests'},
                 status=status.HTTP_403_FORBIDDEN
             )
+        rejection_reason = (request.data.get('rejection_reason') or '').strip()
+        if not rejection_reason:
+            return Response(
+                {'error': 'Reason for rejection is required.', 'rejection_reason': ['This field is required.']},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         obj = self.get_object()
         if obj.status != 'pending':
             return Response(
@@ -319,6 +354,7 @@ class StockRequestViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         obj.status = 'rejected'
+        obj.rejection_reason = rejection_reason
         obj.reviewed_at = timezone.now()
         obj.reviewed_by = request.user
         obj.save()
