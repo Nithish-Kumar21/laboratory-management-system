@@ -1,171 +1,122 @@
-# Manual Database Migrations
+-- ============================================
+-- USER MANAGEMENT MODULE - DATABASE SCHEMA
+-- Date: January 25, 2026
+-- ============================================
 
-This document tracks all manual SQL changes made to the PostgreSQL database that are not managed by Django migrations.
+CREATE TABLE user_account (
+    id SERIAL PRIMARY KEY,
+    employee_id VARCHAR(20) UNIQUE NOT NULL,
+    password VARCHAR(128) NOT NULL,
+    full_name VARCHAR(100) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    phone VARCHAR(13) UNIQUE NOT NULL,
+    role VARCHAR(20) NOT NULL,
+    designation VARCHAR(50) NOT NULL,
+    department VARCHAR(30) NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    is_staff BOOLEAN DEFAULT FALSE,
+    is_superuser BOOLEAN DEFAULT FALSE,
+    password_must_change BOOLEAN DEFAULT TRUE,
+    last_password_change TIMESTAMP,
+    failed_login_attempts INTEGER DEFAULT 0,
+    account_locked_until TIMESTAMP,
+    date_joined TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_login TIMESTAMP,
+    created_by_id INTEGER REFERENCES user_account(id) ON DELETE SET NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT chk_role CHECK (role IN ('HOD', 'Store Keeper', 'Staff')),
+    CONSTRAINT chk_department CHECK (department IN ('B.Sc Chemistry', 'M.Sc Chemistry'))
+);
 
----
+CREATE INDEX idx_user_employee_id ON user_account(employee_id);
+CREATE INDEX idx_user_email ON user_account(email);
+CREATE INDEX idx_user_role ON user_account(role);
+CREATE INDEX idx_user_is_active ON user_account(is_active);
 
-## Migration History
+CREATE TABLE password_reset_token (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES user_account(id) ON DELETE CASCADE,
+    token VARCHAR(64) UNIQUE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP NOT NULL,
+    used BOOLEAN DEFAULT FALSE
+);
 
-### 2025-12-06: Add Supplier Name and Make Fields to Stock Register
+CREATE INDEX idx_reset_token ON password_reset_token(token);
+CREATE INDEX idx_reset_user ON password_reset_token(user_id);
 
-**Author:** Nithish Kumar  
-**Date:** December 6, 2025  
-**Branch:** feature/stock-register  
-**Status:** ✅ Completed and Merged
+CREATE OR REPLACE FUNCTION check_single_hod()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.role = 'HOD' AND NEW.is_active = TRUE THEN
+        IF EXISTS (
+            SELECT 1 FROM user_account 
+            WHERE role = 'HOD' 
+            AND is_active = TRUE
+            AND id != COALESCE(NEW.id, 0)
+        ) THEN
+            RAISE EXCEPTION 'Only one HOD can exist in the system';
+        END IF;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
-#### Summary
-Added supplier_name field to stock_register table and make field to both chemical_item and apparatus_item tables. Also created indexes for improved query performance.
+CREATE TRIGGER enforce_single_hod
+BEFORE INSERT OR UPDATE ON user_account
+FOR EACH ROW
+EXECUTE FUNCTION check_single_hod();
 
-#### SQL Commands Executed
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
--- Add supplier_name to stock_register table
-ALTER TABLE stock_register
-ADD COLUMN supplier_name VARCHAR(100);
+CREATE TRIGGER update_user_updated_at
+BEFORE UPDATE ON user_account
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
 
--- Add make to chemical_item table
-ALTER TABLE chemical_item
-ADD COLUMN make VARCHAR(100);
+CREATE TABLE IF NOT EXISTS django_content_type (
+    id SERIAL PRIMARY KEY,
+    app_label VARCHAR(100) NOT NULL,
+    model VARCHAR(100) NOT NULL,
+    UNIQUE(app_label, model)
+);
 
--- Add make to apparatus_item table
-ALTER TABLE apparatus_item
-ADD COLUMN make VARCHAR(100);
+CREATE TABLE IF NOT EXISTS auth_permission (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    content_type_id INTEGER NOT NULL REFERENCES django_content_type(id) ON DELETE CASCADE,
+    codename VARCHAR(100) NOT NULL,
+    UNIQUE(content_type_id, codename)
+);
 
-text
+CREATE TABLE IF NOT EXISTS auth_group (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(150) UNIQUE NOT NULL
+);
 
-#### Indexes Created
+CREATE TABLE IF NOT EXISTS auth_group_permissions (
+    id SERIAL PRIMARY KEY,
+    group_id INTEGER NOT NULL REFERENCES auth_group(id) ON DELETE CASCADE,
+    permission_id INTEGER NOT NULL REFERENCES auth_permission(id) ON DELETE CASCADE,
+    UNIQUE(group_id, permission_id)
+);
 
--- Stock Register indexes
-CREATE INDEX idx_stock_register_supplier_name ON stock_register(supplier_name);
-CREATE INDEX idx_stock_register_date ON stock_register(date);
+CREATE TABLE IF NOT EXISTS user_account_groups (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES user_account(id) ON DELETE CASCADE,
+    group_id INTEGER NOT NULL REFERENCES auth_group(id) ON DELETE CASCADE,
+    UNIQUE(user_id, group_id)
+);
 
--- Chemical Item indexes
-CREATE INDEX idx_chemical_item_make ON chemical_item(make);
-CREATE INDEX idx_chemical_item_chemical_name ON chemical_item(chemical_name);
-
--- Apparatus Item indexes
-CREATE INDEX idx_apparatus_item_make ON apparatus_item(make);
-CREATE INDEX idx_apparatus_item_apparatus_name ON apparatus_item(apparatus_name);
-
-text
-
-#### Verification Queries
-
--- Verify columns exist
-SELECT column_name, data_type, character_maximum_length
-FROM information_schema.columns
-WHERE table_name = 'stock_register';
-
-SELECT column_name, data_type, character_maximum_length
-FROM information_schema.columns
-WHERE table_name = 'chemical_item';
-
-SELECT column_name, data_type, character_maximum_length
-FROM information_schema.columns
-WHERE table_name = 'apparatus_item';
-
--- Verify indexes exist
-SELECT indexname, indexdef
-FROM pg_indexes
-WHERE tablename IN ('stock_register', 'chemical_item', 'apparatus_item')
-ORDER BY tablename, indexname;
-
-text
-
-#### Related Code Changes
-- `backend/stock_register/models.py` - Added field definitions
-- `backend/stock_register/serializers.py` - Added field validation
-- `frontend/src/AddStockRegisterModal.js` - Added input fields
-- `frontend/src/StockRegisterDetail.js` - Display new columns
-
-#### Rollback (If Needed)
-
--- Remove indexes
-DROP INDEX IF EXISTS idx_stock_register_supplier_name;
-DROP INDEX IF EXISTS idx_stock_register_date;
-DROP INDEX IF EXISTS idx_chemical_item_make;
-DROP INDEX IF EXISTS idx_chemical_item_chemical_name;
-DROP INDEX IF EXISTS idx_apparatus_item_make;
-DROP INDEX IF EXISTS idx_apparatus_item_apparatus_name;
-
--- Remove columns
-ALTER TABLE stock_register DROP COLUMN IF EXISTS supplier_name;
-ALTER TABLE chemical_item DROP COLUMN IF EXISTS make;
-ALTER TABLE apparatus_item DROP COLUMN IF EXISTS make;
-
-text
-
-#### Notes
-- All new fields are nullable (NULL values allowed for existing records)
-- Indexes created for fast searching and filtering
-- Django models use `managed = False`, so migrations are manual
-- Performance: Index scan used automatically when filtering by new columns
-
----
-
-## How to Apply These Changes on New Environment
-
-When setting up a new development environment or deploying to a new server:
-
-1. **Run the ALTER TABLE commands** first (in order shown above)
-2. **Create the indexes** (in order shown above)
-3. **Verify** using the verification queries
-4. **Update Django** - Run `python manage.py migrate` (if any Django migrations exist)
-5. **Test** - Ensure application works correctly
-
----
-
-## Migration Template
-
-For future manual migrations, use this template:
-
-YYYY-MM-DD: Brief Description
-
-Author: Your Name
-Date: Date
-Branch: branch-name
-Status: ✅ Completed / 🔄 In Progress / ❌ Rolled Back
-Summary
-
-Brief description of what changed and why.
-SQL Commands Executed
-
-```sql
--- Your SQL here
-```
-Verification Queries
-
-```sql
--- Verification queries
-```
-Related Code Changes
-
-    File paths that were updated
-
-Rollback (If Needed)
-
-```sql
--- Rollback commands
-```
-Notes
-
-    Any important notes or warnings
-
-text
-
----
-
-## Important Notes
-
-- ⚠️ **Always backup database** before running ALTER TABLE commands
-- ⚠️ **Test in development** before applying to production
-- ⚠️ **Document all changes** in this file
-- ⚠️ **Coordinate with team** before manual schema changes
-- ⚠️ Consider using `BEGIN; ... COMMIT;` for transactional changes
-
----
-
-## Contact
-
-For questions about database migrations:
-- **Database Admin:** Nithish Kumar
-- **Project Lead:** Nithish Kumar
+CREATE TABLE IF NOT EXISTS user_account_user_permissions (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES user_account(id) ON DELETE CASCADE,
+    permission_id INTEGER NOT NULL REFERENCES auth_permission(id) ON DELETE CASCADE,
+    UNIQUE(user_id, permission_id)
+);

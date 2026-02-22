@@ -1,0 +1,83 @@
+.damaged-entry-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.add-entry-btn.danger {
+  background: #ef4444;
+}
+
+.add-entry-btn.danger:hover {
+  background: #dc2626;
+}
+
+.staff-info,
+.class-info,
+.date-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+}
+
+.row-icon {
+  font-size: 1rem;
+  color: var(--text-muted);
+}
+
+.row-icon-small {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.cause-tag {
+  background-color: var(--bg-main);
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: var(--text-main);
+  border: 1px solid var(--border);
+  font-weight: 500;
+}
+
+.status-tag {
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-tag.red {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.btn-text.danger {
+  color: #ef4444;
+}
+
+.btn-text.danger:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 992px) {
+
+  .premium-table th:nth-child(4),
+  .premium-table td:nth-child(4) {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+
+  .premium-table th:nth-child(2),
+  .premium-table td:nth-child(2),
+  .premium-table th:nth-child(5),
+  .premium-table td:nth-child(5) {
+    display: none;
+  }
+}

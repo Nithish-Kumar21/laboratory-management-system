@@ -1,0 +1,452 @@
+.settings-container {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.settings-header {
+    margin-bottom: 10px;
+}
+
+.settings-content-grid {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 30px;
+    align-items: start;
+}
+
+/* Left Menu */
+.settings-menu {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    border-radius: var(--radius-lg);
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 16px;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    text-align: left;
+    transition: var(--transition);
+    color: var(--text-muted);
+}
+
+.menu-item:hover {
+    background-color: var(--bg-main);
+    color: var(--text-main);
+}
+
+.menu-item.active {
+    background-color: var(--primary-glow);
+    color: var(--primary);
+}
+
+.menu-item-icon {
+    font-size: 1.2rem;
+    width: 24px;
+    display: flex;
+    justify-content: center;
+}
+
+.menu-item-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.menu-label {
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.menu-desc {
+    font-size: 0.75rem;
+    opacity: 0.7;
+}
+
+.menu-arrow {
+    font-size: 0.8rem;
+    opacity: 0.3;
+    transition: transform 0.3s;
+}
+
+.menu-item.active .menu-arrow {
+    opacity: 1;
+    transform: translateX(4px);
+}
+
+/* Right Panel */
+.settings-panel {
+    min-height: 600px;
+    padding: 30px;
+    border-radius: var(--radius-lg);
+    position: relative;
+}
+
+.panel-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+    color: var(--text-main);
+}
+
+.panel-desc {
+    color: var(--text-muted);
+    margin-bottom: 30px;
+    font-size: 0.95rem;
+}
+
+/* Theme Selector */
+.theme-selector-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.theme-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    cursor: pointer;
+}
+
+.theme-preview {
+    height: 100px;
+    border-radius: var(--radius-md);
+    border: 4px solid var(--border);
+    position: relative;
+    overflow: hidden;
+    transition: var(--transition);
+}
+
+.theme-card:hover .theme-preview {
+    border-color: var(--text-muted);
+}
+
+.theme-card.active .theme-preview {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px var(--primary-glow);
+}
+
+.theme-preview.light {
+    background: #f8fafc;
+}
+
+.theme-preview.dark {
+    background: #0f172a;
+}
+
+.preview-top {
+    height: 15px;
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.theme-preview.dark .preview-top {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.preview-side {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 25px;
+    background: rgba(0, 0, 0, 0.03);
+}
+
+.theme-preview.dark .preview-side {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.theme-preview.system {
+    display: flex;
+}
+
+.preview-half {
+    flex: 1;
+    height: 100%;
+}
+
+.preview-half.light {
+    background: #f1f5f9;
+}
+
+.preview-half.dark {
+    background: #1e293b;
+}
+
+.theme-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-muted);
+}
+
+.theme-card.active .theme-label {
+    color: var(--primary);
+}
+
+/* Settings Rows */
+.setting-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 0;
+    border-top: 1px solid var(--border);
+}
+
+.setting-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.setting-label {
+    font-weight: 700;
+    color: var(--text-main);
+    font-size: 1rem;
+}
+
+.setting-sub {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+/* Switches */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 24px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background-color: var(--border);
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+input:checked+.slider {
+    background-color: var(--primary);
+}
+
+input:checked+.slider:before {
+    transform: translateX(24px);
+}
+
+/* Form Styles */
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 30px;
+}
+
+.full-width {
+    grid-column: 1 / -1;
+}
+
+.btn-primary-save {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 14px 28px;
+    border-radius: var(--radius-md);
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-primary-save:hover {
+    background: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--primary-glow);
+}
+
+/* Range Sliders */
+.range-group {
+    margin-top: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.range-header {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+input[type="range"] {
+    width: 100%;
+    height: 6px;
+    background: var(--border);
+    border-radius: 5px;
+    outline: none;
+    -webkit-appearance: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    background: var(--primary);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* Mode Toggles */
+.mode-toggle-box {
+    display: flex;
+    background: var(--bg-main);
+    padding: 4px;
+    border-radius: var(--radius-md);
+    margin-bottom: 24px;
+    width: fit-content;
+}
+
+.toggle-btn {
+    padding: 8px 16px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.85rem;
+    transition: var(--transition);
+}
+
+.toggle-btn.active {
+    background: var(--bg-surface);
+    color: var(--primary);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.common-input-area {
+    max-width: 400px;
+}
+
+.individual-list {
+    margin-top: 20px;
+}
+
+.inline-edit-input {
+    width: 80px;
+    padding: 6px 10px;
+    border: 1px solid var(--primary);
+    border-radius: var(--radius-sm);
+    background: var(--bg-main);
+    color: var(--text-main);
+}
+
+.action-btn-group {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-edit-sm {
+    background: var(--bg-main);
+    border: 1px solid var(--border);
+    color: var(--primary);
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+.btn-save-sm {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+.btn-cancel-sm {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: none;
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+/* Feedback */
+.settings-toast {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    z-index: 10;
+}
+
+.settings-toast.success {
+    background: #10b981;
+    color: white;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+@media (max-width: 1024px) {
+    .settings-content-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .theme-selector-grid {
+        grid-template-columns: 1fr;
+    }
+}

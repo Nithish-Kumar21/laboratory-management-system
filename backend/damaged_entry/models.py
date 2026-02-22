@@ -4,12 +4,11 @@ class DamagedEntry(models.Model):
     staff = models.CharField(max_length=100)
     class_name = models.CharField(max_length=50, db_column='class')
     date = models.DateField()
-    caused_by = models.CharField(max_length=100)
     details = models.TextField()
 
     class Meta:
         db_table = 'damaged_entry'
-        managed = False  # Let PostgreSQL handle auto-increment
+        managed = True
 
     def __str__(self):
         return f"{self.staff} - {self.date}"
@@ -24,10 +23,11 @@ class DamagedItem(models.Model):
     )
     apparatus_name = models.CharField(max_length=64)
     quantity = models.IntegerField()
+    caused_by = models.CharField(max_length=100, blank=True, null=True)
 
     class Meta:
         db_table = 'damaged_item'
-        managed = False  # Let PostgreSQL handle auto-increment
+        managed = True
 
     def __str__(self):
         return f"{self.apparatus_name} - {self.damaged_entry.staff}"

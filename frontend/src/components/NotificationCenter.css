@@ -1,0 +1,231 @@
+/* Notification Dropdown Design */
+.dropdown {
+    position: absolute;
+    top: 55px;
+    right: 0;
+    background: var(--bg-surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    z-index: 2001;
+    display: flex;
+    flex-direction: column;
+    min-width: 280px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.dropdown-header {
+    padding: 16px 20px;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dropdown-header h3 {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.alert-count {
+    background: #ef4444;
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 12px;
+}
+
+.dropdown-content {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.dropdown-row {
+    display: flex;
+    gap: 15px;
+    padding: 14px 20px;
+    transition: all 0.2s;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+}
+
+.dropdown-row:hover {
+    background: var(--bg-main);
+}
+
+.dropdown-section-title {
+    padding: 10px 20px 5px 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+    background: var(--bg-surface);
+}
+
+.icon-container {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1.1rem;
+}
+
+.request-icon {
+    background: rgba(63, 81, 181, 0.1);
+    color: #3f51b5;
+}
+
+.approved-icon {
+    background: rgba(34, 197, 94, 0.1);
+    color: #22c55e;
+}
+
+.rejected-icon {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+.row-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.row-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-main);
+    margin: 0;
+}
+
+.row-sub {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.dropdown-footer {
+    padding: 12px;
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--primary);
+    background: var(--bg-main);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.dropdown-footer:hover {
+    color: var(--primary-hover);
+    background: var(--primary-glow);
+}
+
+/* Badge Styling */
+.badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: #ef4444;
+    color: white;
+    font-size: 10px;
+    font-weight: 800;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid var(--bg-surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+.notif-btn.has-alerts {
+    color: #ef4444;
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.15s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.action-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.request-icon {
+    background: rgba(30, 64, 175, 0.1) !important;
+    color: var(--primary) !important;
+}
+
+.tag-pending {
+    background: var(--primary-glow);
+    color: var(--primary);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.tag-approved {
+    background: rgba(34, 197, 94, 0.1);
+    color: #22c55e;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.tag-rejected {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.pending-request-row:hover {
+    background: var(--primary-glow) !important;
+}
+
+.reviewed-request-row:hover {
+    background: rgba(0, 0, 0, 0.02) !important;
+}
