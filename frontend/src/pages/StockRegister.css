@@ -278,13 +278,6 @@
   transform: translateX(5px);
 }
 
-.empty-state {
-  grid-column: 1 / -1;
-  text-align: center;
-  padding: 100px 0;
-  color: var(--text-muted);
-}
-
 @media (max-width: 768px) {
   .stock-list-grid {
     grid-template-columns: 1fr;

@@ -48,7 +48,7 @@ class Migration(migrations.Migration):
                 ('make', models.CharField(blank=True, max_length=100, null=True)),
                 ('quantity_ml', models.DecimalField(decimal_places=2, max_digits=10)),
                 ('rate', models.DecimalField(decimal_places=2, max_digits=10)),
-                ('stock_register', models.ForeignKey(db_column='stock_register_id', on_delete=django.db.models.deletion.DO_NOTHING, related_name='apparatus_items', to='stock_register.stockregister')),
+                ('stock_register', models.ForeignKey(db_column='stock_register_id', on_delete=django.db.models.deletion.DO_NOTHING, related_name='chemical_items', to='stock_register.stockregister')),
             ],
             options={
                 'db_table': 'chemical_item',

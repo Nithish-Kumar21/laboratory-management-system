@@ -30,11 +30,11 @@ function StockRegister() {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      
+
       // Add sorting
       const orderPrefix = sortOrder === 'desc' ? '-' : '';
       params.append('ordering', `${orderPrefix}${sortBy}`);
-      
+
       const res = await api.get(`stock_register/?${params.toString()}`);
       setStockRegisters(Array.isArray(res.data) ? res.data : res.data.results || []);
     } catch (err) {
@@ -70,39 +70,39 @@ function StockRegister() {
       // Date range filter
       if (filters.dateFrom && register.date < filters.dateFrom) return false;
       if (filters.dateTo && register.date > filters.dateTo) return false;
-      
+
       // Supplier filter
       if (filters.supplier && !register.supplier_name?.toLowerCase().includes(filters.supplier.toLowerCase())) {
         return false;
       }
-      
+
       // Chemical name filter (check nested items)
       if (filters.chemicalName) {
-        const hasChemical = register.chemical_items?.some(item => 
+        const hasChemical = register.chemical_items?.some(item =>
           item.chemical_name.toLowerCase().includes(filters.chemicalName.toLowerCase())
         );
         if (!hasChemical) return false;
       }
-      
+
       // Apparatus name filter (check nested items)
       if (filters.apparatusName) {
-        const hasApparatus = register.apparatus_items?.some(item => 
+        const hasApparatus = register.apparatus_items?.some(item =>
           item.apparatus_name.toLowerCase().includes(filters.apparatusName.toLowerCase())
         );
         if (!hasApparatus) return false;
       }
-      
+
       // Make filter (check both chemical and apparatus items)
       if (filters.make) {
-        const chemicalHasMake = register.chemical_items?.some(item => 
+        const chemicalHasMake = register.chemical_items?.some(item =>
           item.make?.toLowerCase().includes(filters.make.toLowerCase())
         );
-        const apparatusHasMake = register.apparatus_items?.some(item => 
+        const apparatusHasMake = register.apparatus_items?.some(item =>
           item.make?.toLowerCase().includes(filters.make.toLowerCase())
         );
         if (!chemicalHasMake && !apparatusHasMake) return false;
       }
-      
+
       return true;
     });
   };
@@ -141,7 +141,7 @@ function StockRegister() {
           className="search-input"
         />
         <div className="search-controls">
-          <button 
+          <button
             className="btn-filter"
             onClick={() => setShowFilters(!showFilters)}
             title="Toggle Filters"
@@ -150,15 +150,15 @@ function StockRegister() {
           </button>
           <div className="sort-controls">
             <label>Sort by:</label>
-            <select 
-              value={sortBy} 
+            <select
+              value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
               className="sort-select"
             >
               <option value="date">Date</option>
               <option value="invoice_number">Invoice Number</option>
             </select>
-            <button 
+            <button
               className="btn-sort-order"
               onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
               title={`Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`}
@@ -295,7 +295,7 @@ function StockRegister() {
         onClose={() => setIsModalOpen(false)}
         onSuccess={fetchRegisters}
       />
-    </div>
+    </div >
   );
 }
 
