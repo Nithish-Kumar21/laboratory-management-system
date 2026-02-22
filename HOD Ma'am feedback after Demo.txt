@@ -1,0 +1,31 @@
+HOD Ma'am feedback after Demo 
+
+
+	- Does Lab Hour go for a whole day or period wise? Is it same for both B.Sc and M.Sc Chemistry departments or differ?
+	- No Admin role. Shift user management module to HOD role. 
+
+Damaged Entry :
+	- Student names are entered generally. change the field next to apparatus name field. Logic : "Which apparatus is damaged by who". 
+		[apparatus name] - [quantity] - [caused by student]
+
+	- 
+
+Stock Register :
+	- feature to add attachments in filetype : img, pdf. 
+
+	- search bar and filter feature for stock register, damaged entry, issue register modules. 
+
+
+bugs noticed :
+
+	- dropdown displays behind chemical list and apparatus list
+	- Form alignment congested
+	- 
+
+
+
+Dashboard interface for every users. 
+
+separate User Interface for mobile screens. 
+
+change password - instead of current password, replace with OTP sent to phone number/email ID

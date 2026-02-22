@@ -4,7 +4,6 @@ class DamagedEntry(models.Model):
     staff = models.CharField(max_length=100)
     class_name = models.CharField(max_length=50, db_column='class')
     date = models.DateField()
-    caused_by = models.CharField(max_length=100)
     details = models.TextField()
 
     class Meta:
@@ -24,6 +23,7 @@ class DamagedItem(models.Model):
     )
     apparatus_name = models.CharField(max_length=64)
     quantity = models.IntegerField()
+    caused_by = models.CharField(max_length=100, blank=True, null=True)
 
     class Meta:
         db_table = 'damaged_item'

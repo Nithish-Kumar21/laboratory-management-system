@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { FaPlusCircle, FaTimes, FaTrashAlt, FaExclamationTriangle, FaUserTie, FaGraduationCap, FaCalendarAlt, FaTools } from 'react-icons/fa';
 import api from '../../utils/api';
+import ConfirmDialog from '../ConfirmDialog';
 import './AddDamagedEntryModal.css';
 
 function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
@@ -8,13 +9,13 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
         staff: '',
         class_name: '',
         date: new Date().toISOString().split('T')[0],
-        caused_by: '',
         details: '',
     });
 
-    const [damagedItems, setDamagedItems] = useState([{ apparatus_name: '', quantity: '' }]);
+    const [damagedItems, setDamagedItems] = useState([{ apparatus_name: '', quantity: '', caused_by: '' }]);
     const [apparatusNames, setApparatusNames] = useState([]);
     const [submitting, setSubmitting] = useState(false);
+    const [alertDialog, setAlertDialog] = useState({ open: false, message: '' });
     const [showSuggestions, setShowSuggestions] = useState({});
     const [activeIndex, setActiveIndex] = useState(-1);
     const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -77,7 +78,7 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
     };
 
     const addRow = () => {
-        setDamagedItems([...damagedItems, { apparatus_name: '', quantity: '' }]);
+        setDamagedItems([...damagedItems, { apparatus_name: '', quantity: '', caused_by: '' }]);
         scrollToBottom();
     };
 
@@ -113,8 +114,8 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
                 }
             };
 
-            const gridStart = 4; // Staff, Class, Date, CausedBy are indices 0-3
-            const perRow = 2;
+            const gridStart = 3; // Staff, Class, Date are indices 0-2
+            const perRow = 3; // Apparatus, Quantity, Caused By
 
             if (key === 'ArrowDown' || (key === 'Enter' && target.tagName !== 'TEXTAREA')) {
                 // If in header, move 1 by 1. Once in grid, move by perRow.
@@ -140,14 +141,14 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
         setDamagedItems(next);
         setShowSuggestions({});
         setActiveIndex(-1);
-        // Auto-focus next field (Quantity)
+        // Auto-focus next field (Caused By)
         setTimeout(() => {
             if (modalRef.current) {
                 const rows = modalRef.current.querySelectorAll('.damaged-row');
                 const targetRow = rows[i];
                 if (targetRow) {
-                    const quantityInput = targetRow.querySelectorAll('input')[1];
-                    if (quantityInput) quantityInput.focus();
+                    const causedByInput = targetRow.querySelectorAll('input')[2];
+                    if (causedByInput) causedByInput.focus();
                 }
             }
         }, 10);
@@ -162,17 +163,18 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
                 ...formData,
                 damaged_items: damagedItems.filter(it => it.apparatus_name).map(it => ({
                     apparatus_name: it.apparatus_name,
-                    quantity: parseInt(it.quantity)
+                    quantity: parseInt(it.quantity),
+                    caused_by: it.caused_by
                 }))
             };
             await api.post('damaged_entry/', payload);
             window.dispatchEvent(new Event('inventory-updated'));
             onSuccess();
             onClose();
-            setFormData({ staff: '', class_name: '', date: new Date().toISOString().split('T')[0], caused_by: '', details: '' });
-            setDamagedItems([{ apparatus_name: '', quantity: '' }]);
+            setFormData({ staff: '', class_name: '', date: new Date().toISOString().split('T')[0], details: '' });
+            setDamagedItems([{ apparatus_name: '', quantity: '', caused_by: '' }]);
         } catch (err) {
-            alert('Error: ' + (err.response?.data?.error || 'Failed to submit report'));
+            setAlertDialog({ open: true, message: 'Error: ' + (err.response?.data?.error || 'Failed to submit report') });
         } finally {
             setSubmitting(false);
         }
@@ -211,12 +213,6 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
                             </div>
                         </div>
 
-                        <div className="form-group full-width mt-20">
-                            <label>Damaged By (Student Name / Reason)</label>
-                            <input type="text" value={formData.caused_by} required placeholder="Student name or description"
-                                onChange={e => setFormData({ ...formData, caused_by: e.target.value })} />
-                        </div>
-
                         <div className="damaged-list-section mt-30">
                             <div className="section-header">
                                 <h3><FaTools /> Damaged Items List</h3>
@@ -228,6 +224,7 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
                             <div className="damaged-grid-header">
                                 <span><FaTools /> Apparatus Name</span>
                                 <span>Quantity Broken</span>
+                                <span>Caused By</span>
                                 <span>Action</span>
                             </div>
 
@@ -252,6 +249,8 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
                                     </div>
                                     <input type="number" className="grid-input" placeholder="Qty" value={it.quantity} required
                                         onChange={e => { const next = [...damagedItems]; next[i].quantity = e.target.value; setDamagedItems(next); }} />
+                                    <input type="text" className="grid-input" placeholder="Caused by..." value={it.caused_by} required
+                                        onChange={e => { const next = [...damagedItems]; next[i].caused_by = e.target.value; setDamagedItems(next); }} />
                                     <button type="button" className="btn-row-del" onClick={() => setDamagedItems(damagedItems.filter((_, idx) => idx !== i))} title="Remove item"><FaTrashAlt /></button>
                                 </div>
                             ))}
@@ -272,6 +271,7 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
                     </div>
                 </form>
             </div>
+            <ConfirmDialog open={alertDialog.open} message={alertDialog.message} showCancel={false} confirmLabel="OK" onConfirm={() => setAlertDialog({ open: false })} />
         </div>
     );
 }

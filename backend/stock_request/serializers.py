@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.utils import timezone
 from .models import StockRequest, StockRequestChemicalItem, StockRequestApparatusItem, IssueRegister, IssueChemicals
 
 
@@ -20,10 +21,11 @@ class ChemicalItemSerializer(serializers.ModelSerializer):
 
 class StockRequestCreateSerializer(serializers.ModelSerializer):
     chemical_items = ChemicalItemWriteSerializer(many=True, required=True)
+    date = serializers.DateField(required=False)
 
     class Meta:
         model = StockRequest
-        fields = ['id', 'request_id', 'class_name', 'reason', 'chemical_items', 'status', 'created_at']
+        fields = ['id', 'request_id', 'class_name', 'reason', 'date', 'chemical_items', 'status', 'created_at']
         read_only_fields = ['id', 'request_id', 'created_at']
 
     def validate(self, data):
@@ -32,22 +34,36 @@ class StockRequestCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "At least one chemical item must be added"
             )
-        
-        status = data.get('status', 'pending')
         user = self.context['request'].user
-        
+        today = timezone.now().date()
+        date_val = data.get('date') or today
+        if date_val < today:
+            raise serializers.ValidationError(
+                {"date": "Date cannot be in the past. Use today or a future date."}
+            )
+        data['date'] = date_val
+        if user.role == 'staff':
+            class_name = data.get('class_name', '')
+            dept = user.department or ''
+            if 'B.Sc' in dept and 'B.Sc' not in class_name:
+                raise serializers.ValidationError(
+                    {"class_name": "Class must belong to your department (B.Sc Chemistry)."}
+                )
+            if 'M.Sc' in dept and 'M.Sc' not in class_name:
+                raise serializers.ValidationError(
+                    {"class_name": "Class must belong to your department (M.Sc Chemistry)."}
+                )
+        status = data.get('status', 'pending')
         if status == 'pending' and user.role == 'staff':
-            # Check for ANY active request (not just pending)
             active_statuses = ['pending', 'accepted', 'issued', 'reported']
             has_active = StockRequest.objects.filter(
-                requested_by=user, 
+                requested_by=user,
                 status__in=active_statuses
             ).exists()
             if has_active:
                 raise serializers.ValidationError(
                     "You already have an active request. Complete your previous request first, or save this as a draft."
                 )
-        
         return data
 
     def create(self, validated_data):
@@ -96,7 +112,7 @@ class StockRequestListSerializer(serializers.ModelSerializer):
     class Meta:
         model = StockRequest
         fields = [
-            'id', 'request_id', 'class_name', 'status', 'reason', 'created_at',
+            'id', 'request_id', 'class_name', 'status', 'reason', 'date', 'created_at',
             'requested_by_name', 'requested_by_id',
             'chemical_items',
             'issued_at', 'reported_at', 'completed_at',
@@ -117,7 +133,7 @@ class StockRequestDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = StockRequest
         fields = [
-            'id', 'request_id', 'class_name', 'status', 'reason', 'created_at', 'date',
+            'id', 'request_id', 'class_name', 'status', 'reason', 'rejection_reason', 'created_at', 'date',
             'requested_by_name', 'requested_by_id', 'requested_by',
             'chemical_items',
             'reviewed_at', 'reviewed_by_name',
@@ -161,4 +177,4 @@ class IssueRegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = IssueRegister
-        fields = ['ir_id', 'staff_name', 'class_field', 'date', 'status', 'chemicals']
+        fields = ['ir_id', 'request_code', 'stock_request_db_id', 'staff_name', 'class_field', 'date', 'status', 'chemicals']

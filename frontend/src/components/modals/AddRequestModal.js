@@ -4,11 +4,28 @@ import api from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import './AddRequestModal.css';
 
+const ALL_CLASS_OPTIONS = [
+  'I B.Sc Chemistry',
+  'II B.Sc Chemistry',
+  'III B.Sc Chemistry',
+  'I M.Sc Chemistry',
+  'II M.Sc Chemistry'
+];
+
+function getClassOptionsByDepartment(department) {
+  if (!department) return ALL_CLASS_OPTIONS;
+  if (department.includes('B.Sc')) return ALL_CLASS_OPTIONS.filter(c => c.includes('B.Sc'));
+  if (department.includes('M.Sc')) return ALL_CLASS_OPTIONS.filter(c => c.includes('M.Sc'));
+  return ALL_CLASS_OPTIONS;
+}
+
 function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editData = null }) {
   const { user } = useAuth();
+  const classOptions = getClassOptionsByDepartment(user?.department);
+  const defaultClass = classOptions.length ? classOptions[0] : 'I B.Sc Chemistry';
   const [formData, setFormData] = useState({
     reason: '',
-    class_name: 'I B.Sc Chemistry',
+    class_name: defaultClass,
     date: new Date().toISOString().split('T')[0]
   });
   const [chemicalItems, setChemicalItems] = useState([{ chemical_name: '', quantity_ml: '' }]);
@@ -16,21 +33,16 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
   const [submitting, setSubmitting] = useState(false);
   const [availableChemicals, setAvailableChemicals] = useState([]);
 
-  const classOptions = [
-    'I B.Sc Chemistry',
-    'II B.Sc Chemistry',
-    'III B.Sc Chemistry',
-    'I M.Sc Chemistry',
-    'II M.Sc Chemistry'
-  ];
-
   useEffect(() => {
     if (isOpen) {
       if (editData) {
+        const opts = getClassOptionsByDepartment(user?.department);
+        const editClass = editData.class_name && opts.includes(editData.class_name) ? editData.class_name : (opts[0] || 'I B.Sc Chemistry');
+        const editDate = editData.date ? editData.date.split('T')[0] : (editData.created_at ? new Date(editData.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
         setFormData({
           reason: editData.reason || '',
-          class_name: editData.class_name || 'I B.Sc Chemistry',
-          date: editData.created_at ? new Date(editData.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+          class_name: editClass,
+          date: editDate
         });
         if (editData.chemical_items && editData.chemical_items.length > 0) {
           setChemicalItems(editData.chemical_items.map(item => ({
@@ -39,9 +51,10 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
           })));
         }
       } else {
+        const opts = getClassOptionsByDepartment(user?.department);
         setFormData({
           reason: '',
-          class_name: 'I B.Sc Chemistry',
+          class_name: opts.length ? opts[0] : 'I B.Sc Chemistry',
           date: new Date().toISOString().split('T')[0]
         });
         setChemicalItems([{ chemical_name: '', quantity_ml: '' }]);
@@ -77,6 +90,10 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
 
   const validate = () => {
     const newErrors = {};
+    const today = new Date().toISOString().split('T')[0];
+    if (formData.date < today) {
+      newErrors.date = 'Date cannot be in the past. Use today or a future date.';
+    }
     if (chemicalItems.length === 0) {
       newErrors.items = 'At least one chemical item must be added';
     }
@@ -103,6 +120,7 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
     const payload = {
       class_name: formData.class_name,
       reason: formData.reason.trim(),
+      date: formData.date,
       status: (directSubmit && !hasActiveRequest) ? 'pending' : 'draft',
       chemical_items: chemicalItems.map((item) => ({
         chemical_name: item.chemical_name.trim(),
@@ -117,9 +135,10 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
         await api.post('stock_request/', payload);
       }
       onSuccess();
+      const opts = getClassOptionsByDepartment(user?.department);
       setFormData({
         reason: '',
-        class_name: 'I B.Sc Chemistry',
+        class_name: opts.length ? opts[0] : 'I B.Sc Chemistry',
         date: new Date().toISOString().split('T')[0]
       });
       setChemicalItems([{ chemical_name: '', quantity_ml: '' }]);
@@ -189,10 +208,12 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
                 <label><FaCalendarAlt /> Date</label>
                 <input
                   type="date"
+                  min={new Date().toISOString().split('T')[0]}
                   value={formData.date}
                   onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  className="modern-input"
+                  className={`modern-input ${errors.date ? 'error' : ''}`}
                 />
+                {errors.date && <span className="error-text">{errors.date}</span>}
               </div>
             </div>
 

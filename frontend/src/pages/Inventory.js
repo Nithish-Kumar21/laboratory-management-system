@@ -4,14 +4,20 @@ import ApparatusTable from '../components/tables/ApparatusTable';
 import ChemicalTable from '../components/tables/ChemicalTable';
 import LowStockAlert from '../components/LowStockAlert';
 import api from '../utils/api';
+import { useAuth } from '../context/AuthContext';
 import './Inventory.css';
 
 function Inventory() {
+  const { isStaff, isAdmin } = useAuth();
   const [activeTab, setActiveTab] = useState('chemical');
   const [hasLowStockChem, setHasLowStockChem] = useState(false);
   const [hasLowStockApp, setHasLowStockApp] = useState(false);
 
+  const showLowStockFeature = !isStaff && !isAdmin;
+  const showReorderLevel = !isStaff;
+
   const checkLowStockStatus = async () => {
+    if (!showLowStockFeature) return;
     try {
       const [chemRes, appRes] = await Promise.all([
         api.get('low_stock_chemicals/').catch(() => ({ data: [] })),
@@ -35,7 +41,7 @@ function Inventory() {
       window.removeEventListener('inventory-updated', checkLowStockStatus);
       clearInterval(interval);
     };
-  }, []);
+  }, [showLowStockFeature]);
 
   return (
     <div className="inventory-page dept-inventory animate-up">
@@ -49,11 +55,13 @@ function Inventory() {
             <p className="page-subtitle">Real-time tracking of chemicals and laboratory apparatus.</p>
           </div>
         </div>
-        <div className="status-badge-container">
-          <span className={`status-badge ${hasLowStockChem || hasLowStockApp ? 'warning' : 'success'}`}>
-            {hasLowStockChem || hasLowStockApp ? 'Attention Required' : 'Stock Optimal'}
-          </span>
-        </div>
+        {showLowStockFeature && (
+          <div className="status-badge-container">
+            <span className={`status-badge ${hasLowStockChem || hasLowStockApp ? 'warning' : 'success'}`}>
+              {hasLowStockChem || hasLowStockApp ? 'Attention Required' : 'Stock Optimal'}
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="inventory-tabs">
@@ -62,28 +70,30 @@ function Inventory() {
           onClick={() => setActiveTab('chemical')}
         >
           <span className="tab-text">Chemicals</span>
-          {hasLowStockChem && <span className="tab-indicator warning animate-pulse"></span>}
+          {showLowStockFeature && hasLowStockChem && <span className="tab-indicator warning animate-pulse"></span>}
         </button>
         <button
           className={`tab-item ${activeTab === 'apparatus' ? 'active' : ''}`}
           onClick={() => setActiveTab('apparatus')}
         >
           <span className="tab-text">Apparatus</span>
-          {hasLowStockApp && <span className="tab-indicator warning animate-pulse"></span>}
+          {showLowStockFeature && hasLowStockApp && <span className="tab-indicator warning animate-pulse"></span>}
         </button>
         <div className="tab-slider" style={{ left: activeTab === 'chemical' ? '0%' : '50%' }}></div>
       </div>
 
-      <div className="inventory-alert-box animate-fade">
-        <LowStockAlert activeTab={activeTab} />
-      </div>
+      {showLowStockFeature && (
+        <div className="inventory-alert-box animate-fade">
+          <LowStockAlert activeTab={activeTab} />
+        </div>
+      )}
 
       <div className="inventory-card card animate-fade">
         <div className="table-responsive">
           {activeTab === 'chemical' ? (
-            <ChemicalTable />
+            <ChemicalTable showReorderLevel={showReorderLevel} />
           ) : (
-            <ApparatusTable />
+            <ApparatusTable showReorderLevel={showReorderLevel} />
           )}
         </div>
       </div>

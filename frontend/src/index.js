@@ -6,6 +6,7 @@ import { AuthProvider } from './context/AuthContext';
 import reportWebVitals from './reportWebVitals';
 import * as serviceWorkerRegistration from './serviceWorkerRegistration';
 
+document.title = 'Laboratory Management System';
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>

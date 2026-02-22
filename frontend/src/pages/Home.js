@@ -9,7 +9,7 @@ import './Home.css';
 import './VintageClock.css';
 
 function Home() {
-  const { isStaff, isHOD } = useAuth();
+  const { isStaff, isHOD, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState({
     chemicals: 0,
@@ -61,6 +61,7 @@ function Home() {
   };
 
   const fetchLowStockItems = async () => {
+    if (isStaff || isAdmin) return;
     try {
       const [chemRes, appRes] = await Promise.all([
         api.get('/low_stock_chemicals/').catch(() => ({ data: [] })),
@@ -111,7 +112,7 @@ function Home() {
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [isHOD, isStaff]);
+  }, [isHOD, isStaff, isAdmin]);
 
   const handleAccept = (id) => {
     api
@@ -222,8 +223,8 @@ function Home() {
           </div>
         )}
 
-        {/* Low Stock Alerts - Hide for Staff */}
-        {!isStaff && lowStockItems.length > 0 && (
+        {/* Low Stock Alerts - Hide for Staff and Admin */}
+        {!isStaff && !isAdmin && lowStockItems.length > 0 && (
           <div className="low-stock-section card animate-fade">
             <div className="section-title-bar">
               <h3>⚠️ Low Stock Alerts</h3>
@@ -307,7 +308,7 @@ function Home() {
                     <div className="request-mini-header">
                       <div className="requester-meta">
                         <strong>{req.requested_by_name}</strong>
-                        <span className="request-date">{new Date(req.created_at).toLocaleDateString()}</span>
+                        <span className="request-date">{req.date ? new Date(req.date).toLocaleDateString() : new Date(req.created_at).toLocaleDateString()}</span>
                       </div>
                       <div className="request-mini-actions">
                         <button className="btn-icon accept" title="Accept" onClick={(e) => { e.stopPropagation(); handleAccept(req.id); }}><FaCheck /></button>

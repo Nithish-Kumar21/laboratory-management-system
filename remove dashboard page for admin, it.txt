@@ -1,0 +1,17 @@
+remove dashboard page for admin, it have access to inventory and stock register pages.
+
+referfirst  attached image. Instead of LabManager, replace with 'Laboratory Management System'
+
+refer second attached image. for all the messages from browser that says 'localhost:3000 says'. Make code changes to remove it. Just the message and ok/cancel buttons. 
+
+refer to third attached image. Instead of X button, keep the sandwich icon only for both open and close of sidebar. 
+
+refer to fourth attached image. eye icon is not visible in white background of field. make the icon black. 
+
+Even at database level only one Store Keeper and One HOD role user account should exist and no more than 1 for both. 
+Show warning that only 1 store keeper user can exist. Only 1 HOD user can exist when user account gets created. 
+
+refer to fifth image. 0 items is being showed even when more than 0 items are inside in detailed view. the no.of items should be accurate to no.of items inside in detailed view. 
+
+__ chemicals
+__ apparatus

@@ -75,6 +75,19 @@
     color: #555;
 }
 
+.toast-link {
+    display: inline-block;
+    margin-top: 6px;
+    font-size: 0.9rem;
+    color: #0b2a4a;
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.toast-link:hover {
+    text-decoration: underline;
+}
+
 .toast-close {
     background: transparent;
     border: none;

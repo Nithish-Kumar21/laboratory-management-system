@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
+from datetime import date
 
 
 class StockRequest(models.Model):
@@ -29,9 +30,10 @@ class StockRequest(models.Model):
         related_name='stock_requests'
     )
     class_name = models.CharField(max_length=50, choices=CLASS_CHOICES)
-    date = models.DateField(auto_now_add=True)
+    date = models.DateField(default=date.today)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     reason = models.TextField(blank=True)
+    rejection_reason = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     reviewed_at = models.DateTimeField(null=True, blank=True)
     reviewed_by = models.ForeignKey(
@@ -126,9 +128,11 @@ class StockRequestApparatusItem(models.Model):
 
 class IssueRegister(models.Model):
     ir_id = models.AutoField(primary_key=True)
-    # Linking to my StockRequest instead of the legacy 'Requests' table if possible,
-    # or just leaving it for now. Actually, let's match inspectdb exactly for the table definition.
-    # But since I want to use it in my views, I'll define it so I can write to it.
+    # request_code: human-readable identifier e.g. REQ-2026-001
+    # We use 'request_code' because 'request_id' (integer) already exists as a legacy FK.
+    request_code = models.CharField(max_length=20, null=True, blank=True)
+    # stock_request_db_id: numeric PK of the originating StockRequest (used for frontend navigation)
+    stock_request_db_id = models.IntegerField(null=True, blank=True)
     staff_name = models.CharField(max_length=100)
     class_field = models.CharField(db_column='class', max_length=50)
     date = models.DateField()

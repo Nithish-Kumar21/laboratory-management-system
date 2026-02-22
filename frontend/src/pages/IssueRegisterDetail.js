@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { FaArrowLeft, FaFlask, FaIdCard, FaUser, FaGraduationCap, FaCalendarAlt, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
+import { FaArrowLeft, FaFlask, FaIdCard, FaUser, FaGraduationCap, FaCalendarAlt, FaCheckCircle } from 'react-icons/fa';
 import api from '../utils/api';
 import './StockRegisterDetail.css';
+import './IssueRegister.css';
 
 function IssueRegisterDetail() {
     const { id } = useParams();
@@ -36,7 +37,14 @@ function IssueRegisterDetail() {
                 </button>
                 <div className="header-title-box">
                     <h2>Issue Register Entry</h2>
-                    <p>IR-#{issueRegister.ir_id}</p>
+                    <p>
+                        IR-#{issueRegister.ir_id}
+                        {issueRegister.request_code && (
+                            <span className="ir-header-req-badge" title="Originated from this Request Form">
+                                · {issueRegister.request_code}
+                            </span>
+                        )}
+                    </p>
                 </div>
                 <div className="status-indicator success">
                     <FaCheckCircle /> {issueRegister.status}
@@ -46,7 +54,12 @@ function IssueRegisterDetail() {
             <div className="detail-info-grid">
                 <div className="info-card card">
                     <label><FaIdCard /> Entry ID</label>
-                    <span>IR-#{issueRegister.ir_id}</span>
+                    <span>
+                        IR-#{issueRegister.ir_id}
+                        {issueRegister.request_code && (
+                            <span className="ir-inline-req"> · {issueRegister.request_code}</span>
+                        )}
+                    </span>
                 </div>
                 <div className="info-card card">
                     <label><FaUser /> Staff Name</label>

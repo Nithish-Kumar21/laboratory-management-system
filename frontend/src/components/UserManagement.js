@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import CreateUserModal from './CreateUserModal';
 import EditUserModal from './EditUserModal';
+import ConfirmDialog from './ConfirmDialog';
 
 const UserManagement = () => {
   const { isAdmin } = useAuth();
@@ -14,6 +15,7 @@ const UserManagement = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [dialog, setDialog] = useState({ open: false, message: '', userId: null });
 
   useEffect(() => {
     if (!isAdmin) {
@@ -42,15 +44,18 @@ const UserManagement = () => {
     setShowEditModal(true);
   };
 
-  const handleDelete = async (userId) => {
-    if (!window.confirm('Are you sure you want to delete this user?')) {
-      return;
-    }
+  const handleDeleteClick = (userId) => {
+    setDialog({ open: true, message: 'Are you sure you want to delete this user?', userId });
+  };
+
+  const handleDeleteConfirm = async () => {
+    const userId = dialog.userId;
+    setDialog({ open: false, message: '', userId: null });
     try {
       await api.delete(`/users/${userId}/`);
       fetchUsers();
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to delete user');
+      setDialog({ open: true, message: err.response?.data?.error || 'Failed to delete user', showCancel: false });
     }
   };
 
@@ -151,7 +156,7 @@ const UserManagement = () => {
                       Edit
                     </button>
                     <button
-                      onClick={() => handleDelete(user.id)}
+                      onClick={() => handleDeleteClick(user.id)}
                       style={styles.deleteButton}
                     >
                       Delete
@@ -184,6 +189,17 @@ const UserManagement = () => {
           }}
         />
       )}
+
+      <ConfirmDialog
+        open={dialog.open}
+        message={dialog.message}
+        showCancel={!!dialog.userId}
+        confirmLabel={dialog.userId ? 'Delete' : 'OK'}
+        cancelLabel="Cancel"
+        variant={dialog.userId ? 'danger' : 'alert'}
+        onConfirm={dialog.userId ? handleDeleteConfirm : () => setDialog({ open: false })}
+        onCancel={() => setDialog({ open: false })}
+      />
     </div>
   );
 };

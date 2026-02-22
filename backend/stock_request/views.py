@@ -204,6 +204,8 @@ class StockRequestViewSet(viewsets.ModelViewSet):
 
         # 1. Create Issue Register Entry
         issue_register = IssueRegister.objects.create(
+            request_code=obj.request_id,
+            stock_request_db_id=obj.pk,
             staff_name=obj.requested_by.full_name,
             class_field=obj.class_name,
             date=obj.date,
@@ -362,7 +364,21 @@ class StockRequestViewSet(viewsets.ModelViewSet):
 
 
 class IssueRegisterViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint for issue register entries.
+    List view: Shows issue ID, staff name, class, date, and status.
+    Detail view: Includes all chemical items with usage details.
+    List supports ?ordering=date|-date|ir_id|-ir_id|staff_name|-staff_name for sorting.
+    """
     queryset = IssueRegister.objects.all()
     serializer_class = IssueRegisterSerializer
     # Using the same permission as StockRequest for now (basically authenticated)
     permission_classes = [StockRequestPermission]
+    ordering_fields = ['date', 'ir_id', 'staff_name']
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        ordering = self.request.query_params.get('ordering')
+        if ordering in ('date', '-date', 'ir_id', '-ir_id', 'staff_name', '-staff_name'):
+            return qs.order_by(ordering)
+        return qs.order_by('-date')

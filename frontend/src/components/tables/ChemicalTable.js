@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { FaFlask, FaExclamationCircle, FaCheckCircle, FaHistory } from 'react-icons/fa';
 import api from '../../utils/api';
 
-function ChemicalTable() {
+function ChemicalTable({ showReorderLevel = true }) {
   const [chemicals, setChemicals] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -27,13 +27,13 @@ function ChemicalTable() {
           <tr>
             <th>Chemical Name</th>
             <th>Available Stock</th>
-            <th>Reorder Point</th>
+            {showReorderLevel && <th>Reorder Point</th>}
             <th>Last Logged</th>
           </tr>
         </thead>
         <tbody>
           {chemicals.map((item) => {
-            const isLow = item.available_quantity_ml <= item.reorder_level;
+            const isLow = showReorderLevel && item.available_quantity_ml <= item.reorder_level;
             return (
               <tr key={item.id} className={isLow ? 'row-warning' : ''}>
                 <td>
@@ -47,7 +47,7 @@ function ChemicalTable() {
                     {item.available_quantity_ml} <span className="unit">ml</span>
                   </span>
                 </td>
-                <td>{item.reorder_level} ml</td>
+                {showReorderLevel && <td>{item.reorder_level} ml</td>}
                 <td>
                   <div className="date-cell">
                     <FaHistory className="date-icon" />

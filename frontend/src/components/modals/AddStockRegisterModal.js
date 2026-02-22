@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { FaPlusCircle, FaTimes, FaTrashAlt, FaFlask, FaBoxes, FaTags } from 'react-icons/fa';
 import api from '../../utils/api';
+import ConfirmDialog from '../ConfirmDialog';
 import './AddStockRegisterModal.css';
 
 function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
@@ -14,6 +15,7 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
   const [apparatusItems, setApparatusItems] = useState([{ apparatus_name: '', quantity_pieces: '', rate: '', make: '' }]);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
+  const [alertDialog, setAlertDialog] = useState({ open: false, message: '' });
 
   const [chemicalNames, setChemicalNames] = useState([]);
   const [apparatusNames, setApparatusNames] = useState([]);
@@ -218,7 +220,7 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
       setApparatusItems([{ apparatus_name: '', quantity_pieces: '', rate: '', make: '' }]);
       setFormData({ invoice_number: '', date: new Date().toISOString().split('T')[0], supplier_name: '' });
     } catch (err) {
-      alert('Error: ' + (err.response?.data?.error || 'Validation failed'));
+      setAlertDialog({ open: true, message: 'Error: ' + (err.response?.data?.error || 'Validation failed') });
     } finally {
       setSubmitting(false);
     }
@@ -247,7 +249,7 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
               </div>
               <div className="form-group">
                 <label>Date Received</label>
-                <input type="date" value={formData.date} required
+                <input type="date" value={formData.date} required max={new Date().toISOString().split('T')[0]}
                   onChange={e => setFormData({ ...formData, date: e.target.value })} />
               </div>
               <div className="form-group">
@@ -350,6 +352,7 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
           </div>
         </form>
       </div>
+      <ConfirmDialog open={alertDialog.open} message={alertDialog.message} showCancel={false} confirmLabel="OK" onConfirm={() => setAlertDialog({ open: false })} />
     </div>
   );
 }

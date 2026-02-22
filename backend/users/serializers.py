@@ -75,6 +75,12 @@ class UserCreateSerializer(serializers.ModelSerializer):
                     "Only one HOD can exist in the system. "
                     "Please deactivate or change the role of the existing HOD first."
                 )
+        if value == 'store_keeper':
+            if User.objects.filter(role='store_keeper', is_active=True).exists():
+                raise serializers.ValidationError(
+                    "Only one Store Keeper can exist in the system. "
+                    "Please deactivate or change the role of the existing Store Keeper first."
+                )
         return value
     
     def validate(self, data):
@@ -143,6 +149,12 @@ class UserUpdateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     "Only one HOD can exist in the system. "
                     "Please deactivate or change the role of the existing HOD first."
+                )
+        if value == 'store_keeper' and user.role != 'store_keeper':
+            if User.objects.filter(role='store_keeper', is_active=True).exclude(id=user.id).exists():
+                raise serializers.ValidationError(
+                    "Only one Store Keeper can exist in the system. "
+                    "Please deactivate or change the role of the existing Store Keeper first."
                 )
         return value
 

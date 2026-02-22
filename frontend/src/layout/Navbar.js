@@ -48,7 +48,7 @@ const Navbar = () => {
                         <div className="navbar-logo">
                             <FaFlask />
                         </div>
-                        <span className="navbar-title">LabManager</span>
+                        <span className="navbar-title">Laboratory Management System</span>
                     </Link>
                 </div>
 

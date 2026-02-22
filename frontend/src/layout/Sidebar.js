@@ -20,6 +20,7 @@ const Sidebar = ({ isOpen, isMobile }) => {
   const { isAdmin, isStaff, logout } = useAuth();
 
   const fetchLowStockCount = async () => {
+    if (isStaff || isAdmin) return;
     try {
       const [chemRes, appRes] = await Promise.all([
         api.get('/low_stock_chemicals/').catch(() => ({ data: [] })),
@@ -41,28 +42,28 @@ const Sidebar = ({ isOpen, isMobile }) => {
       clearInterval(interval);
       window.removeEventListener('inventory-updated', fetchLowStockCount);
     };
-  }, []);
+  }, [isStaff, isAdmin]);
 
   const menuItems = [
     {
       path: '/',
       label: 'Dashboard',
       icon: FaHome,
-      show: true,
+      show: !isAdmin, // Admin has no dashboard
       color: 'var(--dept-dashboard)'
     },
     {
       path: '/inventory',
       label: 'Inventory',
       icon: FaBoxes,
-      show: !isAdmin, // Hide for admin
+      show: !isAdmin, // No access for admin
       color: 'var(--dept-inventory)'
     },
     {
       path: '/stock-register',
       label: 'Stock Register',
       icon: FaClipboardList,
-      show: !isStaff && !isAdmin, // Hide for staff and admin
+      show: !isStaff && !isAdmin, // No access for staff and admin
       color: 'var(--dept-stock)'
     },
     {
@@ -134,7 +135,7 @@ const Sidebar = ({ isOpen, isMobile }) => {
         </button>
         <div className="version-info">
           <span>version 2.4.0</span>
-          <span>© 2026 LabManager</span>
+          <span>© 2026 Laboratory Management System</span>
         </div>
       </div>
     </aside>

@@ -179,6 +179,15 @@
     color: #ef4444;
 }
 
+.detail-table .cause-tag {
+    background: #fef3c7;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-weight: 700;
+    border: 1px solid #fcd34d;
+    color: #92400e;
+}
+
 /* Actions */
 .delete-action-box {
     margin-top: 64px;

@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.utils import timezone
 from .models import StockRegister, ChemicalItem, ApparatusItem
 from inventory.models import AvailableChemical, AvailableApparatus
 
@@ -20,10 +21,19 @@ class ApparatusItemSerializer(serializers.ModelSerializer):
 
 
 class StockRegisterListSerializer(serializers.ModelSerializer):
-    """Serializer for list view - just basic info"""
+    """Serializer for list view - basic info + item counts for list display"""
+    chemical_items_count = serializers.SerializerMethodField()
+    apparatus_items_count = serializers.SerializerMethodField()
+
     class Meta:
         model = StockRegister
-        fields = ['id', 'invoice_number', 'date', 'supplier_name']  # Added 'supplier_name'
+        fields = ['id', 'invoice_number', 'date', 'supplier_name', 'chemical_items_count', 'apparatus_items_count']
+
+    def get_chemical_items_count(self, obj):
+        return obj.chemical_items.count()
+
+    def get_apparatus_items_count(self, obj):
+        return obj.apparatus_items.count()
 
 
 
@@ -87,6 +97,11 @@ class StockRegisterCreateSerializer(serializers.ModelSerializer):
     def validate_invoice_number(self, value):
         if StockRegister.objects.filter(invoice_number=value).exists():
             raise serializers.ValidationError("Invoice number already exists")
+        return value
+    
+    def validate_date(self, value):
+        if value > timezone.now().date():
+            raise serializers.ValidationError("Invoice date cannot be in the future.")
         return value
     
     def validate(self, data):

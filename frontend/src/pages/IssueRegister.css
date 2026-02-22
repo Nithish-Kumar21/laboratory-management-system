@@ -40,3 +40,41 @@
         display: none;
     }
 }
+
+/* ── Request Number Badge (inline inside h3 on list cards) ── */
+.ir-request-badge {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+    gap: 4px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: rgba(99, 102, 241, 0.12);
+    color: var(--accent, #6366f1);
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    margin-left: 8px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    line-height: 1;
+}
+
+/* ── Header inline request badge (detail page subtitle) ── */
+.ir-header-req-badge {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--accent, #6366f1);
+    margin-left: 6px;
+    opacity: 0.9;
+}
+
+/* ── Inline request number inside Entry ID card ── */
+.ir-inline-req {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--accent, #6366f1);
+    margin-left: 4px;
+    opacity: 0.85;
+}

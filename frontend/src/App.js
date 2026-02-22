@@ -5,18 +5,12 @@ import { ThemeProvider } from './context/ThemeContext';
 import TopBar from './layout/TopBar';
 import Sidebar from './layout/Sidebar';
 import ProtectedRoute from './components/ProtectedRoute';
-
-// Authentication Components
 import Login from './components/Login';
 import ChangePassword from './components/ChangePassword';
 import ForgotPassword from './components/ForgotPassword';
 import ResetPassword from './components/ResetPassword';
-
-// User Management Components
 import UserManagement from './components/UserManagement';
 import UserProfile from './components/UserProfile';
-
-// Existing Components
 import Home from './pages/Home';
 import Inventory from './pages/Inventory';
 import StockRegister from './pages/StockRegister';
@@ -29,8 +23,19 @@ import StockRequest from './pages/StockRequest';
 import StockRequestDetail from './pages/StockRequestDetail';
 import Settings from './components/Settings';
 import LowStockToast from './components/LowStockToast';
-
 import './styles/App.css';
+
+function HomeOrRedirect() {
+  const { isAdmin } = useAuth();
+  if (isAdmin) return <Navigate to="/users" replace />;
+  return <Home />;
+}
+
+function AdminBlock({ children, redirectTo = '/users' }) {
+  const { isAdmin } = useAuth();
+  if (isAdmin) return <Navigate to={redirectTo} replace />;
+  return children;
+}
 
 function AppContent() {
   const { loading } = useAuth();
@@ -83,7 +88,7 @@ function AppContent() {
                   <LowStockToast />
                   <div className="page-container">
                     <Routes>
-                      <Route path="" element={<Home />} />
+                      <Route path="" element={<HomeOrRedirect />} />
                       <Route path="profile" element={<UserProfile />} />
 
                       {/* Admin Only */}
@@ -98,9 +103,9 @@ function AppContent() {
 
                       <Route path="settings" element={<Settings />} />
 
-                      {/* Existing Routes */}
-                      <Route path="inventory" element={<Inventory />} />
-                      <Route path="stock-register" element={<StockRegister />} />
+                      {/* Existing Routes - admin has no access to inventory or stock-register */}
+                      <Route path="inventory" element={<AdminBlock redirectTo="/users"><Inventory /></AdminBlock>} />
+                      <Route path="stock-register" element={<AdminBlock redirectTo="/users"><StockRegister /></AdminBlock>} />
                       <Route path="stock-register/:id" element={<StockRegisterDetail />} />
                       <Route path="issue-register" element={<IssueRegister />} />
                       <Route path="issue-register/:id" element={<IssueRegisterDetail />} />

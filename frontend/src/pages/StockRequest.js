@@ -220,7 +220,7 @@ const StockRequest = ({ draftsOnly = false }) => {
                                 </div>
                                 <div className="stock-card-details">
                                     <span className="date">
-                                        <FaCalendarAlt /> {new Date(req.created_at).toLocaleDateString()}
+                                        <FaCalendarAlt /> {req.date ? new Date(req.date).toLocaleDateString() : new Date(req.created_at).toLocaleDateString()}
                                     </span>
                                     <span className="items-count">
                                         {req.chemical_items?.length || 0} Items

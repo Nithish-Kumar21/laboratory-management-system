@@ -175,6 +175,9 @@ const CreateUserModal = ({ onClose, onSuccess }) => {
                 <option value="hod">Head of Department</option>
                 <option value="admin">Administrator</option>
               </select>
+              <p style={{ marginTop: 6, fontSize: 12, color: '#b45309' }}>
+                Only one Store Keeper and one HOD user can exist in the system. Creating another will fail if one already exists.
+              </p>
             </div>
 
             <div style={styles.formGroup}>

@@ -18,41 +18,44 @@ const NotificationCenter = () => {
     const [showNotifDropdown, setShowNotifDropdown] = useState(false);
     const notifRef = useRef(null);
     const navigate = useNavigate();
-    const { isHOD, user } = useAuth();
+    const { isHOD, user, isStaff, isAdmin } = useAuth();
+    const showLowStockInNotif = !isStaff && !isAdmin;
 
     const fetchNotificationData = useCallback(async () => {
         try {
-            const requests = [
-                api.get('/low_stock_chemicals/').catch(() => ({ data: [] })),
-                api.get('/low_stock_apparatus/').catch(() => ({ data: [] })),
-            ];
+            const requests = [];
+            if (showLowStockInNotif) {
+                requests.push(api.get('/low_stock_chemicals/').catch(() => ({ data: [] })));
+                requests.push(api.get('/low_stock_apparatus/').catch(() => ({ data: [] })));
+            }
 
             if (isHOD) {
-                // Fetch full pending requests list instead of just count
                 requests.push(api.get('/stock_request/?status=pending').catch(() => ({ data: [] })));
             } else if (user?.role === 'staff') {
-                // Fetch reviewed requests for staff
                 requests.push(api.get('/stock_request/reviewed/').catch(() => ({ data: [] })));
             }
 
             const results = await Promise.all(requests);
-            const chemRes = results[0];
-            const appRes = results[1];
-            const thirdRes = results[2];
-
-            const chemData = Array.isArray(chemRes.data) ? chemRes.data : (chemRes.data.results || []);
-            const appData = Array.isArray(appRes.data) ? appRes.data : (appRes.data.results || []);
-
+            let chemData = [];
+            let appData = [];
             let pendingData = [];
             let reviewedData = [];
 
-            if (isHOD && thirdRes) {
-                pendingData = Array.isArray(thirdRes.data) ? thirdRes.data : (thirdRes.data.results || []);
-            } else if (user?.role === 'staff' && thirdRes) {
-                reviewedData = Array.isArray(thirdRes.data) ? thirdRes.data : (thirdRes.data.results || []);
+            if (showLowStockInNotif && results.length >= 2) {
+                chemData = Array.isArray(results[0].data) ? results[0].data : (results[0].data?.results || []);
+                appData = Array.isArray(results[1].data) ? results[1].data : (results[1].data?.results || []);
+                if (isHOD && results[2]) {
+                    pendingData = Array.isArray(results[2].data) ? results[2].data : (results[2].data?.results || []);
+                } else if (user?.role === 'staff' && results[2]) {
+                    reviewedData = Array.isArray(results[2].data) ? results[2].data : (results[2].data?.results || []);
+                }
+            } else if (isHOD && results[0]) {
+                pendingData = Array.isArray(results[0].data) ? results[0].data : (results[0].data?.results || []);
+            } else if (user?.role === 'staff' && results[0]) {
+                reviewedData = Array.isArray(results[0].data) ? results[0].data : (results[0].data?.results || []);
             }
 
-            const combinedLowStock = [
+            const combinedLowStock = showLowStockInNotif ? [
                 ...chemData.map(item => ({
                     id: `chem-${item.id}`,
                     name: item.chemical_name,
@@ -69,7 +72,7 @@ const NotificationCenter = () => {
                     unit: 'pcs',
                     isAlert: true
                 }))
-            ];
+            ] : [];
 
             setLowStockItems(combinedLowStock);
             setLowStockCount(combinedLowStock.length);
@@ -78,7 +81,7 @@ const NotificationCenter = () => {
         } catch (err) {
             console.error('Error fetching notification data:', err);
         }
-    }, [isHOD, user]);
+    }, [isHOD, user, showLowStockInNotif]);
 
     useEffect(() => {
         fetchNotificationData();
@@ -100,7 +103,7 @@ const NotificationCenter = () => {
         };
     }, [fetchNotificationData]);
 
-    const totalCount = lowStockCount + pendingRequests.length + reviewedRequests.length;
+    const totalCount = (showLowStockInNotif ? lowStockCount : 0) + pendingRequests.length + reviewedRequests.length;
 
     return (
         <div className="action-item" ref={notifRef}>
@@ -166,23 +169,25 @@ const NotificationCenter = () => {
                             </div>
                         ))}
 
-                        {lowStockItems.length > 0 && (
-                            <div className="dropdown-section-title">Low Stock Alerts</div>
-                        )}
-                        {lowStockItems.map((item) => (
-                            <div key={item.id} className="dropdown-row">
-                                <div className="icon-container">
-                                    <FaExclamationCircle />
-                                </div>
-                                <div className="row-info">
-                                    <p className="row-title">{item.name}</p>
-                                    <div className="row-sub">
-                                        <span className="type-tag">{item.type}</span>
-                                        <span>Stock: <span className="qty-alert">{item.qty} {item.unit}</span></span>
+                        {showLowStockInNotif && lowStockItems.length > 0 && (
+                            <>
+                                <div className="dropdown-section-title">Low Stock Alerts</div>
+                                {lowStockItems.map((item) => (
+                                    <div key={item.id} className="dropdown-row">
+                                        <div className="icon-container">
+                                            <FaExclamationCircle />
+                                        </div>
+                                        <div className="row-info">
+                                            <p className="row-title">{item.name}</p>
+                                            <div className="row-sub">
+                                                <span className="type-tag">{item.type}</span>
+                                                <span>Stock: <span className="qty-alert">{item.qty} {item.unit}</span></span>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-                        ))}
+                                ))}
+                            </>
+                        )}
 
                         {totalCount === 0 && (
                             <div className="empty-state">
@@ -191,13 +196,14 @@ const NotificationCenter = () => {
                             </div>
                         )}
                     </div>
-                    {totalCount > 0 && (
+                    {(pendingRequests.length > 0 || (showLowStockInNotif && lowStockItems.length > 0) || reviewedRequests.length > 0) && (
                         <div className="dropdown-footer" onClick={() => {
                             if (pendingRequests.length > 0) navigate('/requests?status=pending');
-                            else navigate('/inventory');
+                            else if (showLowStockInNotif && lowStockItems.length > 0) navigate('/inventory');
+                            else navigate('/requests');
                             setShowNotifDropdown(false);
                         }}>
-                            {pendingRequests.length > 0 ? 'View All Requests' : 'View Inventory'}
+                            {pendingRequests.length > 0 ? 'View All Requests' : (showLowStockInNotif && lowStockItems.length > 0 ? 'View Inventory' : 'View Requests')}
                         </div>
                     )}
                 </div>

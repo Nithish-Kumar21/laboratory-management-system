@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { FaArrowLeft, FaTrash, FaFlask, FaBoxes, FaExclamationTriangle } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
+import ConfirmDialog from '../components/ConfirmDialog';
 import './StockRegisterDetail.css';
 
 function StockRegisterDetail() {
@@ -13,6 +14,7 @@ function StockRegisterDetail() {
   const [error, setError] = useState(null);
   const { isStaff, isStoreKeeper } = useAuth();
   const [deleting, setDeleting] = useState(false);
+  const [dialog, setDialog] = useState({ open: false, message: '', showCancel: true, onConfirm: null });
 
   useEffect(() => {
     if (isStaff) { navigate('/'); return; }
@@ -21,17 +23,16 @@ function StockRegisterDetail() {
       .catch(err => { setError(err.response?.data?.error || 'Load failed'); setLoading(false); });
   }, [id, isStaff, navigate]);
 
-  const handleDelete = async () => {
-    if (window.confirm('Delete this entry? Inventory will be reverted.')) {
-      setDeleting(true);
-      try {
-        await api.delete(`/stock_register/${id}/`);
-        window.dispatchEvent(new Event('inventory-updated'));
-        navigate('/stock-register');
-      } catch (err) {
-        alert(err.response?.data?.error || 'Delete failed');
-      } finally { setDeleting(false); }
-    }
+  const runDelete = () => {
+    setDeleting(true);
+    api.delete(`/stock_register/${id}/`)
+      .then(() => { window.dispatchEvent(new Event('inventory-updated')); navigate('/stock-register'); })
+      .catch(err => setDialog({ open: true, message: err.response?.data?.error || 'Delete failed', showCancel: false }))
+      .finally(() => setDeleting(false));
+  };
+
+  const handleDelete = () => {
+    setDialog({ open: true, message: 'Delete this entry? Inventory will be reverted.', showCancel: true, onConfirm: runDelete });
   };
 
   if (loading) return <div className="loading-spinner"></div>;
@@ -132,6 +133,17 @@ function StockRegisterDetail() {
           </button>
         </div>
       )}
+
+      <ConfirmDialog
+        open={dialog.open}
+        message={dialog.message}
+        showCancel={dialog.showCancel}
+        confirmLabel="OK"
+        cancelLabel="Cancel"
+        variant="danger"
+        onConfirm={() => { dialog.onConfirm?.(); if (!dialog.showCancel) setDialog({ open: false }); }}
+        onCancel={() => setDialog({ open: false })}
+      />
     </div>
   );
 }

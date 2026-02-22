@@ -1,0 +1,28 @@
+chemical booking 
+
+booking request no (auto generated)
+staff name (retrieved from profile)
+class name 
+date of usage
+
+				+ add chemical
+chemical name - quantity	(dustbin)
+
+
+
+bookings page -> empty page (+ chemical booking) -> booking form displays -> HOD interface -> bookings page  -> all bookings -> upon clicking any booking -> 
+-> information shows with [approve][reject] reason in the end -
+
+
+Issue Register Module Databases
+
+
+staff name 
+class 
+date
+
+
+Chemical list 
+
+chemical name - quantity
+

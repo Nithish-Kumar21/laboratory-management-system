@@ -16,9 +16,18 @@ class DamagedEntryViewSet(viewsets.ModelViewSet):
     """
     API endpoint for damaged entry records.
     Supports: GET (list), GET (detail), POST (create)
+    List supports ?ordering=date|-date|staff|-staff|class_name|-class_name for sorting.
     """
     queryset = DamagedEntry.objects.all().order_by('-date')
     permission_classes = [DamagedEntryPermission]
+    ordering_fields = ['date', 'staff', 'class_name']
+    
+    def get_queryset(self):
+        qs = super().get_queryset()
+        ordering = self.request.query_params.get('ordering')
+        if ordering in ('date', '-date', 'staff', '-staff', 'class_name', '-class_name'):
+            return qs.order_by(ordering)
+        return qs.order_by('-date')
     
     def get_serializer_class(self):
         if self.action == 'create':

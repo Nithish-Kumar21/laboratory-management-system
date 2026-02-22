@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { FaBoxes, FaExclamationCircle, FaCheckCircle, FaHistory } from 'react-icons/fa';
 import api from '../../utils/api';
 
-function ApparatusTable() {
+function ApparatusTable({ showReorderLevel = true }) {
   const [apparatus, setApparatus] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -27,13 +27,13 @@ function ApparatusTable() {
           <tr>
             <th>Apparatus Name</th>
             <th>Available Stock</th>
-            <th>Reorder Point</th>
+            {showReorderLevel && <th>Reorder Point</th>}
             <th>Last Logged</th>
           </tr>
         </thead>
         <tbody>
           {apparatus.map((item) => {
-            const isLow = item.available_quantity_pieces <= item.reorder_level;
+            const isLow = showReorderLevel && item.available_quantity_pieces <= item.reorder_level;
             return (
               <tr key={item.id} className={isLow ? 'row-warning' : ''}>
                 <td>
@@ -47,7 +47,7 @@ function ApparatusTable() {
                     {item.available_quantity_pieces} <span className="unit">pcs</span>
                   </span>
                 </td>
-                <td>{item.reorder_level} pcs</td>
+                {showReorderLevel && <td>{item.reorder_level} pcs</td>}
                 <td>
                   <div className="date-cell">
                     <FaHistory className="date-icon" />

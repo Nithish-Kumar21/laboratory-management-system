@@ -6,7 +6,7 @@ from .models import DamagedEntry, DamagedItem
 class DamagedItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = DamagedItem
-        fields = ['id', 'apparatus_name', 'quantity']
+        fields = ['id', 'apparatus_name', 'quantity', 'caused_by']
 
 
 class DamagedEntryListSerializer(serializers.ModelSerializer):
@@ -15,7 +15,7 @@ class DamagedEntryListSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = DamagedEntry
-        fields = ['id', 'staff', 'class_name', 'date', 'caused_by']
+        fields = ['id', 'staff', 'class_name', 'date']
 
 
 
@@ -25,14 +25,14 @@ class DamagedEntryDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DamagedEntry
-        fields = ['id', 'staff', 'class_name', 'date', 'caused_by', 'details', 'damaged_items']
+        fields = ['id', 'staff', 'class_name', 'date', 'details', 'damaged_items']
 
 
 # Write serializers (NEW)
 class DamagedItemWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = DamagedItem
-        fields = ['apparatus_name', 'quantity']
+        fields = ['apparatus_name', 'quantity', 'caused_by']
 
     def validate(self, data):
         apparatus_name = data.get('apparatus_name')
@@ -62,7 +62,7 @@ class DamagedEntryCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DamagedEntry
-        fields = ['staff', 'class_name', 'date', 'caused_by', 'details', 'damaged_items']
+        fields = ['staff', 'class_name', 'date', 'details', 'damaged_items']
 
     
     def validate(self, data):

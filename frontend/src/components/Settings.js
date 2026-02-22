@@ -13,6 +13,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import api from '../utils/api';
+import ConfirmDialog from './ConfirmDialog';
 import './Settings.css';
 
 function Settings() {
@@ -22,6 +23,7 @@ function Settings() {
     const [activeSection, setActiveSection] = useState('appearance');
     const [message, setMessage] = useState('');
     const [loading, setLoading] = useState(false);
+    const [alertDialog, setAlertDialog] = useState({ open: false, message: '' });
 
     // Reorder level state
     const [config, setConfig] = useState({
@@ -77,7 +79,7 @@ function Settings() {
             window.dispatchEvent(new Event('inventory-updated'));
             setTimeout(() => setMessage(''), 3000);
         } catch (err) {
-            alert('Failed to update level');
+            setAlertDialog({ open: true, message: 'Failed to update level' });
         } finally {
             setLoading(false);
         }
@@ -99,7 +101,7 @@ function Settings() {
             setMessage('Updated successfully');
             setTimeout(() => setMessage(''), 3000);
         } catch (err) {
-            alert('Failed to update');
+            setAlertDialog({ open: true, message: 'Failed to update' });
         }
     };
 
@@ -220,6 +222,7 @@ function Settings() {
                     )}
                 </div>
             </div>
+            <ConfirmDialog open={alertDialog.open} message={alertDialog.message} showCancel={false} confirmLabel="OK" onConfirm={() => setAlertDialog({ open: false })} />
         </div>
     );
 }

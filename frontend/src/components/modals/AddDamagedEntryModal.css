@@ -207,7 +207,7 @@
 
 .damaged-grid-header {
   display: grid;
-  grid-template-columns: 3fr 1fr 60px;
+  grid-template-columns: 2fr 1fr 2fr 60px;
   gap: 20px;
   padding: 0 10px 15px 10px;
   border-bottom: 1px solid #fecaca;
@@ -223,7 +223,7 @@
 
 .damaged-row {
   display: grid;
-  grid-template-columns: 3fr 1fr 60px;
+  grid-template-columns: 2fr 1fr 2fr 60px;
   gap: 20px;
   margin-bottom: 12px;
   align-items: center;

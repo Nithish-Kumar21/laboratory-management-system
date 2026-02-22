@@ -1,9 +1,12 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { FaBell, FaTimes } from 'react-icons/fa';
 import api from '../utils/api';
+import { useAuth } from '../context/AuthContext';
 import './LowStockToast.css';
 
 function LowStockToast() {
+    const { isStaff, isAdmin } = useAuth();
     const [show, setShow] = useState(false);
     const [lowStockCount, setLowStockCount] = useState(0);
     const lowStockCountRef = useRef(0);
@@ -46,31 +49,23 @@ function LowStockToast() {
     }, []);
 
     useEffect(() => {
-        // Initial check
+        if (isStaff || isAdmin) return;
         checkLowStock();
-
-        // Listen for custom "inventory-updated" event (same tab)
         const handleUpdate = () => checkLowStock();
         window.addEventListener('inventory-updated', handleUpdate);
-
-        // Listen for storage events (different tabs/roles)
         const handleStorage = (e) => {
-            if (e.key === 'inventory-updated') {
-                checkLowStock();
-            }
+            if (e.key === 'inventory-updated') checkLowStock();
         };
         window.addEventListener('storage', handleStorage);
-
-        // Faster polling fallback (every 3 seconds) for real-time feel
         const interval = setInterval(checkLowStock, 3000);
-
         return () => {
             window.removeEventListener('inventory-updated', handleUpdate);
             window.removeEventListener('storage', handleStorage);
             clearInterval(interval);
         };
-    }, [checkLowStock]);
+    }, [checkLowStock, isStaff, isAdmin]);
 
+    if (isStaff || isAdmin) return null;
     if (!show) return null;
 
     return (
@@ -81,6 +76,7 @@ function LowStockToast() {
             <div className="toast-message">
                 <strong>Low Stock Warning</strong>
                 <p>{lowStockCount} item(s) are below reorder level!</p>
+                <Link to="/inventory" className="toast-link">View Inventory →</Link>
             </div>
             <button className="toast-close" onClick={() => setShow(false)}>
                 <FaTimes />

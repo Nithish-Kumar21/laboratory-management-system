@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
     FaFlask,
     FaBars,
-    FaTimes,
     FaSun,
     FaMoon,
     FaDesktop,
@@ -29,13 +28,13 @@ const TopBar = ({ onToggleSidebar, isSidebarOpen }) => {
         <nav className="topbar">
             <div className={`topbar-left ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
                 <button className="sidebar-toggle-btn" onClick={onToggleSidebar} title="Toggle Sidebar">
-                    {isSidebarOpen ? <FaTimes /> : <FaBars />}
+                    <FaBars />
                 </button>
                 <Link to="/" className="topbar-logo-link">
                     <div className="topbar-logo">
                         <FaFlask />
                     </div>
-                    <span className="topbar-title">LabManager</span>
+                    <span className="topbar-title">Laboratory Management System</span>
                 </Link>
             </div>
 

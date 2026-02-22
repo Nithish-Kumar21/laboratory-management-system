@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { FaArrowLeft, FaTrash, FaExclamationTriangle, FaTools, FaCalendarAlt, FaUserTie, FaGraduationCap } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
+import ConfirmDialog from '../components/ConfirmDialog';
 import './DamagedEntryDetail.css';
 
 function DamagedEntryDetail() {
@@ -13,6 +14,7 @@ function DamagedEntryDetail() {
   const [error, setError] = useState(null);
   const { isStaff, isStoreKeeper } = useAuth();
   const [deleting, setDeleting] = useState(false);
+  const [dialog, setDialog] = useState({ open: false, message: '', showCancel: true, onConfirm: null });
 
   useEffect(() => {
     if (isStaff) { navigate('/'); return; }
@@ -21,17 +23,16 @@ function DamagedEntryDetail() {
       .catch(err => { setError(err.response?.data?.error || 'Load failed'); setLoading(false); });
   }, [id, isStaff, navigate]);
 
-  const handleDelete = async () => {
-    if (window.confirm('Delete this entry? Inventory will be reverted.')) {
-      setDeleting(true);
-      try {
-        await api.delete(`/damaged_entry/${id}/`);
-        window.dispatchEvent(new Event('inventory-updated'));
-        navigate('/damaged-entry');
-      } catch (err) {
-        alert(err.response?.data?.error || 'Delete failed');
-      } finally { setDeleting(false); }
-    }
+  const handleDelete = () => {
+    setDialog({ open: true, message: 'Delete this entry? Inventory will be reverted.', showCancel: true, onConfirm: runDelete });
+  };
+
+  const runDelete = () => {
+    setDeleting(true);
+    api.delete(`/damaged_entry/${id}/`)
+      .then(() => { window.dispatchEvent(new Event('inventory-updated')); navigate('/damaged-entry'); })
+      .catch(err => setDialog({ open: true, message: err.response?.data?.error || 'Delete failed', showCancel: false }))
+      .finally(() => setDeleting(false));
   };
 
   if (loading) return <div className="loading-spinner"></div>;
@@ -63,10 +64,6 @@ function DamagedEntryDetail() {
           <label><FaCalendarAlt /> Date of Incident</label>
           <span>{damagedEntry.date}</span>
         </div>
-        <div className="info-card card">
-          <label>Caused By</label>
-          <span>{damagedEntry.caused_by}</span>
-        </div>
         <div className="info-card card details-full-width">
           <label>Investigation Details</label>
           <span>{damagedEntry.details}</span>
@@ -82,6 +79,7 @@ function DamagedEntryDetail() {
                 <tr>
                   <th>Apparatus Name</th>
                   <th>Quantity Broken</th>
+                  <th>Caused By</th>
                 </tr>
               </thead>
               <tbody>
@@ -89,6 +87,7 @@ function DamagedEntryDetail() {
                   <tr key={it.id}>
                     <td className="item-name">{it.apparatus_name}</td>
                     <td><span className="qty-badge">{it.quantity} pcs</span></td>
+                    <td><span className="cause-tag">{it.caused_by}</span></td>
                   </tr>
                 ))}
               </tbody>
@@ -108,6 +107,17 @@ function DamagedEntryDetail() {
           </button>
         </div>
       )}
+
+      <ConfirmDialog
+        open={dialog.open}
+        message={dialog.message}
+        showCancel={dialog.showCancel}
+        confirmLabel="OK"
+        cancelLabel="Cancel"
+        variant="danger"
+        onConfirm={() => { dialog.onConfirm?.(); if (!dialog.showCancel) setDialog({ open: false }); }}
+        onCancel={() => setDialog({ open: false })}
+      />
     </div>
   );
 }
