@@ -26,7 +26,7 @@ function DamagedEntry() {
   const navigate = useNavigate();
   const { isAdmin, isStoreKeeper, isStaff } = useAuth();
 
-  const canAddEntry = isAdmin || isStoreKeeper;
+  const canAddEntry = isStoreKeeper;
 
   const fetchDamagedEntries = () => {
     setLoading(true);

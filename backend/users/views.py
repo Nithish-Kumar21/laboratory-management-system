@@ -155,16 +155,16 @@ class UserListCreateView(generics.ListCreateAPIView):
         return [IsAuthenticated()]
     
     def get_queryset(self):
-        # Only admins can see all users
-        if self.request.user.role == 'admin':
+        # HODs can see all users
+        if self.request.user.role == 'hod':
             return User.objects.all().order_by('-date_joined')
         # Others see only themselves
         return User.objects.filter(id=self.request.user.id)
     
     def perform_create(self, serializer):
-        # Only admin can create users
-        if self.request.user.role != 'admin':
-            raise PermissionDenied("Only admins can create users")
+        # Only HOD can create users
+        if self.request.user.role != 'hod':
+            raise PermissionDenied("Only HODs can create users")
         serializer.save()
 
 
@@ -179,14 +179,14 @@ class UserRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     
     def get_object(self):
         user = super().get_object()
-        # Users can edit themselves or admin can edit anyone
-        if user.id != self.request.user.id and self.request.user.role != 'admin':
+        # Users can edit themselves or HOD can edit anyone
+        if user.id != self.request.user.id and self.request.user.role != 'hod':
             raise PermissionDenied("You don't have permission to edit this user")
         return user
     
     def perform_update(self, serializer):
-        # Only admins can change role and is_active
-        if self.request.user.role != 'admin':
+        # Only HODs can change role and is_active
+        if self.request.user.role != 'hod':
             serializer.save(
                 role=self.get_object().role,
                 is_active=self.get_object().is_active
@@ -195,9 +195,9 @@ class UserRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
             serializer.save()
     
     def perform_destroy(self, instance):
-        # Only admin can delete
-        if self.request.user.role != 'admin':
-            raise PermissionDenied("Only admins can delete users")
+        # Only HOD can delete
+        if self.request.user.role != 'hod':
+            raise PermissionDenied("Only HODs can delete users")
         instance.delete()
 
 

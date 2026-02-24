@@ -23,6 +23,7 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
   const [showChemicalSuggestions, setShowChemicalSuggestions] = useState({});
   const [showApparatusSuggestions, setShowApparatusSuggestions] = useState({});
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
 
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -186,20 +187,22 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
     // Auto-focus the next field (Quantity)
     setTimeout(() => {
       if (modalRef.current) {
-        const rowInputs = modalRef.current.querySelectorAll('.grid-row');
-        // Note: Apparatus is in the second items-section
-        const sections = modalRef.current.querySelectorAll('.items-section');
-        const appSection = sections[1];
-        if (appSection) {
-          const rows = appSection.querySelectorAll('.grid-row');
-          const targetRow = rows[i];
-          if (targetRow) {
-            const quantityInput = targetRow.querySelectorAll('input')[1];
-            if (quantityInput) quantityInput.focus();
-          }
+        const inputs = modalRef.current.querySelectorAll('input');
+        const apparatusInputs = Array.from(inputs).filter(input => input.placeholder.includes('Item name'));
+        const currentIndex = apparatusInputs.findIndex(input => input === document.activeElement);
+        if (currentIndex !== -1 && currentIndex < apparatusInputs.length - 1) {
+          apparatusInputs[currentIndex + 1].focus();
         }
       }
     }, 10);
+  };
+
+  const calculateDropdownPosition = (event) => {
+    const rect = event.target.getBoundingClientRect();
+    setDropdownPosition({
+      top: rect.bottom,
+      left: rect.left
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -282,11 +285,16 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
                       onChange={e => {
                         const next = [...chemicalItems]; next[i].chemical_name = e.target.value; setChemicalItems(next);
                         setShowChemicalSuggestions({ [i]: true }); setActiveSuggestionIndex(-1);
+                        calculateDropdownPosition(e);
                       }}
-                      onFocus={() => { setShowChemicalSuggestions({ [i]: true }); setActiveSuggestionIndex(-1); }}
+                      onFocus={e => {
+                        setShowChemicalSuggestions({ [i]: true });
+                        setActiveSuggestionIndex(-1);
+                        calculateDropdownPosition(e);
+                      }}
                       onBlur={() => setTimeout(() => setShowChemicalSuggestions({}), 250)} />
                     {showChemicalSuggestions[i] && it.chemical_name && (
-                      <div className="suggestions-dropdown">
+                      <div className="suggestions-dropdown" style={{ top: dropdownPosition.top, left: dropdownPosition.left }}>
                         {chemicalNames.filter(n => n.toLowerCase().includes(it.chemical_name.toLowerCase())).map((n, idx) => (
                           <div key={idx} className={`suggestion-item ${activeSuggestionIndex === idx ? 'active' : ''}`}
                             onMouseDown={() => selectChemical(i, n)}>{n}</div>
@@ -325,11 +333,16 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
                       onChange={e => {
                         const next = [...apparatusItems]; next[i].apparatus_name = e.target.value; setApparatusItems(next);
                         setShowApparatusSuggestions({ [i]: true }); setActiveSuggestionIndex(-1);
+                        calculateDropdownPosition(e);
                       }}
-                      onFocus={() => { setShowApparatusSuggestions({ [i]: true }); setActiveSuggestionIndex(-1); }}
+                      onFocus={e => {
+                        setShowApparatusSuggestions({ [i]: true });
+                        setActiveSuggestionIndex(-1);
+                        calculateDropdownPosition(e);
+                      }}
                       onBlur={() => setTimeout(() => setShowApparatusSuggestions({}), 250)} />
                     {showApparatusSuggestions[i] && it.apparatus_name && (
-                      <div className="suggestions-dropdown">
+                      <div className="suggestions-dropdown" style={{ top: dropdownPosition.top, left: dropdownPosition.left }}>
                         {apparatusNames.filter(n => n.toLowerCase().includes(it.apparatus_name.toLowerCase())).map((n, idx) => (
                           <div key={idx} className={`suggestion-item ${activeSuggestionIndex === idx ? 'active' : ''}`}
                             onMouseDown={() => selectApparatus(i, n)}>{n}</div>

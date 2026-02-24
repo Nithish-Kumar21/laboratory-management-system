@@ -124,7 +124,7 @@ function StockRegister() {
             <p className="page-subtitle">Unified log of all laboratory inventory acquisitions.</p>
           </div>
         </div>
-        {(isStoreKeeper || isAdmin) && (
+        {isStoreKeeper && (
           <button className="btn-primary" onClick={() => setIsModalOpen(true)}>
             <FaPlus /> New Stock Entry
           </button>

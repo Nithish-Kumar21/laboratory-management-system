@@ -17,10 +17,10 @@ import './Sidebar.css';
 const Sidebar = ({ isOpen, isMobile }) => {
   const [lowStockCount, setLowStockCount] = useState(0);
   const location = useLocation();
-  const { isAdmin, isStaff, logout } = useAuth();
+  const { isAdmin, isHOD, isStoreKeeper, isStaff, logout } = useAuth();
 
   const fetchLowStockCount = async () => {
-    if (isStaff || isAdmin) return;
+    if (isStaff) return;
     try {
       const [chemRes, appRes] = await Promise.all([
         api.get('/low_stock_chemicals/').catch(() => ({ data: [] })),
@@ -42,56 +42,56 @@ const Sidebar = ({ isOpen, isMobile }) => {
       clearInterval(interval);
       window.removeEventListener('inventory-updated', fetchLowStockCount);
     };
-  }, [isStaff, isAdmin]);
+  }, [isStaff, isHOD]);
 
   const menuItems = [
     {
       path: '/',
       label: 'Dashboard',
       icon: FaHome,
-      show: !isAdmin, // Admin has no dashboard
+      show: isStaff || isHOD || isStoreKeeper, // Show for staff, HOD and Store Keeper
       color: 'var(--dept-dashboard)'
     },
     {
       path: '/inventory',
       label: 'Inventory',
       icon: FaBoxes,
-      show: !isAdmin, // No access for admin
+      show: isStaff || isHOD || isStoreKeeper, // Show for staff, HOD and Store Keeper
       color: 'var(--dept-inventory)'
     },
     {
       path: '/stock-register',
       label: 'Stock Register',
       icon: FaClipboardList,
-      show: !isStaff && !isAdmin, // No access for staff and admin
+      show: isHOD || isStoreKeeper, // Show for HOD and Store Keeper
       color: 'var(--dept-stock)'
     },
     {
       path: '/issue-register',
       label: 'Issue Register',
       icon: FaFileAlt,
-      show: !isStaff && !isAdmin, // Hide for staff and admin
+      show: isHOD || isStoreKeeper, // Show for HOD and Store Keeper only
       color: 'var(--dept-issue)'
     },
     {
       path: '/damaged-entry',
       label: 'Damaged Entry',
       icon: FaExclamationTriangle,
-      show: !isStaff && !isAdmin, // Hide for staff and admin
+      show: isHOD || isStoreKeeper, // Show for HOD and Store Keeper
       color: 'var(--dept-damaged)'
     },
     {
       path: '/users',
       label: 'Users',
       icon: FaUsers,
-      show: isAdmin,
+      show: isHOD, // Show only for HOD
       color: 'var(--dept-users)'
     },
     {
       path: '/requests',
       label: 'Chemical Requests',
       icon: FaClipboardList,
-      show: !isAdmin, // Hide for admin
+      show: isStaff || isHOD || isStoreKeeper, // Show for staff, HOD and Store Keeper
       color: '#3498db'
     },
     {

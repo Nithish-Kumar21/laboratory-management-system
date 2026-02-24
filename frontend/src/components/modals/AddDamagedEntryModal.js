@@ -18,6 +18,7 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
     const [alertDialog, setAlertDialog] = useState({ open: false, message: '' });
     const [showSuggestions, setShowSuggestions] = useState({});
     const [activeIndex, setActiveIndex] = useState(-1);
+    const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
     const [position, setPosition] = useState({ x: 0, y: 0 });
     const [isDragging, setIsDragging] = useState(false);
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
@@ -144,14 +145,22 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
         // Auto-focus next field (Caused By)
         setTimeout(() => {
             if (modalRef.current) {
-                const rows = modalRef.current.querySelectorAll('.damaged-row');
-                const targetRow = rows[i];
-                if (targetRow) {
-                    const causedByInput = targetRow.querySelectorAll('input')[2];
-                    if (causedByInput) causedByInput.focus();
+                const inputs = modalRef.current.querySelectorAll('input');
+                const apparatusInputs = Array.from(inputs).filter(input => input.placeholder.includes('Search apparatus'));
+                const currentIndex = apparatusInputs.findIndex(input => input === document.activeElement);
+                if (currentIndex !== -1 && currentIndex < apparatusInputs.length - 1) {
+                    apparatusInputs[currentIndex + 1].focus();
                 }
             }
         }, 10);
+    };
+
+    const calculateDropdownPosition = (event) => {
+        const rect = event.target.getBoundingClientRect();
+        setDropdownPosition({
+            top: rect.bottom,
+            left: rect.left
+        });
     };
 
     const handleSubmit = async (e) => {
@@ -235,11 +244,16 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
                                             onChange={e => {
                                                 const next = [...damagedItems]; next[i].apparatus_name = e.target.value; setDamagedItems(next);
                                                 setShowSuggestions({ [i]: true }); setActiveIndex(-1);
+                                                calculateDropdownPosition(e);
                                             }}
-                                            onFocus={() => { setShowSuggestions({ [i]: true }); setActiveIndex(-1); }}
+                                            onFocus={e => {
+                                                setShowSuggestions({ [i]: true });
+                                                setActiveIndex(-1);
+                                                calculateDropdownPosition(e);
+                                            }}
                                             onBlur={() => setTimeout(() => setShowSuggestions({}), 250)} />
                                         {showSuggestions[i] && it.apparatus_name && (
-                                            <div className="suggestions-dropdown">
+                                            <div className="suggestions-dropdown" style={{ top: dropdownPosition.top, left: dropdownPosition.left }}>
                                                 {apparatusNames.filter(n => n.toLowerCase().includes(it.apparatus_name.toLowerCase())).map((n, idx) => (
                                                     <div key={idx} className={`suggestion-item ${activeIndex === idx ? 'active' : ''}`}
                                                         onMouseDown={() => selectApparatus(i, n)}>{n}</div>

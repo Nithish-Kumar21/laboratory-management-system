@@ -26,8 +26,8 @@ import LowStockToast from './components/LowStockToast';
 import './styles/App.css';
 
 function HomeOrRedirect() {
-  const { isAdmin } = useAuth();
-  if (isAdmin) return <Navigate to="/users" replace />;
+  const { isAdmin, isHOD } = useAuth();
+  if (isAdmin && !isHOD) return <Navigate to="/users" replace />;
   return <Home />;
 }
 
@@ -91,7 +91,7 @@ function AppContent() {
                       <Route path="" element={<HomeOrRedirect />} />
                       <Route path="profile" element={<UserProfile />} />
 
-                      {/* Admin Only */}
+                      {/* HOD Only */}
                       <Route
                         path="users"
                         element={
@@ -103,9 +103,9 @@ function AppContent() {
 
                       <Route path="settings" element={<Settings />} />
 
-                      {/* Existing Routes - admin has no access to inventory or stock-register */}
-                      <Route path="inventory" element={<AdminBlock redirectTo="/users"><Inventory /></AdminBlock>} />
-                      <Route path="stock-register" element={<AdminBlock redirectTo="/users"><StockRegister /></AdminBlock>} />
+                      {/* Existing Routes - HOD has access to inventory and stock-register */}
+                      <Route path="inventory" element={<Inventory />} />
+                      <Route path="stock-register" element={<StockRegister />} />
                       <Route path="stock-register/:id" element={<StockRegisterDetail />} />
                       <Route path="issue-register" element={<IssueRegister />} />
                       <Route path="issue-register/:id" element={<IssueRegisterDetail />} />
