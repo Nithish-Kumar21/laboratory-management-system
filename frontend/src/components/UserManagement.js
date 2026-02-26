@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { FaUserShield, FaUserPlus, FaEdit, FaTrashAlt } from 'react-icons/fa';
 import api from '../utils/api';
 import CreateUserModal from './CreateUserModal';
 import EditUserModal from './EditUserModal';
 import ConfirmDialog from './ConfirmDialog';
+import './UserManagement.css';
 
 const UserManagement = () => {
   const { isAdmin } = useAuth();
@@ -59,18 +61,18 @@ const UserManagement = () => {
     }
   };
 
-  const getRoleBadgeColor = (role) => {
+  const getRoleColors = (role) => {
     switch (role) {
       case 'admin':
-        return { bg: '#e3f2fd', color: '#1976d2' };
+        return { bg: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' };
       case 'hod':
-        return { bg: '#fff3e0', color: '#f57c00' };
+        return { bg: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' };
       case 'store_keeper':
-        return { bg: '#e8f5e9', color: '#388e3c' };
+        return { bg: 'rgba(16, 185, 129, 0.1)', color: '#10b981' };
       case 'staff':
-        return { bg: '#f3e5f5', color: '#7b1fa2' };
+        return { bg: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6' };
       default:
-        return { bg: '#f3e5f5', color: '#7b1fa2' };
+        return { bg: 'rgba(107, 114, 128, 0.1)', color: '#6b7280' };
     }
   };
 
@@ -90,76 +92,81 @@ const UserManagement = () => {
   };
 
   if (loading) {
-    return <div style={styles.loading}>Loading users...</div>;
+    return <div className="user-management-loading">Loading users...</div>;
   }
 
   if (error) {
-    return <div style={styles.error}>{error}</div>;
+    return <div className="user-management-error">{error}</div>;
   }
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <h1 style={styles.title}>User Management</h1>
-        <button onClick={() => setShowCreateModal(true)} style={styles.createButton}>
-          + Create User
+    <div className="user-management-container">
+      <div className="user-management-header">
+        <h1 className="user-management-title">User Management</h1>
+        <button onClick={() => setShowCreateModal(true)} className="btn-create-user">
+          <FaUserPlus style={{ marginRight: '10px' }} /> Create New User
         </button>
       </div>
 
-      <div style={styles.tableContainer}>
-        <table style={styles.table}>
+      <div className="user-table-container">
+        <table className="user-table">
           <thead>
             <tr>
-              <th style={styles.th}>Employee ID</th>
-              <th style={styles.th}>Name</th>
-              <th style={styles.th}>Email</th>
-              <th style={styles.th}>Role</th>
-              <th style={styles.th}>Status</th>
-              <th style={styles.th}>Actions</th>
+              <th>Employee ID</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {users.map((user) => {
-              const roleColor = getRoleBadgeColor(user.role);
+              const roleColors = getRoleColors(user.role);
               return (
-                <tr key={user.id} style={styles.tr}>
-                  <td style={styles.td}>{user.employee_id || '-'}</td>
-                  <td style={styles.td}>{user.full_name || '-'}</td>
-                  <td style={styles.td}>{user.email || '-'}</td>
-                  <td style={styles.td}>
+                <tr key={user.id}>
+                  <td>{user.employee_id || '-'}</td>
+                  <td>{user.full_name || '-'}</td>
+                  <td>{user.email || '-'}</td>
+                  <td>
                     <span
+                      className="role-badge"
                       style={{
-                        ...styles.roleBadge,
-                        backgroundColor: roleColor.bg,
-                        color: roleColor.color,
+                        backgroundColor: roleColors.bg,
+                        color: roleColors.color,
+                        border: `1.5px solid ${roleColors.color}33`,
                       }}
                     >
+                      <FaUserShield style={{ fontSize: '0.8rem' }} />
                       {getRoleDisplay(user.role)}
                     </span>
                   </td>
-                  <td style={styles.td}>
+                  <td>
                     <span
+                      className="status-badge"
                       style={{
-                        ...styles.statusBadge,
-                        backgroundColor: user.is_active ? '#e8f5e9' : '#ffebee',
-                        color: user.is_active ? '#2e7d32' : '#c62828',
+                        backgroundColor: user.is_active ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                        color: user.is_active ? '#10b981' : '#ef4444',
+                        border: user.is_active ? '1.5px solid rgba(16, 185, 129, 0.3)' : '1.5px solid rgba(239, 68, 68, 0.3)',
                       }}
                     >
                       {user.is_active ? 'Active' : 'Inactive'}
                     </span>
                   </td>
-                  <td style={styles.td}>
+                  <td className="user-actions">
                     <button
                       onClick={() => handleEdit(user)}
-                      style={styles.editButton}
+                      className="btn-edit-user"
+                      title="Edit User"
                     >
-                      Edit
+                      <FaEdit /> Edit
                     </button>
                     <button
                       onClick={() => handleDeleteClick(user.id)}
-                      style={styles.deleteButton}
+                      className="btn-delete-user"
+                      title="Delete User"
                     >
-                      Delete
+                      <FaTrashAlt /> Delete
                     </button>
                   </td>
                 </tr>
@@ -202,106 +209,6 @@ const UserManagement = () => {
       />
     </div>
   );
-};
-
-const styles = {
-  container: {
-    padding: '24px',
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '24px',
-  },
-  title: {
-    fontSize: '28px',
-    fontWeight: '600',
-    color: '#2c3e50',
-    margin: 0,
-  },
-  createButton: {
-    padding: '12px 24px',
-    backgroundColor: '#6366f1',
-    color: 'white',
-    border: 'none',
-    borderRadius: '6px',
-    fontSize: '14px',
-    fontWeight: '500',
-    cursor: 'pointer',
-  },
-  loading: {
-    padding: '40px',
-    textAlign: 'center',
-    fontSize: '16px',
-    color: '#666',
-  },
-  error: {
-    padding: '40px',
-    textAlign: 'center',
-    fontSize: '16px',
-    color: '#c33',
-  },
-  tableContainer: {
-    backgroundColor: 'white',
-    borderRadius: '8px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-    overflow: 'hidden',
-  },
-  table: {
-    width: '100%',
-    borderCollapse: 'collapse',
-  },
-  th: {
-    padding: '16px',
-    textAlign: 'left',
-    backgroundColor: '#f8f9fa',
-    color: '#2c3e50',
-    fontWeight: '600',
-    fontSize: '14px',
-    borderBottom: '2px solid #e0e0e0',
-  },
-  tr: {
-    borderBottom: '1px solid #e0e0e0',
-  },
-  td: {
-    padding: '16px',
-    fontSize: '14px',
-    color: '#2c3e50',
-  },
-  roleBadge: {
-    padding: '4px 12px',
-    borderRadius: '12px',
-    fontSize: '12px',
-    fontWeight: '500',
-    display: 'inline-block',
-  },
-  statusBadge: {
-    padding: '4px 12px',
-    borderRadius: '12px',
-    fontSize: '12px',
-    fontWeight: '500',
-    display: 'inline-block',
-  },
-  editButton: {
-    padding: '6px 16px',
-    backgroundColor: '#fff',
-    color: '#6366f1',
-    border: '1px solid #6366f1',
-    borderRadius: '4px',
-    fontSize: '13px',
-    cursor: 'pointer',
-    marginRight: '8px',
-  },
-  deleteButton: {
-    padding: '6px 16px',
-    backgroundColor: '#fff',
-    color: '#dc2626',
-    border: '1px solid #dc2626',
-    borderRadius: '4px',
-    fontSize: '13px',
-    cursor: 'pointer',
-  },
 };
 
 export default UserManagement;

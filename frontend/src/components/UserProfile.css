@@ -1,0 +1,213 @@
+.user-profile-container {
+    padding: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+    animation: fadeIn 0.4s ease-out;
+}
+
+.user-profile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    marginBottom: 32px;
+}
+
+.user-profile-title {
+    fontSize: 2.25rem;
+    fontWeight: 900;
+    color: var(--text-main);
+    letterSpacing: -1.5px;
+    margin: 0;
+}
+
+.btn-change-password {
+    padding: 12px 24px;
+    background: #6366f1;
+    color: white;
+    border: none;
+    border-radius: 14px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+}
+
+.btn-change-password:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+    background: #4f46e5;
+}
+
+.user-profile-content {
+    display: grid;
+    gap: 30px;
+    margin-top: 32px;
+}
+
+.profile-card {
+    background: var(--bg-surface);
+    /* BLACK in dark mode */
+    padding: 32px;
+    border-radius: 24px;
+    border: 1.5px solid var(--border);
+    box-shadow: var(--shadow);
+    transition: all 0.3s ease;
+}
+
+.profile-card:hover {
+    border-color: var(--primary);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.profile-section-title {
+    fontSize: 1.25rem;
+    fontWeight: 800;
+    color: var(--text-main);
+    /* WHITE in dark mode */
+    marginTop: 0;
+    marginBottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 24px;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.info-label {
+    fontSize: 0.75rem;
+    fontWeight: 800;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+}
+
+.info-value {
+    fontSize: 1.1rem;
+    color: var(--text-main);
+    fontWeight: 700;
+}
+
+.role-badge {
+    display: inline-flex;
+    padding: 8px 18px;
+    backgroundColor: var(--primary-glow);
+    color: var(--primary);
+    borderRadius: 14px;
+    fontSize: 0.9rem;
+    fontWeight: 700;
+    width: fit-content;
+    border: 1px solid var(--primary);
+}
+
+.status-badge {
+    display: inline-flex;
+    padding: 8px 18px;
+    borderRadius: 14px;
+    fontSize: 0.9rem;
+    fontWeight: 700;
+    width: fit-content;
+}
+
+.profile-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    marginBottom: 32px;
+}
+
+.profile-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.profile-form-group label {
+    fontSize: 0.85rem;
+    fontWeight: 700;
+    color: var(--text-main);
+}
+
+.profile-input {
+    width: 100%;
+    padding: 16px 20px;
+    background: var(--bg-main);
+    border: 1.5px solid var(--border);
+    border-radius: 16px;
+    color: var(--text-main);
+    font-size: 1rem;
+    transition: all 0.2s;
+}
+
+.profile-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: var(--bg-surface);
+    box-shadow: 0 0 0 5px var(--primary-glow);
+}
+
+.profile-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.btn-update-profile {
+    padding: 14px 32px;
+    background: #6366f1;
+    color: white;
+    border: none;
+    border-radius: 16px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
+}
+
+.btn-cancel {
+    padding: 14px 32px;
+    background: var(--bg-surface);
+    color: var(--text-main);
+    border: 1.5px solid var(--border);
+    border-radius: 16px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.alert-message {
+    padding: 16px 20px;
+    borderRadius: 14px;
+    marginBottom: 24px;
+    fontSize: 0.95rem;
+    fontWeight: 600;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.alert-error {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.alert-success {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+@media (max-width: 768px) {
+    .profile-form-grid {
+        grid-template-columns: 1fr;
+    }
+}

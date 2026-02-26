@@ -89,7 +89,7 @@
     width: 36px;
     height: 36px;
     border-radius: 10px;
-    background: rgba(239, 68, 68, 0.1);
+    background: rgba(239, 68, 68, 0.15);
     color: #ef4444;
     display: flex;
     align-items: center;
@@ -227,5 +227,5 @@
 }
 
 .reviewed-request-row:hover {
-    background: rgba(0, 0, 0, 0.02) !important;
+    background: rgba(255, 255, 255, 0.05) !important;
 }

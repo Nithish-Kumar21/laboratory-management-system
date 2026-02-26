@@ -45,15 +45,18 @@ class StockRegisterViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def chemical_names(self, request):
-        """Get list of unique chemical names for autocomplete"""
-        names = ChemicalItem.objects.values_list('chemical_name', flat=True).distinct().order_by('chemical_name')
-        return Response(list(names))
+        """Get list of unique chemical names and available quantity for autocomplete"""
+        data = AvailableChemical.objects.values('chemical_name', 'available_quantity_ml').order_by('chemical_name')
+        # Map to consistent keys
+        result = [{'name': item['chemical_name'], 'available_quantity': float(item['available_quantity_ml'])} for item in data]
+        return Response(result)
     
     @action(detail=False, methods=['get'])
     def apparatus_names(self, request):
-        """Get list of unique apparatus names for autocomplete"""
-        names = ApparatusItem.objects.values_list('apparatus_name', flat=True).distinct().order_by('apparatus_name')
-        return Response(list(names))
+        """Get list of unique apparatus names and available quantity for autocomplete"""
+        data = AvailableApparatus.objects.values('apparatus_name', 'available_quantity_pieces').order_by('apparatus_name')
+        result = [{'name': item['apparatus_name'], 'available_quantity': item['available_quantity_pieces']} for item in data]
+        return Response(result)
     
     @action(detail=False, methods=['get'])
     def supplier_names(self, request):

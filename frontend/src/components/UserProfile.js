@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { FaUser, FaEnvelope, FaPhone, FaIdCard, FaUserShield, FaCheckCircle, FaExclamationCircle } from 'react-icons/fa';
 import api from '../utils/api';
+import './UserProfile.css';
 
 const UserProfile = () => {
   const { user, updateUser } = useAuth();
@@ -51,7 +53,6 @@ const UserProfile = () => {
         } else if (errorData.error) {
           setError(errorData.error);
         } else {
-          // Handle object with field errors (e.g., { email: ["..."], phone: ["..."] })
           const firstError = Object.values(errorData)[0];
           setError(Array.isArray(firstError) ? firstError[0] : 'Failed to update profile');
         }
@@ -79,38 +80,40 @@ const UserProfile = () => {
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <h1 style={styles.title}>My Profile</h1>
+    <div className="user-profile-container">
+      <div className="user-profile-header">
+        <h1 className="user-profile-title">My Profile</h1>
         <button
           onClick={() => navigate('/change-password')}
-          style={styles.changePasswordButton}
+          className="btn-change-password"
         >
           Change Password
         </button>
       </div>
 
-      <div style={styles.content}>
-        <div style={styles.infoSection}>
-          <h2 style={styles.sectionTitle}>Account Information</h2>
-          <div style={styles.infoGrid}>
-            <div style={styles.infoItem}>
-              <label style={styles.infoLabel}>Employee ID:</label>
-              <span style={styles.infoValue}>{user?.employee_id || '-'}</span>
+      <div className="user-profile-content">
+        <div className="profile-card">
+          <h2 className="profile-section-title"><FaIdCard /> Account Information</h2>
+          <div className="info-grid">
+            <div className="info-item">
+              <label className="info-label">Employee ID</label>
+              <span className="info-value">{user?.employee_id || '-'}</span>
             </div>
-            <div style={styles.infoItem}>
-              <label style={styles.infoLabel}>Role:</label>
-              <span style={styles.infoBadge}>
+            <div className="info-item">
+              <label className="info-label">Role</label>
+              <span className="role-badge">
+                <FaUserShield style={{ marginRight: '8px' }} />
                 {getRoleDisplay(user?.role)}
               </span>
             </div>
-            <div style={styles.infoItem}>
-              <label style={styles.infoLabel}>Status:</label>
+            <div className="info-item">
+              <label className="info-label">Status</label>
               <span
+                className="status-badge"
                 style={{
-                  ...styles.statusBadge,
-                  backgroundColor: user?.is_active ? '#e8f5e9' : '#ffebee',
-                  color: user?.is_active ? '#2e7d32' : '#c62828',
+                  backgroundColor: user?.is_active ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                  color: user?.is_active ? '#10b981' : '#ef4444',
+                  border: user?.is_active ? '1px solid rgba(16, 185, 129, 0.2)' : '1px solid rgba(239, 68, 68, 0.2)',
                 }}
               >
                 {user?.is_active ? 'Active' : 'Inactive'}
@@ -119,64 +122,64 @@ const UserProfile = () => {
           </div>
         </div>
 
-        <div style={styles.formSection}>
-          <h2 style={styles.sectionTitle}>Update Profile</h2>
+        <div className="profile-card">
+          <h2 className="profile-section-title"><FaUser /> Update Profile</h2>
 
-          {error && <div style={styles.errorMessage}>{error}</div>}
-          {success && <div style={styles.successMessage}>{success}</div>}
+          {error && <div className="alert-message alert-error"><FaExclamationCircle /> {error}</div>}
+          {success && <div className="alert-message alert-success"><FaCheckCircle /> {success}</div>}
 
           <form onSubmit={handleSubmit}>
-            <div style={styles.formGrid}>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Full Name</label>
+            <div className="profile-form-grid">
+              <div className="profile-form-group">
+                <label>Full Name</label>
                 <input
                   type="text"
                   name="full_name"
                   value={formData.full_name}
                   onChange={handleChange}
-                  style={styles.input}
+                  className="profile-input"
                   placeholder="Enter full name"
                 />
               </div>
 
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Email</label>
+              <div className="profile-form-group">
+                <label>Email Address</label>
                 <input
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  style={styles.input}
+                  className="profile-input"
                   placeholder="Enter email"
                   required
                 />
               </div>
 
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Phone</label>
+              <div className="profile-form-group">
+                <label>Phone Number</label>
                 <input
                   type="tel"
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  style={styles.input}
+                  className="profile-input"
                   placeholder="Enter phone number"
                 />
               </div>
             </div>
 
-            <div style={styles.buttonGroup}>
+            <div className="profile-actions">
               <button
                 type="submit"
                 disabled={loading}
-                style={styles.submitButton}
+                className="btn-update-profile"
               >
                 {loading ? 'Updating...' : 'Update Profile'}
               </button>
               <button
                 type="button"
                 onClick={() => navigate('/')}
-                style={styles.cancelButton}
+                className="btn-cancel"
               >
                 Cancel
               </button>
@@ -186,160 +189,6 @@ const UserProfile = () => {
       </div>
     </div>
   );
-};
-
-const styles = {
-  container: {
-    padding: '24px',
-    maxWidth: '1200px',
-    margin: '0 auto',
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '24px',
-  },
-  title: {
-    fontSize: '28px',
-    fontWeight: '600',
-    color: '#2c3e50',
-    margin: 0,
-  },
-  changePasswordButton: {
-    padding: '10px 20px',
-    backgroundColor: '#6366f1',
-    color: 'white',
-    border: 'none',
-    borderRadius: '6px',
-    fontSize: '14px',
-    fontWeight: '500',
-    cursor: 'pointer',
-  },
-  content: {
-    display: 'grid',
-    gap: '24px',
-  },
-  infoSection: {
-    backgroundColor: 'white',
-    padding: '24px',
-    borderRadius: '8px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-  },
-  sectionTitle: {
-    fontSize: '18px',
-    fontWeight: '600',
-    color: '#2c3e50',
-    marginTop: 0,
-    marginBottom: '20px',
-  },
-  infoGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-    gap: '20px',
-  },
-  infoItem: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px',
-  },
-  infoLabel: {
-    fontSize: '14px',
-    color: '#666',
-    fontWeight: '500',
-  },
-  infoValue: {
-    fontSize: '16px',
-    color: '#2c3e50',
-    fontWeight: '500',
-  },
-  infoBadge: {
-    display: 'inline-block',
-    padding: '6px 16px',
-    backgroundColor: '#e3f2fd',
-    color: '#1976d2',
-    borderRadius: '16px',
-    fontSize: '14px',
-    fontWeight: '500',
-    width: 'fit-content',
-  },
-  statusBadge: {
-    display: 'inline-block',
-    padding: '6px 16px',
-    borderRadius: '16px',
-    fontSize: '14px',
-    fontWeight: '500',
-    width: 'fit-content',
-  },
-  formSection: {
-    backgroundColor: 'white',
-    padding: '24px',
-    borderRadius: '8px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-  },
-  errorMessage: {
-    padding: '12px',
-    backgroundColor: '#fee',
-    color: '#c33',
-    borderRadius: '6px',
-    marginBottom: '16px',
-    fontSize: '14px',
-  },
-  successMessage: {
-    padding: '12px',
-    backgroundColor: '#e8f5e9',
-    color: '#2e7d32',
-    borderRadius: '6px',
-    marginBottom: '16px',
-    fontSize: '14px',
-  },
-  formGrid: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '20px',
-    marginBottom: '24px',
-  },
-  formGroup: {
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  label: {
-    marginBottom: '8px',
-    fontSize: '14px',
-    fontWeight: '500',
-    color: '#2c3e50',
-  },
-  input: {
-    padding: '10px 12px',
-    border: '1px solid #ddd',
-    borderRadius: '6px',
-    fontSize: '14px',
-    outline: 'none',
-  },
-  buttonGroup: {
-    display: 'flex',
-    gap: '12px',
-  },
-  submitButton: {
-    padding: '12px 24px',
-    backgroundColor: '#6366f1',
-    color: 'white',
-    border: 'none',
-    borderRadius: '6px',
-    fontSize: '14px',
-    fontWeight: '500',
-    cursor: 'pointer',
-  },
-  cancelButton: {
-    padding: '12px 24px',
-    backgroundColor: 'white',
-    color: '#666',
-    border: '1px solid #ddd',
-    borderRadius: '6px',
-    fontSize: '14px',
-    fontWeight: '500',
-    cursor: 'pointer',
-  },
 };
 
 export default UserProfile;

@@ -158,22 +158,22 @@
 }
 
 .status-badge-compact.pending {
-    background: #fff4e5;
+    background: rgba(255, 152, 0, 0.1);
     color: #ff9800;
 }
 
 .status-badge-compact.accepted {
-    background: #e6f7ed;
+    background: rgba(39, 174, 96, 0.1);
     color: #27ae60;
 }
 
 .status-badge-compact.rejected {
-    background: #fdf2f2;
+    background: rgba(229, 57, 53, 0.1);
     color: #e53935;
 }
 
 .status-badge-compact.draft {
-    background: #eef2ff;
+    background: rgba(79, 70, 229, 0.1);
     color: #4f46e5;
 }
 

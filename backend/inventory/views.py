@@ -28,8 +28,10 @@ class AvailableChemicalViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def names(self, request):
-        names = AvailableChemical.objects.values_list('chemical_name', flat=True).distinct().order_by('chemical_name')
-        return Response(list(names))
+        """Get list of chemical names and available quantity"""
+        data = AvailableChemical.objects.values('chemical_name', 'available_quantity_ml').order_by('chemical_name')
+        result = [{'name': item['chemical_name'], 'available_quantity': float(item['available_quantity_ml'])} for item in data]
+        return Response(result)
 
 class AvailableApparatusViewSet(viewsets.ModelViewSet):
     """
@@ -42,8 +44,10 @@ class AvailableApparatusViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def names(self, request):
-        names = AvailableApparatus.objects.values_list('apparatus_name', flat=True).distinct().order_by('apparatus_name')
-        return Response(list(names))
+        """Get list of apparatus names and available quantity"""
+        data = AvailableApparatus.objects.values('apparatus_name', 'available_quantity_pieces').order_by('apparatus_name')
+        result = [{'name': item['apparatus_name'], 'available_quantity': item['available_quantity_pieces']} for item in data]
+        return Response(result)
 
 class LowStockChemicalViewSet(viewsets.ReadOnlyModelViewSet):
     """
