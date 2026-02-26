@@ -195,14 +195,22 @@
   box-shadow: 0 10px 20px rgba(239, 68, 68, 0.2);
 }
 
+/* Wrapper so header and rows share exact same column widths */
+.damaged-items-table {
+  padding: 0 40px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
 .grid-matrix-header {
   display: grid;
   grid-template-columns: 3fr 110px 2.5fr 44px;
   gap: 20px;
-  padding: 0 40px 15px 40px;
+  padding: 0 0 15px 0;
   border-bottom: 2px solid var(--border);
   margin-bottom: 20px;
   width: 100%;
+  box-sizing: border-box;
 }
 
 .grid-matrix-header span {
@@ -220,15 +228,14 @@
   gap: 20px;
   align-items: center;
   margin-bottom: 15px;
-  padding: 12px 40px;
+  padding: 12px 0;
   background: #000000;
-  /* Robust dark row */
   border-radius: 20px;
   border: 1.5px solid #1a1a1a;
   transition: all 0.2s;
   width: 100%;
   position: relative;
-  /* CRITICAL for z-index lifting */
+  box-sizing: border-box;
 }
 
 /* Lift the row being edited so dropdown overlaps header or other rows */
