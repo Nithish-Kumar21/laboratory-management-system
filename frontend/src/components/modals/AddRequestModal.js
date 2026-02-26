@@ -196,23 +196,30 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
               </div>
             </div>
 
-            <div className="items-section">
+            <div className="items-section chemical-requirements-section">
               <div className="items-section-header">
-                <h3>Chemical Requirements</h3>
+                <h3><FaFlask /> Chemical Requirements</h3>
                 <button type="button" className="btn-add-line" onClick={addChemicalRow}>
                   <FaPlus /> Add Line
                 </button>
               </div>
 
-              <div className="items-separator"></div>
+              <div className="chemical-requirements-table">
+                <div className="grid-matrix-header">
+                  <span>Material Name</span>
+                  <span>Qty (ML)</span>
+                  <span>Rate (₹)</span>
+                  <span>Make / Brand</span>
+                  <span></span>
+                </div>
 
-              <div className="chemical-items-container">
                 {chemicalItems.map((item, i) => (
-                  <div key={i} className="grid-row animate-fade">
-                    <div className="chem-select-col autocomplete-wrapper">
+                  <div key={i} className="grid-row chemical-row animate-fade">
+                    <div className="autocomplete-wrapper">
                       <input
                         type="text"
-                        placeholder="Chemical Name"
+                        className="grid-input"
+                        placeholder="Item name..."
                         value={item.chemical_name}
                         autoComplete="off"
                         onChange={(e) => {
@@ -244,22 +251,43 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
                         </ul>
                       )}
                     </div>
-                    <div className="chem-qty-col">
-                      <div className="qty-input-wrapper">
-                        <input
-                          type="number"
-                          step="0.01"
-                          placeholder="0.00 ML"
-                          value={item.quantity_ml}
-                          onChange={(e) => updateChemicalItem(i, 'quantity_ml', e.target.value)}
-                        />
-                      </div>
+                    <div className="qty-ml-wrapper">
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        className="grid-input grid-input-qty"
+                        placeholder="0.00 ML"
+                        value={item.quantity_ml}
+                        onChange={(e) => updateChemicalItem(i, 'quantity_ml', e.target.value)}
+                      />
+                      <span className="input-suffix">ML</span>
                     </div>
+                    <div className="rate-rupee-wrapper">
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        className="grid-input grid-input-rate"
+                        placeholder="0.00 ₹"
+                        value={item.rate}
+                        onChange={(e) => updateChemicalItem(i, 'rate', e.target.value)}
+                      />
+                      <span className="input-suffix">₹</span>
+                    </div>
+                    <input
+                      type="text"
+                      className="grid-input"
+                      placeholder="Make"
+                      value={item.make}
+                      onChange={(e) => updateChemicalItem(i, 'make', e.target.value)}
+                    />
                     <button
                       type="button"
                       className="btn-row-del"
                       onClick={() => removeChemicalRow(i)}
                       disabled={chemicalItems.length === 1}
+                      title="Remove line"
                     >
                       <FaTrash />
                     </button>
