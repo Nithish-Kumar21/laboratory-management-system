@@ -244,11 +244,11 @@
   grid-template-columns: 2fr 1fr 50px;
   gap: 15px;
   align-items: center;
-  margin-bottom: 10px;
-  padding: 8px 0;
-  background: #000000;
-  border-radius: 14px;
-  border: 1.5px solid #1a1a1a;
+  margin-bottom: 14px;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+  border: none;
   width: 100%;
   position: relative;
   box-sizing: border-box;
@@ -260,19 +260,19 @@
 
 .chemical-requirements-section .grid-input {
   width: 100%;
-  padding: 8px 12px;
-  background: #111111 !important;
-  color: #ffffff !important;
-  border: 1.5px solid #222222 !important;
-  border-radius: 10px;
-  font-size: 0.85rem;
+  padding: 12px 18px;
+  background: #ffffff;
+  color: var(--text-main);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  font-size: 0.95rem;
   font-weight: 500;
   transition: all 0.2s;
 }
 
 .chemical-requirements-section .grid-input:focus {
-  border-color: #444 !important;
-  background: #1a1a1a !important;
+  border-color: #3b51bf;
+  background: #ffffff;
   outline: none;
 }
 
@@ -289,7 +289,7 @@
 }
 
 .qty-ml-wrapper .grid-input-qty {
-  padding-right: 36px;
+  padding-right: 40px;
   text-align: right;
 }
 
@@ -339,6 +339,7 @@
 .chemical-requirements-section .chemical-select {
   appearance: none;
   background-image: none;
+  height: 48px;
 }
 
 /* Legacy / other modals */
