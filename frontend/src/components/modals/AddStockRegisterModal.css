@@ -307,16 +307,12 @@
 
 .grid-row input {
   width: 100%;
-  padding: 8px 12px;
-  /* significantly reduced vertical padding */
+  padding: 12px 18px;
   background: #111111 !important;
-  /* DARK Aesthetic as per reference */
   color: #ffffff !important;
   border: 1.5px solid #222222 !important;
-  border-radius: 10px;
-  /* Matched smaller container */
-  font-size: 0.85rem;
-  /* Slightly smaller font for compact fit */
+  border-radius: 14px;
+  font-size: 0.95rem;
   font-weight: 500;
   transition: all 0.2s;
 }
