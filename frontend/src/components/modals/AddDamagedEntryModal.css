@@ -167,14 +167,14 @@
 
 .section-header h3 {
   font-size: 1.4rem;
-  font-weight: 900;
-  color: var(--text-main);
+  font-weight: 800;
+  color: #e5e7eb;
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-/* Reference: light blue wrench icon next to "Damaged Items List" */
+/* Blue wrench icon next to "Damaged Items List" */
 .items-section .section-header h3 .section-title-icon {
   color: #60a5fa;
 }
@@ -183,13 +183,13 @@
   background: #ef4444;
   color: white;
   border: none;
-  padding: 12px 28px;
-  border-radius: 14px;
+  padding: 12px 24px;
+  border-radius: 12px;
   font-size: 0.9rem;
-  font-weight: 800;
+  font-weight: 700;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -211,10 +211,10 @@
   display: grid;
   grid-template-columns: 3fr 110px 2.5fr 44px;
   gap: 20px;
-  padding: 12px 0 15px 0;
-  border-top: 1px dashed var(--border);
-  border-bottom: 2px solid var(--border);
-  margin-bottom: 20px;
+  padding: 12px 0 14px 0;
+  border-top: 1px solid rgba(156, 163, 175, 0.4);
+  border-bottom: 1px solid rgba(156, 163, 175, 0.4);
+  margin-bottom: 16px;
   width: 100%;
   box-sizing: border-box;
 }
@@ -232,10 +232,10 @@
 
 .grid-matrix-header span {
   font-size: 0.75rem;
-  font-weight: 900;
-  color: var(--text-muted);
+  font-weight: 800;
+  color: #9ca3af;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
 }
 
 /* Match reference: Apparatus Name + Caused By left; Quantity Broken center; Action right */
