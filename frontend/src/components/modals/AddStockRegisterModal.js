@@ -19,11 +19,16 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
 
   const [chemicalNames, setChemicalNames] = useState([]);
   const [apparatusNames, setApparatusNames] = useState([]);
+  const [supplierNames, setSupplierNames] = useState([]);
+  const [chemMakes, setChemMakes] = useState([]);
+  const [appMakes, setAppMakes] = useState([]);
 
   const [showChemicalSuggestions, setShowChemicalSuggestions] = useState({});
   const [showApparatusSuggestions, setShowApparatusSuggestions] = useState({});
+  const [showSupplierSuggestions, setShowSupplierSuggestions] = useState(false);
+  const [showChemMakesSuggestions, setShowChemMakesSuggestions] = useState({});
+  const [showAppMakesSuggestions, setShowAppMakesSuggestions] = useState({});
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
-  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
 
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -34,13 +39,35 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
 
   useEffect(() => {
     if (isOpen) {
-      setPosition({ x: 0, y: 0 }); // Reset position when opened
-      api.get('/stock_register/chemical_names/')
-        .then(res => setChemicalNames(Array.isArray(res.data) ? res.data : res.data.results || []))
-        .catch(err => console.error('Error fetching chemical names:', err));
-      api.get('/stock_register/apparatus_names/')
-        .then(res => setApparatusNames(Array.isArray(res.data) ? res.data : res.data.results || []))
-        .catch(err => console.error('Error fetching apparatus names:', err));
+      setPosition({ x: 0, y: 0 });
+
+      const fetchAll = async () => {
+        try {
+          const [chem, app, sup, cMake, aMake] = await Promise.all([
+            api.get('available_chemicals/names/').catch(() => ({ data: [] })),
+            api.get('available_apparatus/names/').catch(() => ({ data: [] })),
+            api.get('stock_register/supplier_names/').catch(() => ({ data: [] })),
+            api.get('stock_register/chemical_makes/').catch(() => ({ data: [] })),
+            api.get('stock_register/apparatus_makes/').catch(() => ({ data: [] }))
+          ]);
+
+          const process = (res) => {
+            const d = res.data;
+            if (Array.isArray(d)) return d;
+            if (d && Array.isArray(d.results)) return d.results;
+            return [];
+          };
+
+          setChemicalNames(process(chem));
+          setApparatusNames(process(app));
+          setSupplierNames(process(sup));
+          setChemMakes(process(cMake));
+          setAppMakes(process(aMake));
+        } catch (err) {
+          console.error('Error in pre-fetch:', err);
+        }
+      };
+      fetchAll();
     }
   }, [isOpen]);
 
@@ -110,23 +137,36 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
     const { key, target } = e;
     const chemRowIdx = Object.keys(showChemicalSuggestions).find(idx => showChemicalSuggestions[idx]);
     const appRowIdx = Object.keys(showApparatusSuggestions).find(idx => showApparatusSuggestions[idx]);
-    const isShowing = chemRowIdx !== undefined || appRowIdx !== undefined;
+    const chemMakeRowIdx = Object.keys(showChemMakesSuggestions).find(idx => showChemMakesSuggestions[idx]);
+    const appMakeRowIdx = Object.keys(showAppMakesSuggestions).find(idx => showAppMakesSuggestions[idx]);
+    const isShowing = chemRowIdx !== undefined || appRowIdx !== undefined || showSupplierSuggestions || chemMakeRowIdx !== undefined || appMakeRowIdx !== undefined;
 
     if (isShowing) {
-      const type = chemRowIdx !== undefined ? 'chemical' : 'apparatus';
-      const rowIdx = type === 'chemical' ? chemRowIdx : appRowIdx;
-      const query = type === 'chemical' ? chemicalItems[rowIdx].chemical_name : apparatusItems[rowIdx].apparatus_name;
-      const options = type === 'chemical' ? chemicalNames.filter(n => n.toLowerCase().includes(query.toLowerCase())) : apparatusNames.filter(n => n.toLowerCase().includes(query.toLowerCase()));
+      let type, rowIdx, query, options;
+      if (chemRowIdx !== undefined) { type = 'chemical'; rowIdx = chemRowIdx; query = chemicalItems[rowIdx].chemical_name; options = chemicalNames; }
+      else if (appRowIdx !== undefined) { type = 'apparatus'; rowIdx = appRowIdx; query = apparatusItems[rowIdx].apparatus_name; options = apparatusNames; }
+      else if (showSupplierSuggestions) { type = 'supplier'; query = formData.supplier_name; options = supplierNames; }
+      else if (chemMakeRowIdx !== undefined) { type = 'chemmake'; rowIdx = chemMakeRowIdx; query = chemicalItems[rowIdx].make; options = chemMakes; }
+      else if (appMakeRowIdx !== undefined) { type = 'appmake'; rowIdx = appMakeRowIdx; query = apparatusItems[rowIdx].make; options = appMakes; }
 
-      if (key === 'ArrowDown') { e.preventDefault(); setActiveSuggestionIndex(prev => Math.min(prev + 1, options.length - 1)); return; }
+      const filteredOptions = options.filter(n => {
+        const val = typeof n === 'object' ? (n.name || '') : (n || '');
+        return val.toLowerCase().startsWith((query || '').toLowerCase());
+      });
+
+      if (key === 'ArrowDown') { e.preventDefault(); setActiveSuggestionIndex(prev => Math.min(prev + 1, filteredOptions.length - 1)); return; }
       if (key === 'ArrowUp') { e.preventDefault(); setActiveSuggestionIndex(prev => Math.max(prev - 1, 0)); return; }
       if (key === 'Enter' && activeSuggestionIndex >= 0) {
         e.preventDefault();
-        const val = options[activeSuggestionIndex];
-        if (type === 'chemical') selectChemical(rowIdx, val); else selectApparatus(rowIdx, val);
+        const val = filteredOptions[activeSuggestionIndex];
+        if (type === 'chemical') selectChemical(rowIdx, val.name);
+        else if (type === 'apparatus') selectApparatus(rowIdx, val.name);
+        else if (type === 'supplier') { setFormData({ ...formData, supplier_name: val }); setShowSupplierSuggestions(false); }
+        else if (type === 'chemmake') { const n = [...chemicalItems]; n[rowIdx].make = val; setChemicalItems(n); setShowChemMakesSuggestions({}); }
+        else if (type === 'appmake') { const n = [...apparatusItems]; n[rowIdx].make = val; setApparatusItems(n); setShowAppMakesSuggestions({}); }
         return;
       }
-      if (key === 'Escape' || key === 'Tab') { setShowChemicalSuggestions({}); setShowApparatusSuggestions({}); return; }
+      if (key === 'Escape' || key === 'Tab') { setShowChemicalSuggestions({}); setShowApparatusSuggestions({}); setShowSupplierSuggestions(false); setShowChemMakesSuggestions({}); setShowAppMakesSuggestions({}); return; }
     }
 
     if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter'].includes(key)) {
@@ -187,23 +227,16 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
     // Auto-focus the next field (Quantity)
     setTimeout(() => {
       if (modalRef.current) {
-        const inputs = modalRef.current.querySelectorAll('input');
-        const apparatusInputs = Array.from(inputs).filter(input => input.placeholder.includes('Item name'));
-        const currentIndex = apparatusInputs.findIndex(input => input === document.activeElement);
-        if (currentIndex !== -1 && currentIndex < apparatusInputs.length - 1) {
-          apparatusInputs[currentIndex + 1].focus();
+        const rowInputs = modalRef.current.querySelectorAll('.grid-row');
+        const targetRow = rowInputs[chemicalItems.length + i]; // Apparatus rows follow chemical rows
+        if (targetRow) {
+          const quantityInput = targetRow.querySelectorAll('input')[1];
+          if (quantityInput) quantityInput.focus();
         }
       }
     }, 10);
   };
 
-  const calculateDropdownPosition = (event) => {
-    const rect = event.target.getBoundingClientRect();
-    setDropdownPosition({
-      top: rect.bottom,
-      left: rect.left
-    });
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -215,7 +248,7 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
         chemical_items: chemicalItems.filter(it => it.chemical_name).map(it => ({ ...it, quantity_ml: parseFloat(it.quantity_ml), rate: parseFloat(it.rate), make: it.make })),
         apparatus_items: apparatusItems.filter(it => it.apparatus_name).map(it => ({ ...it, quantity_pieces: parseInt(it.quantity_pieces), rate: parseFloat(it.rate), make: it.make }))
       };
-      await api.post('/stock_register/', payload);
+      await api.post('stock_register/', payload);
       window.dispatchEvent(new Event('inventory-updated'));
       onSuccess();
       onClose();
@@ -257,8 +290,20 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
               </div>
               <div className="form-group">
                 <label>Supplier Details</label>
-                <input type="text" value={formData.supplier_name} required placeholder="Vendor full name..."
-                  onChange={e => setFormData({ ...formData, supplier_name: e.target.value })} />
+                <div className="autocomplete-wrapper">
+                  <input type="text" value={formData.supplier_name} required placeholder="Vendor full name..."
+                    onChange={e => { setFormData({ ...formData, supplier_name: e.target.value }); setShowSupplierSuggestions(true); setActiveSuggestionIndex(-1); }}
+                    onFocus={() => { setShowSupplierSuggestions(true); setActiveSuggestionIndex(-1); }}
+                    onBlur={() => setTimeout(() => setShowSupplierSuggestions(false), 250)} />
+                  {showSupplierSuggestions && formData.supplier_name && (
+                    <div className="suggestions-dropdown">
+                      {supplierNames.filter(n => n.toLowerCase().startsWith(formData.supplier_name.toLowerCase())).map((n, idx) => (
+                        <div key={idx} className={`suggestion-item ${activeSuggestionIndex === idx ? 'active' : ''}`}
+                          onMouseDown={() => { setFormData({ ...formData, supplier_name: n }); setShowSupplierSuggestions(false); }}>{n}</div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -275,7 +320,7 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
                 <span>Qty (ML)</span>
                 <span>Rate (₹)</span>
                 <span>Make / Brand</span>
-                <span></span>
+                <span>Action</span>
               </div>
 
               {chemicalItems.map((it, i) => (
@@ -285,26 +330,42 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
                       onChange={e => {
                         const next = [...chemicalItems]; next[i].chemical_name = e.target.value; setChemicalItems(next);
                         setShowChemicalSuggestions({ [i]: true }); setActiveSuggestionIndex(-1);
-                        calculateDropdownPosition(e);
                       }}
                       onFocus={e => {
                         setShowChemicalSuggestions({ [i]: true });
                         setActiveSuggestionIndex(-1);
-                        calculateDropdownPosition(e);
                       }}
                       onBlur={() => setTimeout(() => setShowChemicalSuggestions({}), 250)} />
                     {showChemicalSuggestions[i] && it.chemical_name && (
-                      <div className="suggestions-dropdown" style={{ top: dropdownPosition.top, left: dropdownPosition.left }}>
-                        {chemicalNames.filter(n => n.toLowerCase().includes(it.chemical_name.toLowerCase())).map((n, idx) => (
-                          <div key={idx} className={`suggestion-item ${activeSuggestionIndex === idx ? 'active' : ''}`}
-                            onMouseDown={() => selectChemical(i, n)}>{n}</div>
+                      <ul className="suggestions-dropdown list-style-none">
+                        {chemicalNames.filter(n => (n.name || '').toLowerCase().startsWith((it.chemical_name || '').toLowerCase())).map((n, idx) => (
+                          <li key={idx} className={`suggestion-item ${activeSuggestionIndex === idx ? 'active' : ''}`}
+                            onMouseDown={() => selectChemical(i, n.name)}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                              <span>{n.name}</span>
+                              <span style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 'bold' }}>Stock: {n.available_quantity} ML</span>
+                            </div>
+                          </li>
                         ))}
-                      </div>
+                      </ul>
                     )}
                   </div>
-                  <input type="number" step="0.01" placeholder="Quantity" value={it.quantity_ml} required onChange={e => { const next = [...chemicalItems]; next[i].quantity_ml = e.target.value; setChemicalItems(next); }} />
-                  <input type="number" step="0.01" placeholder="Price" value={it.rate} required onChange={e => { const next = [...chemicalItems]; next[i].rate = e.target.value; setChemicalItems(next); }} />
-                  <input type="text" placeholder="Make" value={it.make} required onChange={e => { const next = [...chemicalItems]; next[i].make = e.target.value; setChemicalItems(next); }} />
+                  <input type="number" step="0.01" placeholder="Qty" value={it.quantity_ml} required onChange={e => { const next = [...chemicalItems]; next[i].quantity_ml = e.target.value; setChemicalItems(next); }} />
+                  <input type="number" step="0.01" placeholder="Rate" value={it.rate} required onChange={e => { const next = [...chemicalItems]; next[i].rate = e.target.value; setChemicalItems(next); }} />
+                  <div className="autocomplete-wrapper">
+                    <input type="text" placeholder="Make" value={it.make} required
+                      onChange={e => { const next = [...chemicalItems]; next[i].make = e.target.value; setChemicalItems(next); setShowChemMakesSuggestions({ [i]: true }); setActiveSuggestionIndex(-1); }}
+                      onFocus={() => { setShowChemMakesSuggestions({ [i]: true }); setActiveSuggestionIndex(-1); }}
+                      onBlur={() => setTimeout(() => setShowChemMakesSuggestions({}), 250)} />
+                    {showChemMakesSuggestions[i] && it.make && (
+                      <ul className="suggestions-dropdown list-style-none">
+                        {chemMakes.filter(n => n.toLowerCase().startsWith(it.make.toLowerCase())).map((n, idx) => (
+                          <li key={idx} className={`suggestion-item ${activeSuggestionIndex === idx ? 'active' : ''}`}
+                            onMouseDown={() => { const next = [...chemicalItems]; next[i].make = n; setChemicalItems(next); setShowChemMakesSuggestions({}); }}>{n}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                   <button type="button" className="btn-row-del" onClick={() => setChemicalItems(chemicalItems.filter((_, idx) => idx !== i))} title="Remove line"><FaTrashAlt /></button>
                 </div>
               ))}
@@ -333,26 +394,42 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
                       onChange={e => {
                         const next = [...apparatusItems]; next[i].apparatus_name = e.target.value; setApparatusItems(next);
                         setShowApparatusSuggestions({ [i]: true }); setActiveSuggestionIndex(-1);
-                        calculateDropdownPosition(e);
                       }}
                       onFocus={e => {
                         setShowApparatusSuggestions({ [i]: true });
                         setActiveSuggestionIndex(-1);
-                        calculateDropdownPosition(e);
                       }}
                       onBlur={() => setTimeout(() => setShowApparatusSuggestions({}), 250)} />
                     {showApparatusSuggestions[i] && it.apparatus_name && (
-                      <div className="suggestions-dropdown" style={{ top: dropdownPosition.top, left: dropdownPosition.left }}>
-                        {apparatusNames.filter(n => n.toLowerCase().includes(it.apparatus_name.toLowerCase())).map((n, idx) => (
-                          <div key={idx} className={`suggestion-item ${activeSuggestionIndex === idx ? 'active' : ''}`}
-                            onMouseDown={() => selectApparatus(i, n)}>{n}</div>
+                      <ul className="suggestions-dropdown list-style-none">
+                        {apparatusNames.filter(n => (n.name || '').toLowerCase().startsWith((it.apparatus_name || '').toLowerCase())).map((n, idx) => (
+                          <li key={idx} className={`suggestion-item ${activeSuggestionIndex === idx ? 'active' : ''}`}
+                            onMouseDown={() => selectApparatus(i, n.name)}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                              <span>{n.name}</span>
+                              <span style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 'bold' }}>Stock: {n.available_quantity} PCS</span>
+                            </div>
+                          </li>
                         ))}
-                      </div>
+                      </ul>
                     )}
                   </div>
-                  <input type="number" placeholder="Quantity" value={it.quantity_pieces} required onChange={e => { const next = [...apparatusItems]; next[i].quantity_pieces = e.target.value; setApparatusItems(next); }} />
-                  <input type="number" step="0.01" placeholder="Price" value={it.rate} required onChange={e => { const next = [...apparatusItems]; next[i].rate = e.target.value; setApparatusItems(next); }} />
-                  <input type="text" placeholder="Make" value={it.make} required onChange={e => { const next = [...apparatusItems]; next[i].make = e.target.value; setApparatusItems(next); }} />
+                  <input type="number" placeholder="Qty" value={it.quantity_pieces} required onChange={e => { const next = [...apparatusItems]; next[i].quantity_pieces = e.target.value; setApparatusItems(next); }} />
+                  <input type="number" step="0.01" placeholder="Rate" value={it.rate} required onChange={e => { const next = [...apparatusItems]; next[i].rate = e.target.value; setApparatusItems(next); }} />
+                  <div className="autocomplete-wrapper">
+                    <input type="text" placeholder="Make" value={it.make} required
+                      onChange={e => { const next = [...apparatusItems]; next[i].make = e.target.value; setApparatusItems(next); setShowAppMakesSuggestions({ [i]: true }); setActiveSuggestionIndex(-1); }}
+                      onFocus={() => { setShowAppMakesSuggestions({ [i]: true }); setActiveSuggestionIndex(-1); }}
+                      onBlur={() => setTimeout(() => setShowAppMakesSuggestions({}), 250)} />
+                    {showAppMakesSuggestions[i] && it.make && (
+                      <ul className="suggestions-dropdown list-style-none">
+                        {appMakes.filter(n => n.toLowerCase().startsWith(it.make.toLowerCase())).map((n, idx) => (
+                          <li key={idx} className={`suggestion-item ${activeSuggestionIndex === idx ? 'active' : ''}`}
+                            onMouseDown={() => { const next = [...apparatusItems]; next[i].make = n; setApparatusItems(next); setShowAppMakesSuggestions({}); }}>{n}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                   <button type="button" className="btn-row-del" onClick={() => setApparatusItems(apparatusItems.filter((_, idx) => idx !== i))} title="Remove line"><FaTrashAlt /></button>
                 </div>
               ))}
