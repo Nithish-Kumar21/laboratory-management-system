@@ -215,7 +215,7 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
 
                         <div className="items-section">
                             <div className="section-header">
-                                <h3><FaTools /> Damaged Items List</h3>
+                                <h3><FaTools className="section-title-icon" /> Damaged Items List</h3>
                                 <button type="button" className="btn-add-line" onClick={addRow}>
                                     <FaPlusCircle /> Add Line
                                 </button>
