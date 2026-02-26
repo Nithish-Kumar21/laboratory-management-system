@@ -221,7 +221,7 @@
 
 .chemical-requirements-section .grid-matrix-header {
   display: grid;
-  grid-template-columns: 1.5fr 1fr 0.8fr 1.5fr 50px;
+  grid-template-columns: 2fr 1fr 50px;
   gap: 15px;
   padding: 0 0 10px 0;
   border-bottom: 1.5px solid var(--border);
@@ -241,7 +241,7 @@
 
 .chemical-requirements-section .grid-row.chemical-row {
   display: grid;
-  grid-template-columns: 1.5fr 1fr 0.8fr 1.5fr 50px;
+  grid-template-columns: 2fr 1fr 50px;
   gap: 15px;
   align-items: center;
   margin-bottom: 10px;
@@ -281,16 +281,14 @@
 }
 
 /* Qty: suffix "ML" inside input */
-.qty-ml-wrapper,
-.rate-rupee-wrapper {
+.qty-ml-wrapper {
   position: relative;
   display: flex;
   align-items: center;
   width: 100%;
 }
 
-.qty-ml-wrapper .grid-input-qty,
-.rate-rupee-wrapper .grid-input-rate {
+.qty-ml-wrapper .grid-input-qty {
   padding-right: 36px;
   text-align: right;
 }
@@ -336,6 +334,11 @@
 .chemical-requirements-section .autocomplete-wrapper {
   position: relative;
   width: 100%;
+}
+
+.chemical-requirements-section .chemical-select {
+  appearance: none;
+  background-image: none;
 }
 
 /* Legacy / other modals */
@@ -393,7 +396,7 @@
 
   .chemical-requirements-section .grid-matrix-header,
   .chemical-requirements-section .grid-row.chemical-row {
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr 44px;
     gap: 10px;
   }
 

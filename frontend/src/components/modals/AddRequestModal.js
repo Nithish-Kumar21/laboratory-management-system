@@ -28,11 +28,10 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
     class_name: defaultClass,
     date: new Date().toISOString().split('T')[0]
   });
-  const [chemicalItems, setChemicalItems] = useState([{ chemical_name: '', quantity_ml: '', rate: '', make: '' }]);
+  const [chemicalItems, setChemicalItems] = useState([{ chemical_name: '', quantity_ml: '' }]);
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [availableChemicals, setAvailableChemicals] = useState([]);
-  const [showSuggestions, setShowSuggestions] = useState({});
 
   useEffect(() => {
     if (isOpen) {
@@ -48,9 +47,7 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
         if (editData.chemical_items && editData.chemical_items.length > 0) {
           setChemicalItems(editData.chemical_items.map(item => ({
             chemical_name: item.chemical_name,
-            quantity_ml: item.quantity_ml,
-            rate: item.rate ?? '',
-            make: item.make ?? ''
+            quantity_ml: item.quantity_ml
           })));
         }
       } else {
@@ -60,7 +57,7 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
           class_name: opts.length ? opts[0] : 'I B.Sc Chemistry',
           date: new Date().toISOString().split('T')[0]
         });
-        setChemicalItems([{ chemical_name: '', quantity_ml: '', rate: '', make: '' }]);
+        setChemicalItems([{ chemical_name: '', quantity_ml: '' }]);
       }
 
       api
@@ -76,7 +73,7 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
   if (!isOpen) return null;
 
   const addChemicalRow = () => {
-    setChemicalItems([...chemicalItems, { chemical_name: '', quantity_ml: '', rate: '', make: '' }]);
+    setChemicalItems([...chemicalItems, { chemical_name: '', quantity_ml: '' }]);
   };
 
   const removeChemicalRow = (i) => {
@@ -206,82 +203,39 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
 
               <div className="chemical-requirements-table">
                 <div className="grid-matrix-header">
-                  <span>Material Name</span>
+                  <span>Chemical</span>
                   <span>Qty (ML)</span>
-                  <span>Rate (₹)</span>
-                  <span>Make / Brand</span>
                   <span></span>
                 </div>
 
                 {chemicalItems.map((item, i) => (
                   <div key={i} className="grid-row chemical-row animate-fade">
-                    <div className="autocomplete-wrapper">
-                      <input
-                        type="text"
-                        className="grid-input"
-                        placeholder="Item name..."
-                        value={item.chemical_name}
-                        autoComplete="off"
-                        onChange={(e) => {
-                          updateChemicalItem(i, 'chemical_name', e.target.value);
-                          setShowSuggestions({ [i]: true });
-                        }}
-                        onFocus={() => setShowSuggestions({ [i]: true })}
-                        onBlur={() => setTimeout(() => setShowSuggestions({}), 200)}
-                      />
-                      {showSuggestions[i] && item.chemical_name && (
-                        <ul className="suggestions-dropdown list-style-none">
-                          {availableChemicals
-                            .filter(c => (c.chemical_name || '').toLowerCase().startsWith((item.chemical_name || '').toLowerCase()))
-                            .map((c, idx) => (
-                              <li
-                                key={idx}
-                                className="suggestion-item"
-                                onMouseDown={() => {
-                                  updateChemicalItem(i, 'chemical_name', c.chemical_name);
-                                  setShowSuggestions({});
-                                }}
-                              >
-                                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                                  <span>{c.chemical_name}</span>
-                                  <span style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 'bold' }}>Stock: {c.available_quantity_ml} ML</span>
-                                </div>
-                              </li>
-                            ))}
-                        </ul>
-                      )}
-                    </div>
+                    <select
+                      className="grid-input chemical-select"
+                      value={item.chemical_name}
+                      onChange={(e) => updateChemicalItem(i, 'chemical_name', e.target.value)}
+                    >
+                      <option value="">Select Chemical</option>
+                      {availableChemicals.map((c, idx) => (
+                        <option key={idx} value={c.chemical_name}>
+                          {c.chemical_name}
+                        </option>
+                      ))}
+                    </select>
+
                     <div className="qty-ml-wrapper">
                       <input
                         type="number"
                         step="0.01"
                         min="0"
                         className="grid-input grid-input-qty"
-                        placeholder="0.00 ML"
+                        placeholder="0.00"
                         value={item.quantity_ml}
                         onChange={(e) => updateChemicalItem(i, 'quantity_ml', e.target.value)}
                       />
                       <span className="input-suffix">ML</span>
                     </div>
-                    <div className="rate-rupee-wrapper">
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        className="grid-input grid-input-rate"
-                        placeholder="0.00 ₹"
-                        value={item.rate}
-                        onChange={(e) => updateChemicalItem(i, 'rate', e.target.value)}
-                      />
-                      <span className="input-suffix">₹</span>
-                    </div>
-                    <input
-                      type="text"
-                      className="grid-input"
-                      placeholder="Make"
-                      value={item.make}
-                      onChange={(e) => updateChemicalItem(i, 'make', e.target.value)}
-                    />
+
                     <button
                       type="button"
                       className="btn-row-del"
