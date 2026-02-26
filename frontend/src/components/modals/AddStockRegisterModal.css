@@ -273,7 +273,11 @@
   text-align: center;
 }
 
-/* (All headings centered above their columns now) */
+/* MATERIAL NAME + MAKE/BRAND aligned to start of their boxes */
+.grid-matrix-header span:nth-child(1),
+.grid-matrix-header span:nth-child(4) {
+  text-align: left;
+}
 
 .grid-row {
   display: grid;
