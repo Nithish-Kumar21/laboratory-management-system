@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { FaPlusCircle, FaTimes, FaTrashAlt, FaExclamationTriangle, FaUserTie, FaGraduationCap, FaCalendarAlt, FaTools } from 'react-icons/fa';
+import { FaPlusCircle, FaTimes, FaTrashAlt, FaExclamationTriangle, FaUserTie, FaGraduationCap, FaCalendarAlt, FaTools, FaChevronDown } from 'react-icons/fa';
 import api from '../../utils/api';
 import ConfirmDialog from '../ConfirmDialog';
 import './AddDamagedEntryModal.css';
@@ -18,7 +18,6 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
     const [alertDialog, setAlertDialog] = useState({ open: false, message: '' });
     const [showSuggestions, setShowSuggestions] = useState({});
     const [activeIndex, setActiveIndex] = useState(-1);
-    const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
     const [position, setPosition] = useState({ x: 0, y: 0 });
     const [isDragging, setIsDragging] = useState(false);
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
@@ -89,13 +88,13 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
 
         if (rowIdx !== undefined) {
             const query = damagedItems[rowIdx].apparatus_name;
-            const options = apparatusNames.filter(n => n.toLowerCase().includes(query.toLowerCase()));
+            const options = apparatusNames.filter(n => n.name.toLowerCase().startsWith(query.toLowerCase()));
 
             if (key === 'ArrowDown') { e.preventDefault(); setActiveIndex(prev => Math.min(prev + 1, options.length - 1)); return; }
             if (key === 'ArrowUp') { e.preventDefault(); setActiveIndex(prev => Math.max(prev - 1, 0)); return; }
             if (key === 'Enter' && activeIndex >= 0) {
                 e.preventDefault();
-                selectApparatus(rowIdx, options[activeIndex]);
+                selectApparatus(rowIdx, options[activeIndex].name);
                 return;
             }
             if (key === 'Escape' || key === 'Tab') { setShowSuggestions({}); return; }
@@ -142,26 +141,18 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
         setDamagedItems(next);
         setShowSuggestions({});
         setActiveIndex(-1);
-        // Auto-focus next field (Caused By)
         setTimeout(() => {
             if (modalRef.current) {
-                const inputs = modalRef.current.querySelectorAll('input');
-                const apparatusInputs = Array.from(inputs).filter(input => input.placeholder.includes('Search apparatus'));
-                const currentIndex = apparatusInputs.findIndex(input => input === document.activeElement);
-                if (currentIndex !== -1 && currentIndex < apparatusInputs.length - 1) {
-                    apparatusInputs[currentIndex + 1].focus();
+                const rowInputs = modalRef.current.querySelectorAll('.damaged-row');
+                const targetRow = rowInputs[i];
+                if (targetRow) {
+                    const quantityInput = targetRow.querySelectorAll('input')[1];
+                    if (quantityInput) quantityInput.focus();
                 }
             }
         }, 10);
     };
 
-    const calculateDropdownPosition = (event) => {
-        const rect = event.target.getBoundingClientRect();
-        setDropdownPosition({
-            top: rect.bottom,
-            left: rect.left
-        });
-    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -204,7 +195,7 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
 
                 <form onSubmit={handleSubmit} onKeyDown={handleKeyDown}>
                     <div className="modal-body" ref={scrollRef}>
-                        <div className="form-grid-three">
+                        <div className="form-header-card">
                             <div className="form-group">
                                 <label><FaUserTie /> Responsible Staff</label>
                                 <input type="text" value={formData.staff} required placeholder="Name of staff"
@@ -222,7 +213,7 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
                             </div>
                         </div>
 
-                        <div className="damaged-list-section mt-30">
+                        <div className="items-section">
                             <div className="section-header">
                                 <h3><FaTools /> Damaged Items List</h3>
                                 <button type="button" className="btn-add-line" onClick={addRow}>
@@ -230,35 +221,46 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
                                 </button>
                             </div>
 
-                            <div className="damaged-grid-header">
-                                <span><FaTools /> Apparatus Name</span>
-                                <span>Quantity Broken</span>
-                                <span>Caused By</span>
-                                <span>Action</span>
-                            </div>
+                            <div className="damaged-items-table">
+                                <div className="grid-matrix-header">
+                                    <span><FaTools /> Apparatus Name</span>
+                                    <span>Quantity Broken</span>
+                                    <span>Caused By</span>
+                                    <span>Action</span>
+                                </div>
 
-                            {damagedItems.map((it, i) => (
-                                <div key={i} className="damaged-row animate-fade">
+                                {damagedItems.map((it, i) => (
+                                <div key={i} className="grid-row animate-fade">
                                     <div className="autocomplete-wrapper">
                                         <input type="text" className="grid-input" placeholder="Search apparatus..." value={it.apparatus_name} required autoComplete="off"
                                             onChange={e => {
                                                 const next = [...damagedItems]; next[i].apparatus_name = e.target.value; setDamagedItems(next);
                                                 setShowSuggestions({ [i]: true }); setActiveIndex(-1);
-                                                calculateDropdownPosition(e);
                                             }}
                                             onFocus={e => {
                                                 setShowSuggestions({ [i]: true });
                                                 setActiveIndex(-1);
-                                                calculateDropdownPosition(e);
                                             }}
                                             onBlur={() => setTimeout(() => setShowSuggestions({}), 250)} />
                                         {showSuggestions[i] && it.apparatus_name && (
-                                            <div className="suggestions-dropdown" style={{ top: dropdownPosition.top, left: dropdownPosition.left }}>
-                                                {apparatusNames.filter(n => n.toLowerCase().includes(it.apparatus_name.toLowerCase())).map((n, idx) => (
-                                                    <div key={idx} className={`suggestion-item ${activeIndex === idx ? 'active' : ''}`}
-                                                        onMouseDown={() => selectApparatus(i, n)}>{n}</div>
+                                            <ul className="suggestions-dropdown list-style-none">
+                                                {[
+                                                    { name: 'Beaker 250ml', available_quantity: 30 },
+                                                    { name: 'Test Tube', available_quantity: 150 },
+                                                    { name: 'Pipette', available_quantity: 45 },
+                                                    { name: 'Burette', available_quantity: 20 },
+                                                    { name: 'Funnel', available_quantity: 80 },
+                                                    { name: 'Flask 500ml', available_quantity: 15 }
+                                                ].filter(n => (n.name || '').toLowerCase().startsWith((it.apparatus_name || '').toLowerCase())).slice(0, 6).map((n, idx) => (
+                                                    <li key={idx} className={`suggestion-item ${activeIndex === idx ? 'active' : ''}`}
+                                                        onMouseDown={() => selectApparatus(i, n.name)}>
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                                                            <span>{n.name}</span>
+                                                            <span style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 'bold' }}>Stock: {n.available_quantity}</span>
+                                                        </div>
+                                                    </li>
                                                 ))}
-                                            </div>
+                                            </ul>
                                         )}
                                     </div>
                                     <input type="number" className="grid-input" placeholder="Qty" value={it.quantity} required
@@ -267,7 +269,8 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
                                         onChange={e => { const next = [...damagedItems]; next[i].caused_by = e.target.value; setDamagedItems(next); }} />
                                     <button type="button" className="btn-row-del" onClick={() => setDamagedItems(damagedItems.filter((_, idx) => idx !== i))} title="Remove item"><FaTrashAlt /></button>
                                 </div>
-                            ))}
+                                ))}
+                            </div>
                         </div>
 
                         <div className="form-group full-width mt-30">
