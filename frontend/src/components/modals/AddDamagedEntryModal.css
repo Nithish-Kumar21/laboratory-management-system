@@ -219,7 +219,20 @@
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 1px;
+}
+
+/* Match reference: Apparatus Name + Caused By left; Quantity Broken center; Action right */
+.grid-matrix-header span:nth-child(1),
+.grid-matrix-header span:nth-child(3) {
   text-align: left;
+}
+
+.grid-matrix-header span:nth-child(2) {
+  text-align: center;
+}
+
+.grid-matrix-header span:nth-child(4) {
+  text-align: right;
 }
 
 .grid-row {
@@ -278,12 +291,15 @@
   text-align: center;
 }
 
+.grid-row .btn-row-del {
+  justify-self: end;
+}
+
 .btn-row-del {
   width: 44px;
   height: 44px;
   border-radius: 12px;
   background: #140808;
-  /* Dark red background for trash */
   border: 1.5px solid #1a0a0a;
   color: #ef4444;
   display: flex;
