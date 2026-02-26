@@ -336,11 +336,7 @@
   width: 100%;
 }
 
-.chemical-requirements-section .chemical-select {
-  appearance: none;
-  background-image: none;
-  height: 48px;
-}
+/* Autocomplete wrapper already styled globally; nothing special needed here */
 
 /* Legacy / other modals */
 .btn-add-line {

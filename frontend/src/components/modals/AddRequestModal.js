@@ -32,6 +32,7 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [availableChemicals, setAvailableChemicals] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState({});
 
   useEffect(() => {
     if (isOpen) {
@@ -210,18 +211,52 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
 
                 {chemicalItems.map((item, i) => (
                   <div key={i} className="grid-row chemical-row animate-fade">
-                    <select
-                      className="grid-input chemical-select"
-                      value={item.chemical_name}
-                      onChange={(e) => updateChemicalItem(i, 'chemical_name', e.target.value)}
-                    >
-                      <option value="">Select Chemical</option>
-                      {availableChemicals.map((c, idx) => (
-                        <option key={idx} value={c.chemical_name}>
-                          {c.chemical_name}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="autocomplete-wrapper">
+                      <input
+                        type="text"
+                        className="grid-input"
+                        placeholder="Select Chemical"
+                        value={item.chemical_name}
+                        autoComplete="off"
+                        onChange={(e) => {
+                          updateChemicalItem(i, 'chemical_name', e.target.value);
+                          setShowSuggestions({ [i]: true });
+                        }}
+                        onFocus={() => setShowSuggestions({ [i]: true })}
+                        onBlur={() => setTimeout(() => setShowSuggestions({}), 200)}
+                      />
+                      {showSuggestions[i] && item.chemical_name && (
+                        <ul className="suggestions-dropdown list-style-none">
+                          {availableChemicals
+                            .filter(c =>
+                              (c.chemical_name || '').toLowerCase().startsWith((item.chemical_name || '').toLowerCase())
+                            )
+                            .map((c, idx) => (
+                              <li
+                                key={idx}
+                                className="suggestion-item"
+                                onMouseDown={() => {
+                                  updateChemicalItem(i, 'chemical_name', c.chemical_name);
+                                  setShowSuggestions({});
+                                }}
+                              >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                                  <span>{c.chemical_name}</span>
+                                  <span
+                                    style={{
+                                      fontSize: '0.75rem',
+                                      color: '#ef4444',
+                                      fontWeight: 'bold'
+                                    }}
+                                  >
+                                    Stock: {c.available_quantity_ml} ML
+                                  </span>
+                                </div>
+                              </li>
+                            ))}
+                        </ul>
+                      )}
+                    </div>
 
                     <div className="qty-ml-wrapper">
                       <input
