@@ -238,13 +238,13 @@
   letter-spacing: 0.5px;
 }
 
-/* Match reference: Apparatus Name + Caused By left; Quantity Broken center; Action right */
-.grid-matrix-header span:nth-child(1),
-.grid-matrix-header span:nth-child(3) {
+/* Header alignment: Apparatus left, Quantity + Caused centered, Action right */
+.grid-matrix-header span:nth-child(1) {
   text-align: left;
 }
 
-.grid-matrix-header span:nth-child(2) {
+.grid-matrix-header span:nth-child(2),
+.grid-matrix-header span:nth-child(3) {
   text-align: center;
 }
 
