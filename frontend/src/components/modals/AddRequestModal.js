@@ -28,7 +28,7 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
     class_name: defaultClass,
     date: new Date().toISOString().split('T')[0]
   });
-  const [chemicalItems, setChemicalItems] = useState([{ chemical_name: '', quantity_ml: '' }]);
+  const [chemicalItems, setChemicalItems] = useState([{ chemical_name: '', quantity_ml: '', rate: '', make: '' }]);
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [availableChemicals, setAvailableChemicals] = useState([]);
@@ -48,7 +48,9 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
         if (editData.chemical_items && editData.chemical_items.length > 0) {
           setChemicalItems(editData.chemical_items.map(item => ({
             chemical_name: item.chemical_name,
-            quantity_ml: item.quantity_ml
+            quantity_ml: item.quantity_ml,
+            rate: item.rate ?? '',
+            make: item.make ?? ''
           })));
         }
       } else {
@@ -58,7 +60,7 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
           class_name: opts.length ? opts[0] : 'I B.Sc Chemistry',
           date: new Date().toISOString().split('T')[0]
         });
-        setChemicalItems([{ chemical_name: '', quantity_ml: '' }]);
+        setChemicalItems([{ chemical_name: '', quantity_ml: '', rate: '', make: '' }]);
       }
 
       api
@@ -74,7 +76,7 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
   if (!isOpen) return null;
 
   const addChemicalRow = () => {
-    setChemicalItems([...chemicalItems, { chemical_name: '', quantity_ml: '' }]);
+    setChemicalItems([...chemicalItems, { chemical_name: '', quantity_ml: '', rate: '', make: '' }]);
   };
 
   const removeChemicalRow = (i) => {
