@@ -271,8 +271,7 @@
 /* Lift the row being edited so dropdown overlaps header or other rows */
 .grid-row:focus-within {
   z-index: 100;
-  border-color: #ef4444;
-  /* Red border for active row */
+  border-color: #333;
 }
 
 .grid-row>* {
@@ -315,8 +314,8 @@
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  background: #140808;
-  border: 1.5px solid #1a0a0a;
+  background: #262626;
+  border: 1.5px solid rgba(239, 68, 68, 0.5);
   color: #ef4444;
   display: flex;
   align-items: center;
