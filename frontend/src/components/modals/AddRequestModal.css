@@ -223,9 +223,9 @@
   display: grid;
   grid-template-columns: 2fr 1fr 50px;
   gap: 15px;
-  padding: 0 0 10px 0;
-  border-bottom: 1.5px solid var(--border);
-  margin-bottom: 12px;
+  padding: 0;
+  border: none;
+  margin-bottom: 8px;
   width: 100%;
   box-sizing: border-box;
 }
