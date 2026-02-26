@@ -270,12 +270,7 @@
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 1.2px;
-}
-
-/* Center numeric labels */
-.grid-matrix-header span:nth-child(2),
-.grid-matrix-header span:nth-child(3) {
-  text-align: center;
+  text-align: left;
 }
 
 .grid-row {
