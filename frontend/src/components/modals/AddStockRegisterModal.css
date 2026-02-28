@@ -252,14 +252,13 @@
   border-bottom: 1px solid var(--border);
 }
 
-/* Shared wrapper: same horizontal padding as Main branch so header and rows align exactly */
+/* Wrapper: no padding here so header/row match Main's self-padding structure */
 .stock-entry-table {
-  padding: 0 24px;
   width: 100%;
   box-sizing: border-box;
 }
 
-/* Inherit Main branch grid structure: 2.5fr 1fr 1fr 1.5fr 60px (Material ~40%, Qty ~15%, Rate ~15%, Make ~20%, Delete) */
+/* Main branch exact grid: 2.5fr 1fr 1fr 1.5fr 60px — QTY and MAKE align with inputs */
 .grid-matrix-header,
 .grid-row {
   display: grid;
@@ -276,8 +275,9 @@
   }
 }
 
+/* Main branch: header has 24px horizontal padding — grid content aligns with row grid */
 .grid-matrix-header {
-  padding: 0 0 15px 0;
+  padding: 0 24px 15px 24px;
   border-bottom: 2px solid var(--border);
   margin-bottom: 20px;
 }
@@ -292,10 +292,11 @@
   white-space: nowrap;
 }
 
+/* Main branch: row has 24px horizontal padding — grid aligns with header grid */
 .grid-row {
   align-items: center;
   margin-bottom: 15px;
-  padding: 10px 0;
+  padding: 10px 24px;
   background: #1e293b;
   border-radius: 20px;
   border: 1.5px solid var(--border);
