@@ -240,6 +240,11 @@
   text-align: left;
 }
 
+/* Center QTY (ML) header in its column */
+.chemical-requirements-section .grid-matrix-header span:nth-child(2) {
+  text-align: center;
+}
+
 .chemical-requirements-section .grid-row.chemical-row {
   display: grid;
   grid-template-columns: 2fr 1fr 40px;
