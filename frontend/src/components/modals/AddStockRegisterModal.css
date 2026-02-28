@@ -252,14 +252,19 @@
   border-bottom: 1px solid var(--border);
 }
 
-/* Wrapper: no padding here so header/row match Main's self-padding structure */
-.stock-entry-table {
+/* Main branch exact structure: header and row are direct siblings in items-section */
+/* grid-template-columns: 2.5fr 1fr 1fr 1.5fr 60px — QTY and MAKE align with inputs */
+.grid-matrix-header {
+  display: grid;
+  grid-template-columns: 2.5fr 1fr 1fr 1.5fr 60px;
+  gap: 20px;
+  padding: 0 24px 15px 24px;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 20px;
   width: 100%;
   box-sizing: border-box;
 }
 
-/* Main branch exact grid: 2.5fr 1fr 1fr 1.5fr 60px — QTY and MAKE align with inputs */
-.grid-matrix-header,
 .grid-row {
   display: grid;
   grid-template-columns: 2.5fr 1fr 1fr 1.5fr 60px;
@@ -269,17 +274,10 @@
 }
 
 @media (max-width: 1200px) {
-  .stock-entry-table .grid-matrix-header,
-  .stock-entry-table .grid-row {
+  .grid-matrix-header,
+  .grid-row {
     grid-template-columns: 2fr 1fr 1fr 1fr 44px;
   }
-}
-
-/* Main branch: header has 24px horizontal padding — grid content aligns with row grid */
-.grid-matrix-header {
-  padding: 0 24px 15px 24px;
-  border-bottom: 2px solid var(--border);
-  margin-bottom: 20px;
 }
 
 .grid-matrix-header span {
@@ -292,7 +290,6 @@
   white-space: nowrap;
 }
 
-/* Main branch: row has 24px horizontal padding — grid aligns with header grid */
 .grid-row {
   align-items: center;
   margin-bottom: 15px;
