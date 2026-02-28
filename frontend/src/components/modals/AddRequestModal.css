@@ -214,21 +214,25 @@
 }
 
 .chemical-requirements-table {
-  padding: 0 40px;
+  padding: 0 24px;
   width: 100%;
   box-sizing: border-box;
 }
 
-/* Main branch: 2fr 1fr 40px — QTY (ML) left-aligned with input */
-.chemical-requirements-section .grid-matrix-header {
+/* Synchronized grid: [Chemical] 2fr [Qty] 1fr [Delete] 50px */
+.chemical-requirements-section .grid-matrix-header,
+.chemical-requirements-section .grid-row.chemical-row {
   display: grid;
-  grid-template-columns: 2fr 1fr 40px;
-  gap: 15px;
-  padding: 0;
-  border: none;
-  margin-bottom: 8px;
+  grid-template-columns: 2fr 1fr 50px;
+  gap: 20px;
+  padding: 0 24px;
   width: 100%;
   box-sizing: border-box;
+}
+
+.chemical-requirements-section .grid-matrix-header {
+  border: none;
+  margin-bottom: 20px;
 }
 
 .chemical-requirements-section .grid-matrix-header span {
@@ -266,10 +270,11 @@
 
 .chemical-requirements-section .grid-input {
   width: 100%;
+  min-height: 44px;
   padding: 12px 18px;
-  background: #ffffff;
-  color: var(--text-main);
-  border: 1.5px solid var(--border);
+  background: #0f172a !important;
+  color: var(--text-main) !important;
+  border: 1.5px solid var(--border) !important;
   border-radius: 12px;
   font-size: 0.95rem;
   font-weight: 500;
@@ -277,13 +282,13 @@
 }
 
 .chemical-requirements-section .grid-input:focus {
-  border-color: #3b51bf;
-  background: #ffffff;
+  border-color: #334155 !important;
+  background: #131c2f !important;
   outline: none;
 }
 
 .chemical-requirements-section .grid-input::placeholder {
-  color: #6b7280;
+  color: var(--text-muted);
 }
 
 /* Qty: number input with stepper, ML suffix inside input, bluish-dark theme */

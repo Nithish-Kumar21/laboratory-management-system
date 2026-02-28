@@ -200,9 +200,7 @@
   box-shadow: 0 10px 20px rgba(239, 68, 68, 0.2);
 }
 
-/* Shared wrapper: horizontal padding applied here so header and row share exact column positions */
 .damaged-items-table {
-  padding: 0 24px;
   width: 100%;
   box-sizing: border-box;
 }
