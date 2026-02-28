@@ -317,10 +317,10 @@
   background: #131c2f !important;
 }
 
-/* ML unit rendered inside input as suffix */
+/* ML unit rendered inside input as suffix (left of stepper arrows) */
 .qty-ml-wrapper .input-suffix {
   position: absolute;
-  right: 40px;
+  right: 28px;
   top: 50%;
   transform: translateY(-50%);
   font-size: 0.8rem;

@@ -263,7 +263,7 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
                                             </ul>
                                         )}
                                     </div>
-                                    <input type="number" className="grid-input" placeholder="Qty" value={it.quantity} required
+                                    <input type="number" className="grid-input" placeholder="Qty" value={it.quantity ?? ''} required
                                         onChange={e => { const next = [...damagedItems]; next[i].quantity = e.target.value; setDamagedItems(next); }} />
                                     <input type="text" className="grid-input" placeholder="Caused by..." value={it.caused_by} required
                                         onChange={e => { const next = [...damagedItems]; next[i].caused_by = e.target.value; setDamagedItems(next); }} />
