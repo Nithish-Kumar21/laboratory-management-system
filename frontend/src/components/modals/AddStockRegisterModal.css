@@ -296,6 +296,7 @@
   align-items: center;
   margin-bottom: 15px;
   padding: 10px 24px;
+  position: relative;
   background: #1e293b;
   border-radius: 20px;
   border: 1.5px solid var(--border);
