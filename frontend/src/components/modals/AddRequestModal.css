@@ -218,11 +218,11 @@
   box-sizing: border-box;
 }
 
-/* Synchronized grid: [Chemical] 2fr [Qty] 1fr [Delete] 50px */
+/* Lock headers to columns: 2.5fr 1fr 50px — MATERIAL NAME, QTY (ML), Delete */
 .chemical-requirements-section .grid-matrix-header,
 .chemical-requirements-section .grid-row.chemical-row {
   display: grid;
-  grid-template-columns: 2fr 1fr 50px;
+  grid-template-columns: 2.5fr 1fr 50px;
   gap: 20px;
   padding: 0 24px;
   width: 100%;
@@ -245,9 +245,9 @@
   text-align: left;
 }
 
-/* Center QTY (ML) header in its column */
+/* QTY (ML) header aligns with start of input box */
 .chemical-requirements-section .grid-matrix-header span:nth-child(2) {
-  text-align: center;
+  text-align: left;
 }
 
 .chemical-requirements-section .grid-row.chemical-row {
