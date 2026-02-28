@@ -41,15 +41,15 @@
 }
 
 :root.dark-mode {
-  --bg-main: #000000;
-  --bg-surface: #0a0a0a;
-  --bg-sidebar: #000000;
+  --bg-main: #0b1120;
+  --bg-surface: #131c2f;
+  --bg-sidebar: #0b1120;
 
-  --text-main: #ffffff;
-  --text-muted: #a0a0a0;
+  --text-main: #f1f5f9;
+  --text-muted: #94a3b8;
 
-  --border: #262626;
-  --shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
+  --border: #1e293b;
+  --shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
 }
 
 /* Base resets */

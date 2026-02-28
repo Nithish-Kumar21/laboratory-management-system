@@ -222,10 +222,10 @@
   top: 100%;
   left: 0;
   width: 100%;
-  background: #000000;
-  border: 1.5px solid #222;
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border);
   border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+  box-shadow: var(--shadow);
   z-index: 1000;
   max-height: 250px;
   overflow-y: auto;
@@ -249,7 +249,7 @@
 }
 
 .suggestion-item:not(:last-child) {
-  border-bottom: 1px solid #1a1a1a;
+  border-bottom: 1px solid var(--border);
 }
 
 /* Shared wrapper: same horizontal padding so header and rows share exact width */
