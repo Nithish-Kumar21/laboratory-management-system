@@ -200,19 +200,18 @@
   box-shadow: 0 10px 20px rgba(239, 68, 68, 0.2);
 }
 
-/* Shared wrapper: same horizontal padding as Main branch so header and rows align exactly */
+/* Main branch exact structure: damaged-grid-header uses padding 0 10px; row must match for alignment */
 .damaged-items-table {
-  padding: 0 24px;
   width: 100%;
   box-sizing: border-box;
 }
 
-/* Inherit Main branch grid structure: 2fr 1fr 2fr 60px (Apparatus, Qty, Caused By, Delete) */
+/* Main branch grid: 2fr 1fr 2fr 60px — padding-left and gap must match row exactly */
 .grid-matrix-header {
   display: grid;
   grid-template-columns: 2fr 1fr 2fr 60px;
   gap: 20px;
-  padding: 0 0 15px 0;
+  padding: 0 10px 15px 10px;
   border-bottom: 2px solid var(--border);
   margin-bottom: 20px;
   width: 100%;
@@ -239,13 +238,14 @@
   text-align: left;
 }
 
+/* padding 10px 10px matches header — same padding-left for pixel-perfect alignment */
 .grid-row {
   display: grid;
   grid-template-columns: 2fr 1fr 2fr 60px;
   gap: 20px;
   align-items: center;
   margin-bottom: 12px;
-  padding: 10px 0;
+  padding: 10px 10px;
   width: 100%;
   position: relative;
   box-sizing: border-box;
