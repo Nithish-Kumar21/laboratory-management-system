@@ -226,7 +226,7 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
                                     <span><FaTools /> Apparatus Name</span>
                                     <span>Quantity Broken</span>
                                     <span>Caused By</span>
-                                    <span>Action</span>
+                                    <span></span>
                                 </div>
 
                                 {damagedItems.map((it, i) => (
