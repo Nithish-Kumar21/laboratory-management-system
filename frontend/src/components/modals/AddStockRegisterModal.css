@@ -252,11 +252,11 @@
   border-bottom: 1px solid var(--border);
 }
 
-/* Synchronized grid: [Name] 2fr [Qty] 1fr [Rate] 1fr [Make] 1.2fr [Delete] 50px */
+/* Lock headers to columns: 2.5fr 1fr 1fr 1.5fr 50px */
 .grid-matrix-header,
 .grid-row {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1.2fr 50px;
+  grid-template-columns: 2.5fr 1fr 1fr 1.5fr 50px;
   gap: 20px;
   padding: 0 24px;
   width: 100%;
@@ -272,8 +272,14 @@
 @media (max-width: 1200px) {
   .grid-matrix-header,
   .grid-row {
-    grid-template-columns: 2fr 1fr 1fr 1fr 44px;
+    grid-template-columns: 2.5fr 1fr 1fr 1fr 44px;
   }
+}
+
+/* Ensure number steppers (up/down arrows) are visible */
+.grid-row input[type="number"]::-webkit-outer-spin-button,
+.grid-row input[type="number"]::-webkit-inner-spin-button {
+  opacity: 1;
 }
 
 .grid-matrix-header span {
