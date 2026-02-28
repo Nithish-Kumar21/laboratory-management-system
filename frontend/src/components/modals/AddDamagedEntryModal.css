@@ -258,38 +258,54 @@
   gap: 20px;
   align-items: center;
   margin-bottom: 14px;
-  padding: 0;
+  padding: 8px 0;
   width: 100%;
   position: relative;
   box-sizing: border-box;
+  background: #1e293b;
+  border-radius: 12px;
+  border: 1.5px solid var(--border);
 }
 
 .grid-row:focus-within {
   z-index: 100;
+  border-color: #334155;
 }
 
 .grid-row > * {
   min-width: 0;
 }
 
+.grid-row .autocomplete-wrapper {
+  min-height: 44px;
+  display: flex;
+  align-items: stretch;
+}
+
+.grid-row .autocomplete-wrapper input {
+  flex: 1;
+}
+
 .grid-input {
   width: 100%;
-  padding: 12px 16px !important;
-  background: #000000 !important;
-  border: 1px solid #4b5563 !important;
-  border-radius: 10px !important;
-  color: #f9fafb !important;
+  min-height: 44px;
+  padding: 12px 18px !important;
+  background: #0f172a !important;
+  border: 1.5px solid var(--border) !important;
+  border-radius: 12px !important;
+  color: var(--text-main) !important;
   font-size: 0.95rem;
   font-weight: 500;
+  box-sizing: border-box;
 }
 
 .grid-input::placeholder {
-  color: #6b7280;
+  color: var(--text-muted);
 }
 
 .grid-input:focus {
-  border-color: #ef4444 !important;
-  background: #1a1a1a !important;
+  border-color: #334155 !important;
+  background: #131c2f !important;
   outline: none;
 }
 
@@ -368,13 +384,12 @@
 .suggestions-dropdown {
   position: absolute;
   top: 100%;
-  /* Show BELOW the input as requested */
   left: 0;
   width: 100%;
-  background: #000000;
-  border: 1.5px solid #222;
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border);
   border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+  box-shadow: var(--shadow);
   z-index: 1000;
   max-height: 250px;
   overflow-y: auto;
@@ -397,7 +412,7 @@
 }
 
 .suggestion-item:not(:last-child) {
-  border-bottom: 1px solid #1a1a1a;
+  border-bottom: 1px solid var(--border);
 }
 
 .suggestion-item:hover,
