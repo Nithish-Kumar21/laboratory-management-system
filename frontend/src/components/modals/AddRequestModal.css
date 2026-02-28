@@ -230,7 +230,9 @@
 }
 
 .chemical-requirements-section .grid-matrix-header {
+  padding: 0 24px 15px 24px;
   border: none;
+  border-bottom: 2px solid var(--border);
   margin-bottom: 20px;
 }
 
@@ -249,18 +251,13 @@
 }
 
 .chemical-requirements-section .grid-row.chemical-row {
-  display: grid;
-  grid-template-columns: 2fr 1fr 40px;
-  gap: 15px;
   align-items: center;
   margin-bottom: 14px;
-  padding: 0;
-  background: transparent;
-  border-radius: 0;
-  border: none;
-  width: 100%;
+  padding: 10px 24px;
+  background: #1e293b;
+  border-radius: 20px;
+  border: 1.5px solid var(--border);
   position: relative;
-  box-sizing: border-box;
 }
 
 .chemical-requirements-section .grid-row.chemical-row > * {
