@@ -321,7 +321,6 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
                   <span>Qty (ML)</span>
                   <span>Rate (₹)</span>
                   <span>Make / Brand</span>
-                  <span>Action</span>
                 </div>
 
                 {chemicalItems.map((it, i) => (
@@ -387,7 +386,6 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
                   <span>Qty (PCS)</span>
                   <span>Rate (₹)</span>
                   <span>Make / Brand</span>
-                  <span>Action</span>
                 </div>
 
                 {apparatusItems.map((it, i) => (
