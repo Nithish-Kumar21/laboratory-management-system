@@ -219,9 +219,10 @@
   box-sizing: border-box;
 }
 
+/* Main branch: 2fr 1fr 40px — QTY (ML) left-aligned with input */
 .chemical-requirements-section .grid-matrix-header {
   display: grid;
-  grid-template-columns: 2fr 1fr 50px;
+  grid-template-columns: 2fr 1fr 40px;
   gap: 15px;
   padding: 0;
   border: none;
@@ -241,7 +242,7 @@
 
 .chemical-requirements-section .grid-row.chemical-row {
   display: grid;
-  grid-template-columns: 2fr 1fr 50px;
+  grid-template-columns: 2fr 1fr 40px;
   gap: 15px;
   align-items: center;
   margin-bottom: 14px;
@@ -289,7 +290,7 @@
 }
 
 .qty-ml-wrapper .grid-input-qty {
-  padding-right: 12px;
+  padding-right: 36px;
   text-align: left;
 }
 
