@@ -315,16 +315,14 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
                 </button>
               </div>
 
-              <div className="stock-entry-table">
-                <div className="grid-matrix-header">
-                  <span>Material Name</span>
-                  <span>Qty (ML)</span>
-                  <span>Rate (₹)</span>
-                  <span>Make / Brand</span>
-                  <span></span>
-                </div>
-
-                {chemicalItems.map((it, i) => (
+              <div className="grid-matrix-header">
+                <span>Material Name</span>
+                <span>Qty (ML)</span>
+                <span>Rate (₹)</span>
+                <span>Make / Brand</span>
+                <span></span>
+              </div>
+              {chemicalItems.map((it, i) => (
                 <div key={i} className="grid-row animate-fade">
                   <div className="autocomplete-wrapper">
                     <input type="text" placeholder="Item name..." value={it.chemical_name} required autoComplete="off"
@@ -369,8 +367,7 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
                   </div>
                   <button type="button" className="btn-row-del" onClick={() => setChemicalItems(chemicalItems.filter((_, idx) => idx !== i))} title="Remove line"><FaTrashAlt /></button>
                 </div>
-                ))}
-              </div>
+              ))}
             </div>
 
             <div className="items-section">
@@ -381,16 +378,14 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
                 </button>
               </div>
 
-              <div className="stock-entry-table">
-                <div className="grid-matrix-header">
-                  <span>Material Name</span>
-                  <span>Qty (PCS)</span>
-                  <span>Rate (₹)</span>
-                  <span>Make / Brand</span>
-                  <span></span>
-                </div>
-
-                {apparatusItems.map((it, i) => (
+              <div className="grid-matrix-header">
+                <span>Material Name</span>
+                <span>Qty (PCS)</span>
+                <span>Rate (₹)</span>
+                <span>Make / Brand</span>
+                <span></span>
+              </div>
+              {apparatusItems.map((it, i) => (
                 <div key={i} className="grid-row animate-fade">
                   <div className="autocomplete-wrapper">
                     <input type="text" placeholder="Item name..." value={it.apparatus_name} required autoComplete="off"
