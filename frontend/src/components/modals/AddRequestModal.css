@@ -281,7 +281,7 @@
   color: #6b7280;
 }
 
-/* Qty: suffix "ML" inside input */
+/* Qty: number input with stepper, placeholder "0.00 ML", bluish-dark theme */
 .qty-ml-wrapper {
   position: relative;
   display: flex;
@@ -290,11 +290,33 @@
 }
 
 .qty-ml-wrapper .grid-input-qty {
-  padding-right: 36px;
+  width: 100%;
+  padding: 12px 18px;
   text-align: left;
+  background: #0f172a !important;
+  color: var(--text-main) !important;
+  border: 1.5px solid var(--border) !important;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 500;
 }
 
-.qty-ml-wrapper .input-suffix,
+/* Ensure number stepper (up/down arrows) is visible */
+.qty-ml-wrapper .grid-input-qty::-webkit-outer-spin-button,
+.qty-ml-wrapper .grid-input-qty::-webkit-inner-spin-button {
+  opacity: 1;
+}
+
+.qty-ml-wrapper .grid-input-qty::placeholder {
+  color: var(--text-muted);
+}
+
+.qty-ml-wrapper .grid-input-qty:focus {
+  outline: none;
+  border-color: #334155 !important;
+  background: #131c2f !important;
+}
+
 .rate-rupee-wrapper .input-suffix {
   position: absolute;
   right: 12px;
