@@ -200,18 +200,19 @@
   box-shadow: 0 10px 20px rgba(239, 68, 68, 0.2);
 }
 
-/* Main branch exact structure: damaged-grid-header uses padding 0 10px; row must match for alignment */
+/* Shared wrapper: horizontal padding applied here so header and row share exact column positions */
 .damaged-items-table {
+  padding: 0 24px;
   width: 100%;
   box-sizing: border-box;
 }
 
-/* Main branch grid: 2fr 1fr 2fr 60px — padding-left and gap must match row exactly */
+/* Grid: 2fr 1fr 2fr 60px — header and row share same grid, no extra horizontal padding */
 .grid-matrix-header {
   display: grid;
   grid-template-columns: 2fr 1fr 2fr 60px;
   gap: 20px;
-  padding: 0 10px 15px 10px;
+  padding: 0 0 15px 0;
   border-bottom: 2px solid var(--border);
   margin-bottom: 20px;
   width: 100%;
@@ -238,14 +239,14 @@
   text-align: left;
 }
 
-/* padding 10px 10px matches header — same padding-left for pixel-perfect alignment */
+/* Same grid as header — CAUSED BY label aligns with Caused by input block */
 .grid-row {
   display: grid;
   grid-template-columns: 2fr 1fr 2fr 60px;
   gap: 20px;
   align-items: center;
   margin-bottom: 12px;
-  padding: 10px 10px;
+  padding: 10px 0;
   width: 100%;
   position: relative;
   box-sizing: border-box;
