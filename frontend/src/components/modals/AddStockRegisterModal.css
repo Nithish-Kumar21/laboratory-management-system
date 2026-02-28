@@ -290,6 +290,12 @@
   white-space: nowrap;
 }
 
+/* Center QTY (ML) and QTY (PCS) headers in their columns */
+.grid-matrix-header span:nth-child(2),
+.grid-matrix-header span:nth-child(3) {
+  text-align: center;
+}
+
 .grid-row {
   align-items: center;
   margin-bottom: 15px;
