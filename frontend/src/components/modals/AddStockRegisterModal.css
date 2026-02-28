@@ -288,9 +288,9 @@
   align-items: center;
   margin-bottom: 10px;
   padding: 8px 0;
-  background: #000000;
-  border-radius: 14px;
-  border: 1.5px solid #1a1a1a;
+  background: #1e293b;
+  border-radius: 12px;
+  border: 1.5px solid var(--border);
   transition: all 0.2s;
   position: relative;
 }
@@ -301,16 +301,16 @@
 
 .grid-row:focus-within {
   z-index: 100;
-  border-color: #333;
+  border-color: #334155;
 }
 
 .grid-row input {
   width: 100%;
   min-height: 44px;
   padding: 12px 18px;
-  background: #111111 !important;
-  color: #ffffff !important;
-  border: 1.5px solid #222222 !important;
+  background: #0f172a !important;
+  color: var(--text-main) !important;
+  border: 1.5px solid var(--border) !important;
   border-radius: 12px;
   font-size: 0.95rem;
   font-weight: 500;
@@ -329,8 +329,8 @@
 }
 
 .grid-row input:focus {
-  border-color: #444 !important;
-  background: #1a1a1a !important;
+  border-color: #334155 !important;
+  background: #131c2f !important;
   outline: none;
 }
 
@@ -363,8 +363,8 @@
 /* Footer MUST be pinned to bottom */
 .modal-footer {
   padding: 24px 50px;
-  background: #000;
-  border-top: 1px solid #1a1a1a;
+  background: var(--bg-main);
+  border-top: 1px solid var(--border);
   display: flex;
   justify-content: flex-end;
   gap: 20px;
@@ -374,8 +374,8 @@
 .btn-cancel {
   padding: 12px 30px;
   background: transparent;
-  border: 1px solid #333;
-  color: #888;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
   border-radius: 14px;
   font-weight: 600;
   cursor: pointer;
