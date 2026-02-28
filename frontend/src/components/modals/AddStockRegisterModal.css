@@ -301,7 +301,6 @@
   border-radius: 20px;
   border: 1.5px solid var(--border);
   transition: all 0.2s;
-  position: relative;
 }
 
 .grid-row>* {
