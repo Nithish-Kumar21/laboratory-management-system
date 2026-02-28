@@ -207,16 +207,21 @@
   box-sizing: border-box;
 }
 
-/* Grid: 2fr 1fr 2fr 60px — header and row share same grid, no extra horizontal padding */
-.grid-matrix-header {
+/* Synchronized grid: [Name] 2fr [Qty] 1fr [Cause] 1fr [Delete] 50px */
+.grid-matrix-header,
+.grid-row {
   display: grid;
-  grid-template-columns: 2fr 1fr 2fr 60px;
+  grid-template-columns: 2fr 1fr 1fr 50px;
   gap: 20px;
-  padding: 0 0 15px 0;
-  border-bottom: 2px solid var(--border);
-  margin-bottom: 20px;
+  padding: 0 24px;
   width: 100%;
   box-sizing: border-box;
+}
+
+.grid-matrix-header {
+  padding: 0 24px 15px 24px;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 20px;
 }
 
 .grid-matrix-header span:first-child {
@@ -245,17 +250,11 @@
   text-align: center;
 }
 
-/* Same grid as header — CAUSED BY label aligns with Caused by input block */
 .grid-row {
-  display: grid;
-  grid-template-columns: 2fr 1fr 2fr 60px;
-  gap: 20px;
   align-items: center;
   margin-bottom: 12px;
-  padding: 10px 0;
-  width: 100%;
+  padding: 10px 24px;
   position: relative;
-  box-sizing: border-box;
   background: #1e293b;
   border-radius: 20px;
   border: 1.5px solid var(--border);
@@ -282,10 +281,11 @@
 
 .grid-input {
   width: 100%;
+  min-height: 44px;
   padding: 14px 18px !important;
   background: #0f172a !important;
   border: 1.5px solid var(--border) !important;
-  border-radius: 14px !important;
+  border-radius: 12px !important;
   color: var(--text-main) !important;
   font-size: 0.95rem;
   font-weight: 500;
