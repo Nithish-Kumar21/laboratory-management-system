@@ -264,13 +264,14 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
                         step="0.01"
                         min="0"
                         className="grid-input grid-input-qty"
-                        placeholder="0.00 ML"
+                        placeholder="0.00"
                         value={item.quantity_ml === '' || item.quantity_ml == null ? '' : item.quantity_ml}
                         onChange={(e) => {
                           const v = e.target.value;
                           updateChemicalItem(i, 'quantity_ml', v === '' ? '' : v);
                         }}
                       />
+                      <span className="input-suffix">ML</span>
                     </div>
 
                     <button

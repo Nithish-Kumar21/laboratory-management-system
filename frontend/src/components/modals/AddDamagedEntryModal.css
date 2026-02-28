@@ -239,6 +239,11 @@
   text-align: left;
 }
 
+/* Center CAUSED BY header exactly above its input column */
+.grid-matrix-header span:nth-child(3) {
+  text-align: center;
+}
+
 /* Same grid as header — CAUSED BY label aligns with Caused by input block */
 .grid-row {
   display: grid;
