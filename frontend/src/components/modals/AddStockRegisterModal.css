@@ -252,31 +252,39 @@
   border-bottom: 1px solid var(--border);
 }
 
-/* Shared wrapper: same horizontal padding so header and rows share exact width */
+/* Shared wrapper: same horizontal padding as Main branch so header and rows align exactly */
 .stock-entry-table {
-  padding: 0 40px;
+  padding: 0 24px;
   width: 100%;
   box-sizing: border-box;
 }
 
-/* Synchronized grid: Material 40%, Qty 15%, Rate 15%, Make 20%, Trash remaining (10%) */
+/* Inherit Main branch grid structure: 2.5fr 1fr 1fr 1.5fr 60px (Material ~40%, Qty ~15%, Rate ~15%, Make ~20%, Delete) */
 .grid-matrix-header,
 .grid-row {
   display: grid;
-  grid-template-columns: 4fr 1.5fr 1.5fr 2fr 1fr;
-  gap: 15px;
+  grid-template-columns: 2.5fr 1fr 1fr 1.5fr 60px;
+  gap: 20px;
   width: 100%;
   box-sizing: border-box;
 }
 
+@media (max-width: 1200px) {
+  .stock-entry-table .grid-matrix-header,
+  .stock-entry-table .grid-row {
+    grid-template-columns: 2fr 1fr 1fr 1fr 44px;
+  }
+}
+
 .grid-matrix-header {
-  padding: 0 0 10px 0;
-  margin-bottom: 8px;
+  padding: 0 24px 15px 24px;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 20px;
 }
 
 .grid-matrix-header span {
-  font-size: 0.75rem;
-  font-weight: 800;
+  font-size: 0.7rem;
+  font-weight: 900;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 1.2px;
@@ -286,10 +294,10 @@
 
 .grid-row {
   align-items: center;
-  margin-bottom: 10px;
-  padding: 8px 0;
+  margin-bottom: 15px;
+  padding: 10px 24px;
   background: #1e293b;
-  border-radius: 12px;
+  border-radius: 20px;
   border: 1.5px solid var(--border);
   transition: all 0.2s;
   position: relative;
@@ -306,12 +314,11 @@
 
 .grid-row input {
   width: 100%;
-  min-height: 44px;
-  padding: 12px 18px;
+  padding: 14px 18px;
   background: #0f172a !important;
   color: var(--text-main) !important;
   border: 1.5px solid var(--border) !important;
-  border-radius: 12px;
+  border-radius: 14px;
   font-size: 0.95rem;
   font-weight: 500;
   transition: all 0.2s;
@@ -319,13 +326,13 @@
 }
 
 .grid-row .autocomplete-wrapper {
-  min-height: 44px;
   display: flex;
   align-items: stretch;
 }
 
 .grid-row .autocomplete-wrapper input {
   flex: 1;
+  min-height: 44px;
 }
 
 .grid-row input:focus {
@@ -340,9 +347,9 @@
 }
 
 .btn-row-del {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
   background: #140808;
   border: 1.5px solid #1a0a0a;
   color: #ef4444;
