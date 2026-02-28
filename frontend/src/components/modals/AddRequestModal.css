@@ -281,7 +281,7 @@
   color: #6b7280;
 }
 
-/* Qty: number input with stepper, placeholder "0.00 ML", bluish-dark theme */
+/* Qty: number input with stepper, ML suffix inside input, bluish-dark theme */
 .qty-ml-wrapper {
   position: relative;
   display: flex;
@@ -291,7 +291,7 @@
 
 .qty-ml-wrapper .grid-input-qty {
   width: 100%;
-  padding: 12px 18px;
+  padding: 12px 36px 12px 18px;
   text-align: left;
   background: #0f172a !important;
   color: var(--text-main) !important;
@@ -301,7 +301,7 @@
   font-weight: 500;
 }
 
-/* Ensure number stepper (up/down arrows) is visible */
+/* Ensure number stepper (up/down arrows) is visible — do not hide with appearance: none */
 .qty-ml-wrapper .grid-input-qty::-webkit-outer-spin-button,
 .qty-ml-wrapper .grid-input-qty::-webkit-inner-spin-button {
   opacity: 1;
@@ -315,6 +315,18 @@
   outline: none;
   border-color: #334155 !important;
   background: #131c2f !important;
+}
+
+/* ML unit rendered inside input as suffix */
+.qty-ml-wrapper .input-suffix {
+  position: absolute;
+  right: 40px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  pointer-events: none;
 }
 
 .rate-rupee-wrapper .input-suffix {

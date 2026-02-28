@@ -349,7 +349,7 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
                       </ul>
                     )}
                   </div>
-                  <input type="number" step="0.01" placeholder="Qty" value={it.quantity_ml} required onChange={e => { const next = [...chemicalItems]; next[i].quantity_ml = e.target.value; setChemicalItems(next); }} />
+                  <input type="number" step="0.01" placeholder="Qty" value={it.quantity_ml ?? ''} required onChange={e => { const next = [...chemicalItems]; next[i].quantity_ml = e.target.value; setChemicalItems(next); }} />
                   <input type="number" step="0.01" placeholder="Rate" value={it.rate} required onChange={e => { const next = [...chemicalItems]; next[i].rate = e.target.value; setChemicalItems(next); }} />
                   <div className="autocomplete-wrapper">
                     <input type="text" placeholder="Make" value={it.make} required
@@ -412,7 +412,7 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
                       </ul>
                     )}
                   </div>
-                  <input type="number" placeholder="Qty" value={it.quantity_pieces} required onChange={e => { const next = [...apparatusItems]; next[i].quantity_pieces = e.target.value; setApparatusItems(next); }} />
+                  <input type="number" placeholder="Qty" value={it.quantity_pieces ?? ''} required onChange={e => { const next = [...apparatusItems]; next[i].quantity_pieces = e.target.value; setApparatusItems(next); }} />
                   <input type="number" step="0.01" placeholder="Rate" value={it.rate} required onChange={e => { const next = [...apparatusItems]; next[i].rate = e.target.value; setApparatusItems(next); }} />
                   <div className="autocomplete-wrapper">
                     <input type="text" placeholder="Make" value={it.make} required
