@@ -430,8 +430,7 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
                   </div>
                   <button type="button" className="btn-row-del" onClick={() => setApparatusItems(apparatusItems.filter((_, idx) => idx !== i))} title="Remove line"><FaTrashAlt /></button>
                 </div>
-                ))}
-              </div>
+              ))}
             </div>
           </div>
 
