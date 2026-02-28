@@ -200,21 +200,21 @@
   box-shadow: 0 10px 20px rgba(239, 68, 68, 0.2);
 }
 
-/* Wrapper so header and rows share exact same column widths */
+/* Shared wrapper: same horizontal padding as Main branch so header and rows align exactly */
 .damaged-items-table {
-  padding: 0 40px;
+  padding: 0 24px;
   width: 100%;
   box-sizing: border-box;
 }
 
+/* Inherit Main branch grid structure: 2fr 1fr 2fr 60px (Apparatus, Qty, Caused By, Delete) */
 .grid-matrix-header {
   display: grid;
-  grid-template-columns: 3fr 110px 2.5fr 44px;
+  grid-template-columns: 2fr 1fr 2fr 60px;
   gap: 20px;
-  padding: 12px 0 14px 0;
-  border-top: 1px solid rgba(156, 163, 175, 0.4);
-  border-bottom: 1px solid rgba(156, 163, 175, 0.4);
-  margin-bottom: 16px;
+  padding: 0 0 15px 0;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 20px;
   width: 100%;
   box-sizing: border-box;
 }
@@ -232,38 +232,25 @@
 
 .grid-matrix-header span {
   font-size: 0.75rem;
-  font-weight: 800;
-  color: #9ca3af;
+  font-weight: 900;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-}
-
-/* Header alignment: Apparatus left, Quantity + Caused centered, Action right */
-.grid-matrix-header span:nth-child(1) {
   text-align: left;
-}
-
-.grid-matrix-header span:nth-child(2),
-.grid-matrix-header span:nth-child(3) {
-  text-align: center;
-}
-
-.grid-matrix-header span:nth-child(4) {
-  text-align: right;
 }
 
 .grid-row {
   display: grid;
-  grid-template-columns: 3fr 110px 2.5fr 44px;
+  grid-template-columns: 2fr 1fr 2fr 60px;
   gap: 20px;
   align-items: center;
-  margin-bottom: 14px;
-  padding: 8px 0;
+  margin-bottom: 12px;
+  padding: 10px 0;
   width: 100%;
   position: relative;
   box-sizing: border-box;
   background: #1e293b;
-  border-radius: 12px;
+  border-radius: 20px;
   border: 1.5px solid var(--border);
 }
 
@@ -321,7 +308,7 @@
 .btn-row-del {
   width: 44px;
   height: 44px;
-  border-radius: 12px;
+  border-radius: 10px;
   background: #140808;
   border: 1.5px solid #1a0a0a;
   color: #ef4444;
