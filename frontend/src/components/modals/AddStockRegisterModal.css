@@ -259,11 +259,11 @@
   box-sizing: border-box;
 }
 
-/* Header and row use identical grid so columns align */
+/* Header and row use identical grid (Material ~45%, Qty/Rate/Make ~18% each, delete col) */
 .grid-matrix-header,
 .grid-row {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr auto;
+  grid-template-columns: 2.5fr 1fr 1fr 1fr 44px;
   gap: 15px;
   width: 100%;
   box-sizing: border-box;
@@ -271,7 +271,6 @@
 
 .grid-matrix-header {
   padding: 0 0 12px 0;
-  border-bottom: 1.5px solid var(--border);
   margin-bottom: 12px;
 }
 
@@ -284,16 +283,8 @@
   text-align: center;
 }
 
-/* MATERIAL NAME + MAKE/BRAND aligned to start of their boxes, others centered */
-.grid-matrix-header span:nth-child(1),
 .grid-matrix-header span:nth-child(4) {
-  text-align: left;
-}
-
-.grid-matrix-header span:nth-child(2),
-.grid-matrix-header span:nth-child(3),
-.grid-matrix-header span:nth-child(5) {
-  text-align: center;
+  white-space: nowrap;
 }
 
 .grid-row {
@@ -318,6 +309,7 @@
 
 .grid-row input {
   width: 100%;
+  min-height: 44px;
   padding: 12px 18px;
   background: #111111 !important;
   color: #ffffff !important;
@@ -326,6 +318,17 @@
   font-size: 0.95rem;
   font-weight: 500;
   transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+.grid-row .autocomplete-wrapper {
+  min-height: 44px;
+  display: flex;
+  align-items: stretch;
+}
+
+.grid-row .autocomplete-wrapper input {
+  flex: 1;
 }
 
 .grid-row input:focus {
