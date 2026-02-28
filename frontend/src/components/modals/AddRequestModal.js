@@ -263,17 +263,14 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
                         type="text"
                         inputMode="decimal"
                         className="grid-input grid-input-qty"
-                        placeholder="0.00 ML"
-                        value={
-                          item.quantity_ml !== ''
-                            ? `${item.quantity_ml} ML`
-                            : ''
-                        }
+                        placeholder="0.00"
+                        value={item.quantity_ml}
                         onChange={(e) => {
                           const raw = e.target.value.replace(/[^0-9.]/g, '');
                           updateChemicalItem(i, 'quantity_ml', raw);
                         }}
                       />
+                      <span className="input-suffix">ML</span>
                     </div>
 
                     <button
