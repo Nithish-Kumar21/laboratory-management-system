@@ -259,19 +259,19 @@
   box-sizing: border-box;
 }
 
-/* Header and row use identical grid (Material ~45%, Qty/Rate/Make ~18% each, delete col) */
+/* Synchronized grid: Material 40%, Qty 15%, Rate 15%, Make 20%, Trash remaining (10%) */
 .grid-matrix-header,
 .grid-row {
   display: grid;
-  grid-template-columns: 2.5fr 1fr 1fr 1fr 44px;
+  grid-template-columns: 4fr 1.5fr 1.5fr 2fr 1fr;
   gap: 15px;
   width: 100%;
   box-sizing: border-box;
 }
 
 .grid-matrix-header {
-  padding: 0 0 12px 0;
-  margin-bottom: 12px;
+  padding: 0 0 10px 0;
+  margin-bottom: 8px;
 }
 
 .grid-matrix-header span {
