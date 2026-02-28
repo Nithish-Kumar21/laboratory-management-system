@@ -280,10 +280,7 @@
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 1.2px;
-  text-align: center;
-}
-
-.grid-matrix-header span:nth-child(4) {
+  text-align: left;
   white-space: nowrap;
 }
 
@@ -314,7 +311,7 @@
   background: #111111 !important;
   color: #ffffff !important;
   border: 1.5px solid #222222 !important;
-  border-radius: 14px;
+  border-radius: 12px;
   font-size: 0.95rem;
   font-weight: 500;
   transition: all 0.2s;
