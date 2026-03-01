@@ -59,18 +59,18 @@ const UserManagement = () => {
     }
   };
 
-  const getRoleBadgeColor = (role) => {
+  const getRoleColors = (role) => {
     switch (role) {
       case 'admin':
-        return { bg: '#e3f2fd', color: '#1976d2' };
+        return { bg: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' };
       case 'hod':
-        return { bg: '#fff3e0', color: '#f57c00' };
+        return { bg: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' };
       case 'store_keeper':
-        return { bg: '#e8f5e9', color: '#388e3c' };
+        return { bg: 'rgba(16, 185, 129, 0.1)', color: '#10b981' };
       case 'staff':
-        return { bg: '#f3e5f5', color: '#7b1fa2' };
+        return { bg: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6' };
       default:
-        return { bg: '#f3e5f5', color: '#7b1fa2' };
+        return { bg: 'rgba(107, 114, 128, 0.1)', color: '#6b7280' };
     }
   };
 
@@ -94,79 +94,113 @@ const UserManagement = () => {
   }
 
   if (error) {
-    return <div style={styles.error}>{error}</div>;
+    return <div className="text-center p-6 text-red-600">{error}</div>;
   }
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <h1 style={styles.title}>User Management</h1>
-        <button onClick={() => setShowCreateModal(true)} style={styles.createButton}>
-          + Create User
-        </button>
-      </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="bg-white dark:bg-[#0f172a] rounded-xl shadow-md border border-gray-200 dark:border-gray-800">
+          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">User Management</h1>
+              <button 
+                onClick={() => setShowCreateModal(true)} 
+                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              >
+                <FaUserPlus className="mr-2 h-4 w-4" /> 
+                Create New User
+              </button>
+            </div>
+          </div>
 
-      <div style={styles.tableContainer}>
-        <table style={styles.table}>
-          <thead>
-            <tr>
-              <th style={styles.th}>Employee ID</th>
-              <th style={styles.th}>Name</th>
-              <th style={styles.th}>Email</th>
-              <th style={styles.th}>Role</th>
-              <th style={styles.th}>Status</th>
-              <th style={styles.th}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((user) => {
-              const roleColor = getRoleBadgeColor(user.role);
-              return (
-                <tr key={user.id} style={styles.tr}>
-                  <td style={styles.td}>{user.employee_id || '-'}</td>
-                  <td style={styles.td}>{user.full_name || '-'}</td>
-                  <td style={styles.td}>{user.email || '-'}</td>
-                  <td style={styles.td}>
-                    <span
-                      style={{
-                        ...styles.roleBadge,
-                        backgroundColor: roleColor.bg,
-                        color: roleColor.color,
-                      }}
-                    >
-                      {getRoleDisplay(user.role)}
-                    </span>
-                  </td>
-                  <td style={styles.td}>
-                    <span
-                      style={{
-                        ...styles.statusBadge,
-                        backgroundColor: user.is_active ? '#e8f5e9' : '#ffebee',
-                        color: user.is_active ? '#2e7d32' : '#c62828',
-                      }}
-                    >
-                      {user.is_active ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td style={styles.td}>
-                    <button
-                      onClick={() => handleEdit(user)}
-                      style={styles.editButton}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDeleteClick(user.id)}
-                      style={styles.deleteButton}
-                    >
-                      Delete
-                    </button>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Employee ID
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Name
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Email
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Role
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
+              </thead>
+              <tbody className="bg-white dark:bg-[#0f172a] divide-y divide-gray-200 dark:divide-gray-700">
+                {users.map((user) => {
+                  const roleColors = getRoleColors(user.role);
+                  return (
+                    <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                        {user.employee_id || '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                        {user.full_name || '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                        {user.email || '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border"
+                          style={{
+                            backgroundColor: roleColors.bg,
+                            color: roleColors.color,
+                            borderColor: roleColors.color + '33',
+                          }}
+                        >
+                          <FaUserShield className="mr-1 h-3 w-3" />
+                          {getRoleDisplay(user.role)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${
+                            user.is_active 
+                              ? 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800' 
+                              : 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800'
+                          }`}
+                        >
+                          {user.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleEdit(user)}
+                            className="inline-flex items-center px-3 py-1.5 border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors font-medium text-xs"
+                            title="Edit User"
+                          >
+                            <FaEdit className="mr-1 h-3 w-3" /> Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteClick(user.id)}
+                            className="inline-flex items-center px-3 py-1.5 border border-red-600 text-red-600 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors font-medium text-xs"
+                            title="Delete User"
+                          >
+                            <FaTrashAlt className="mr-1 h-3 w-3" /> Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
       {showCreateModal && (
@@ -202,106 +236,6 @@ const UserManagement = () => {
       />
     </div>
   );
-};
-
-const styles = {
-  container: {
-    padding: '24px',
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '24px',
-  },
-  title: {
-    fontSize: '28px',
-    fontWeight: '600',
-    color: '#2c3e50',
-    margin: 0,
-  },
-  createButton: {
-    padding: '12px 24px',
-    backgroundColor: '#6366f1',
-    color: 'white',
-    border: 'none',
-    borderRadius: '6px',
-    fontSize: '14px',
-    fontWeight: '500',
-    cursor: 'pointer',
-  },
-  loading: {
-    padding: '40px',
-    textAlign: 'center',
-    fontSize: '16px',
-    color: '#666',
-  },
-  error: {
-    padding: '40px',
-    textAlign: 'center',
-    fontSize: '16px',
-    color: '#c33',
-  },
-  tableContainer: {
-    backgroundColor: 'white',
-    borderRadius: '8px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-    overflow: 'hidden',
-  },
-  table: {
-    width: '100%',
-    borderCollapse: 'collapse',
-  },
-  th: {
-    padding: '16px',
-    textAlign: 'left',
-    backgroundColor: '#f8f9fa',
-    color: '#2c3e50',
-    fontWeight: '600',
-    fontSize: '14px',
-    borderBottom: '2px solid #e0e0e0',
-  },
-  tr: {
-    borderBottom: '1px solid #e0e0e0',
-  },
-  td: {
-    padding: '16px',
-    fontSize: '14px',
-    color: '#2c3e50',
-  },
-  roleBadge: {
-    padding: '4px 12px',
-    borderRadius: '12px',
-    fontSize: '12px',
-    fontWeight: '500',
-    display: 'inline-block',
-  },
-  statusBadge: {
-    padding: '4px 12px',
-    borderRadius: '12px',
-    fontSize: '12px',
-    fontWeight: '500',
-    display: 'inline-block',
-  },
-  editButton: {
-    padding: '6px 16px',
-    backgroundColor: '#fff',
-    color: '#6366f1',
-    border: '1px solid #6366f1',
-    borderRadius: '4px',
-    fontSize: '13px',
-    cursor: 'pointer',
-    marginRight: '8px',
-  },
-  deleteButton: {
-    padding: '6px 16px',
-    backgroundColor: '#fff',
-    color: '#dc2626',
-    border: '1px solid #dc2626',
-    borderRadius: '4px',
-    fontSize: '13px',
-    cursor: 'pointer',
-  },
 };
 
 export default UserManagement;
