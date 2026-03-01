@@ -99,15 +99,7 @@ const UserManagement = () => {
   }
 
   if (error) {
-<<<<<<< HEAD
     return <div className="text-center p-6 text-red-600">{error}</div>;
-=======
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-red-600 dark:text-red-400 text-lg">{error}</div>
-      </div>
-    );
->>>>>>> bugftx
   }
 
   return (
