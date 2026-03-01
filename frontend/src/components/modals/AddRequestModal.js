@@ -229,7 +229,7 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
                           if (item.chemical_name && item.chemical_name.trim()) {
                             setShowSuggestions({ [i]: true });
                           }
-                        }}}
+                        }}
                         onBlur={() => setTimeout(() => setShowSuggestions({}), 200)}
                       />
                       {showSuggestions[i] && item.chemical_name && item.chemical_name.trim() && (
