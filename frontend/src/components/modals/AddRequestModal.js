@@ -217,22 +217,6 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
                         </option>
                       ))}
                     </select>className="form-group margin-top-lg">
-              <label>Purpose / Remarks (optional)</label>
-              <textarea
-                value={formData.reason}
-                onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-                placeholder="Briefly describe what these chemicals will be used for..."
-{{ ... }
-=======
-=======
->>>>>>> f57127f563959cb9dc3a5104dcaa91cd02714fb3
-              <div className="chemical-requirements-table">
-                <div className="grid-matrix-header">
-                  <span>Chemical</span>
-                  <span>QTY (ML)</span>
-                  <span></span>
-                  <span></span>
-                  <span></span>
                 </div>
 
                 {chemicalItems.map((item, i) => (
