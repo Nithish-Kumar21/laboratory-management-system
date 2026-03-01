@@ -221,12 +221,18 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
                         value={item.chemical_name}
                         onChange={(e) => {
                           updateChemicalItem(i, 'chemical_name', e.target.value);
-                          setShowSuggestions({ [i]: true });
+                          if (e.target.value.trim()) {
+                            setShowSuggestions({ [i]: true });
+                          }
                         }}
-                        onFocus={() => setShowSuggestions({ [i]: true })}
+                        onFocus={() => {
+                          if (item.chemical_name && item.chemical_name.trim()) {
+                            setShowSuggestions({ [i]: true });
+                          }
+                        }}}
                         onBlur={() => setTimeout(() => setShowSuggestions({}), 200)}
                       />
-                      {showSuggestions[i] && item.chemical_name && (
+                      {showSuggestions[i] && item.chemical_name && item.chemical_name.trim() && (
                         <ul className="suggestions-dropdown list-style-none">
                           {availableChemicals
                             .filter(c =>
