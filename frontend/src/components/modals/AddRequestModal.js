@@ -224,9 +224,6 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
               </button>
             </div>
 
-            <div className="chemical-items-container">
-              {chemicalItems.map((item, i) => (
-                <div key={i} className="chemical-request-row">
                   <div className="chem-select-col">
                     <select
                       value={item.chemical_name}
@@ -239,46 +236,13 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
                           {chem.chemical_name} • {chem.available_quantity_ml}ml available
                         </option>
                       ))}
-                    </select>
-                    {errors[`chemical_name_${i}`] && (
-                      <span className="error-text">{errors[`chemical_name_${i}`]}</span>
-                    )}
-                  </div>
-                  <div className="chem-qty-col">
-                    <div className="qty-input-wrapper">
-                      <input
-                        type="number"
-                        step="0.01"
-                        placeholder="0.00"
-                        value={item.quantity_ml}
-                        onChange={(e) => updateChemicalItem(i, 'quantity_ml', e.target.value)}
-                        className={errors[`chemical_quantity_${i}`] ? 'error' : ''}
-                      />
-                      <span className="unit-tag">ML</span>
-                    </div>
-                    {errors[`chemical_quantity_${i}`] && (
-                      <span className="error-text">{errors[`chemical_quantity_${i}`]}</span>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    className="remove-chem-btn"
-                    onClick={() => removeChemicalRow(i)}
-                    disabled={chemicalItems.length === 1}
-                  >
-                    <FaTrash />
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            <div className="form-group margin-top-lg">
+                    </select>className="form-group margin-top-lg">
               <label>Purpose / Remarks (optional)</label>
               <textarea
                 value={formData.reason}
                 onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
                 placeholder="Briefly describe what these chemicals will be used for..."
-                rows={3}
+{{ ... }
                 className="modern-textarea"
               />
             </div>
