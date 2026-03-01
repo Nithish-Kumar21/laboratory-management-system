@@ -1,0 +1,208 @@
+/* SearchableDropdown Component Styles */
+.searchable-dropdown-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.searchable-dropdown-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+  font-size: 14px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+
+.searchable-dropdown-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.searchable-dropdown-input:disabled {
+  background-color: #f3f4f6;
+  cursor: not-allowed;
+}
+
+/* Floating Dropdown Panel */
+.searchable-dropdown-panel {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  margin-top: 4px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+  animation: dropdownFadeIn 0.15s ease-out;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.searchable-dropdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.searchable-dropdown-close {
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+}
+
+.searchable-dropdown-close:hover {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.searchable-dropdown-results {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.searchable-dropdown-item {
+  padding: 10px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #f3f4f6;
+  transition: background-color 0.15s;
+}
+
+.searchable-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.searchable-dropdown-item:hover,
+.searchable-dropdown-item.active {
+  background: #f0f9ff;
+}
+
+.searchable-dropdown-item-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.searchable-dropdown-item-name {
+  font-weight: 500;
+  color: #991b1b; /* Dark Red */
+  font-size: 14px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.searchable-dropdown-item-stock {
+  color: #2563eb; /* Blue */
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.searchable-dropdown-no-results {
+  padding: 12px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 14px;
+  font-style: italic;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .searchable-dropdown-input {
+    background: #1f2937;
+    border-color: #374151;
+    color: white;
+  }
+  
+  .searchable-dropdown-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  }
+  
+  .searchable-dropdown-input:disabled {
+    background-color: #374151;
+  }
+  
+  .searchable-dropdown-panel {
+    background: #1f2937;
+    border-color: #374151;
+  }
+  
+  .searchable-dropdown-header {
+    background: #374151;
+    border-bottom-color: #4b5563;
+    color: #9ca3af;
+  }
+  
+  .searchable-dropdown-close {
+    color: #9ca3af;
+  }
+  
+  .searchable-dropdown-close:hover {
+    background: #4b5563;
+    color: #e5e7eb;
+  }
+  
+  .searchable-dropdown-item {
+    border-bottom-color: #374151;
+  }
+  
+  .searchable-dropdown-item:hover,
+  .searchable-dropdown-item.active {
+    background: #1e3a8a;
+  }
+  
+  .searchable-dropdown-no-results {
+    color: #9ca3af;
+  }
+}
+
+/* Integration with existing grid layouts */
+.grid-row .searchable-dropdown-wrapper {
+  width: 100%;
+}
+
+.grid-row .searchable-dropdown-input {
+  width: 100%;
+  height: 40px;
+  box-sizing: border-box;
+}
+
+/* Ensure dropdown doesn't break grid layout */
+.searchable-dropdown-panel {
+  position: absolute;
+  z-index: 50;
+}

@@ -205,19 +205,20 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
               <div className="chemical-requirements-table">
                 <div className="grid-matrix-header">
                   <span>Chemical</span>
-                  <span>Qty (ML)</span>
+                  <span>QTY (ML)</span>
+                  <span></span>
+                  <span></span>
                   <span></span>
                 </div>
 
                 {chemicalItems.map((item, i) => (
-                  <div key={i} className="grid-row chemical-row animate-fade">
+                  <div key={i} className="grid-row chemical-row animate-fade bg-white dark:bg-[#0f172a] grid grid-cols-[2.5fr_1fr_1fr_1.5fr_80px] gap-4 items-center">
                     <div className="autocomplete-wrapper">
                       <input
                         type="text"
-                        className="grid-input"
-                        placeholder="Select Chemical"
+                        className="grid-input text-black dark:text-white bg-white dark:bg-slate-900 border border-gray-300 dark:border-gray-600"
+                        placeholder="Type to search chemicals..."
                         value={item.chemical_name}
-                        autoComplete="off"
                         onChange={(e) => {
                           updateChemicalItem(i, 'chemical_name', e.target.value);
                           setShowSuggestions({ [i]: true });
@@ -263,15 +264,14 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
                         type="number"
                         step="0.01"
                         min="0"
-                        className="grid-input grid-input-qty"
-                        placeholder="0.00"
+                        className="grid-input grid-input-qty text-black dark:text-white bg-white dark:bg-slate-900 border border-gray-300 dark:border-gray-600"
+                        placeholder="0ML"
                         value={item.quantity_ml === '' || item.quantity_ml == null ? '' : item.quantity_ml}
                         onChange={(e) => {
                           const v = e.target.value;
                           updateChemicalItem(i, 'quantity_ml', v === '' ? '' : v);
                         }}
                       />
-                      <span className="input-suffix">ML</span>
                     </div>
 
                     <button

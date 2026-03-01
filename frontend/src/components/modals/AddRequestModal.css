@@ -218,17 +218,6 @@
   box-sizing: border-box;
 }
 
-/* Lock headers to columns: 2.5fr 1fr 50px — MATERIAL NAME, QTY (ML), Delete */
-.chemical-requirements-section .grid-matrix-header,
-.chemical-requirements-section .grid-row.chemical-row {
-  display: grid;
-  grid-template-columns: 2.5fr 1fr 50px;
-  gap: 20px;
-  padding: 0 24px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
 .chemical-requirements-section .grid-matrix-header {
   padding: 0 24px 15px 24px;
   border: none;
@@ -254,10 +243,11 @@
   align-items: center;
   margin-bottom: 14px;
   padding: 10px 24px;
-  background: #1e293b;
   border-radius: 20px;
-  border: 1.5px solid var(--border);
   position: relative;
+}
+
+.dark .chemical-requirements-section .grid-row.chemical-row {
 }
 
 .chemical-requirements-section .grid-row.chemical-row > * {
@@ -268,8 +258,6 @@
   width: 100%;
   min-height: 44px;
   padding: 12px 18px;
-  background: #0f172a !important;
-  color: var(--text-main) !important;
   border: 1.5px solid var(--border) !important;
   border-radius: 12px;
   font-size: 0.95rem;
@@ -277,9 +265,12 @@
   transition: all 0.2s;
 }
 
-.chemical-requirements-section .grid-input:focus {
-  border-color: #334155 !important;
-  background: #131c2f !important;
+.dark .chemical-requirements-section .grid-input {
+  border: 1.5px solid #334155 !important;
+}
+
+.dark .chemical-requirements-section .grid-input:focus {
+  border-color: #3b51bf !important;
   outline: none;
 }
 
@@ -299,15 +290,17 @@
   width: 100%;
   padding: 12px 36px 12px 18px;
   text-align: left;
-  background: #0f172a !important;
-  color: var(--text-main) !important;
-  border: 1.5px solid var(--border) !important;
+  border: 1.5px solid #e5e7eb !important;
   border-radius: 12px;
   font-size: 0.95rem;
   font-weight: 500;
 }
 
-/* Ensure number stepper (up/down arrows) is visible — do not hide with appearance: none */
+.qty-ml-wrapper .grid-input-qty:focus {
+  outline: none;
+  border-color: #3b51bf !important;
+}
+
 .qty-ml-wrapper .grid-input-qty::-webkit-outer-spin-button,
 .qty-ml-wrapper .grid-input-qty::-webkit-inner-spin-button {
   opacity: 1;
@@ -315,12 +308,6 @@
 
 .qty-ml-wrapper .grid-input-qty::placeholder {
   color: var(--text-muted);
-}
-
-.qty-ml-wrapper .grid-input-qty:focus {
-  outline: none;
-  border-color: #334155 !important;
-  background: #131c2f !important;
 }
 
 /* ML unit rendered inside input as suffix (left of stepper arrows) */
@@ -350,8 +337,8 @@
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  background: #140808;
-  border: 1.5px solid #1a0a0a;
+  background: white;
+  border: 1.5px solid #e5e7eb;
   color: #ef4444;
   display: flex;
   align-items: center;
@@ -362,9 +349,18 @@
   justify-self: end;
 }
 
+.dark .chemical-requirements-section .btn-row-del {
+  background: #140808;
+  border: 1.5px solid #1a0a0a;
+}
+
 .chemical-requirements-section .btn-row-del:hover {
-  background: #1a0a0a;
+  background: #f3f4f6;
   transform: scale(1.03);
+}
+
+.dark .chemical-requirements-section .btn-row-del:hover {
+  background: #1a0a0a;
 }
 
 .chemical-requirements-section .btn-row-del:disabled {
