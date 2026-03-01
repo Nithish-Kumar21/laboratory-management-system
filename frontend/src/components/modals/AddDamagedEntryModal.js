@@ -184,7 +184,7 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
 
     return (
         <div className="modal-overlay" onClick={onClose}>
-            <div className="modal-content flexible animate-up"
+            <div className="modal-content flexible animate-up damaged-entry-modal"
                 onClick={e => e.stopPropagation()}
                 ref={modalRef}
                 style={{ transform: `translate(${position.x}px, ${position.y}px)` }}>
@@ -230,45 +230,45 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
                                 </div>
 
                                 {damagedItems.map((it, i) => (
-                                <div key={i} className="grid-row animate-fade">
-                                    <div className="autocomplete-wrapper">
-                                        <input type="text" className="grid-input" placeholder="Search apparatus..." value={it.apparatus_name} required autoComplete="off"
-                                            onChange={e => {
-                                                const next = [...damagedItems]; next[i].apparatus_name = e.target.value; setDamagedItems(next);
-                                                setShowSuggestions({ [i]: true }); setActiveIndex(-1);
-                                            }}
-                                            onFocus={e => {
-                                                setShowSuggestions({ [i]: true });
-                                                setActiveIndex(-1);
-                                            }}
-                                            onBlur={() => setTimeout(() => setShowSuggestions({}), 250)} />
-                                        {showSuggestions[i] && it.apparatus_name && (
-                                            <ul className="suggestions-dropdown list-style-none">
-                                                {[
-                                                    { name: 'Beaker 250ml', available_quantity: 30 },
-                                                    { name: 'Test Tube', available_quantity: 150 },
-                                                    { name: 'Pipette', available_quantity: 45 },
-                                                    { name: 'Burette', available_quantity: 20 },
-                                                    { name: 'Funnel', available_quantity: 80 },
-                                                    { name: 'Flask 500ml', available_quantity: 15 }
-                                                ].filter(n => (n.name || '').toLowerCase().startsWith((it.apparatus_name || '').toLowerCase())).slice(0, 6).map((n, idx) => (
-                                                    <li key={idx} className={`suggestion-item ${activeIndex === idx ? 'active' : ''}`}
-                                                        onMouseDown={() => selectApparatus(i, n.name)}>
-                                                        <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                                                            <span>{n.name}</span>
-                                                            <span style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 'bold' }}>Stock: {n.available_quantity}</span>
-                                                        </div>
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        )}
+                                    <div key={i} className="grid-row animate-fade">
+                                        <div className="autocomplete-wrapper">
+                                            <input type="text" className="grid-input" placeholder="Search apparatus..." value={it.apparatus_name} required autoComplete="off"
+                                                onChange={e => {
+                                                    const next = [...damagedItems]; next[i].apparatus_name = e.target.value; setDamagedItems(next);
+                                                    setShowSuggestions({ [i]: true }); setActiveIndex(-1);
+                                                }}
+                                                onFocus={e => {
+                                                    setShowSuggestions({ [i]: true });
+                                                    setActiveIndex(-1);
+                                                }}
+                                                onBlur={() => setTimeout(() => setShowSuggestions({}), 250)} />
+                                            {showSuggestions[i] && it.apparatus_name && (
+                                                <ul className="suggestions-dropdown list-style-none">
+                                                    {[
+                                                        { name: 'Beaker 250ml', available_quantity: 30 },
+                                                        { name: 'Test Tube', available_quantity: 150 },
+                                                        { name: 'Pipette', available_quantity: 45 },
+                                                        { name: 'Burette', available_quantity: 20 },
+                                                        { name: 'Funnel', available_quantity: 80 },
+                                                        { name: 'Flask 500ml', available_quantity: 15 }
+                                                    ].filter(n => (n.name || '').toLowerCase().startsWith((it.apparatus_name || '').toLowerCase())).slice(0, 6).map((n, idx) => (
+                                                        <li key={idx} className={`suggestion-item ${activeIndex === idx ? 'active' : ''}`}
+                                                            onMouseDown={() => selectApparatus(i, n.name)}>
+                                                            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                                                                <span>{n.name}</span>
+                                                                <span style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 'bold' }}>Stock: {n.available_quantity}</span>
+                                                            </div>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            )}
+                                        </div>
+                                        <input type="number" className="grid-input" placeholder="Qty" value={it.quantity ?? ''} required
+                                            onChange={e => { const next = [...damagedItems]; next[i].quantity = e.target.value; setDamagedItems(next); }} />
+                                        <input type="text" className="grid-input" placeholder="Caused by..." value={it.caused_by} required
+                                            onChange={e => { const next = [...damagedItems]; next[i].caused_by = e.target.value; setDamagedItems(next); }} />
+                                        <button type="button" className="btn-row-del" onClick={() => setDamagedItems(damagedItems.filter((_, idx) => idx !== i))} title="Remove item"><FaTrashAlt /></button>
                                     </div>
-                                    <input type="number" className="grid-input" placeholder="Qty" value={it.quantity ?? ''} required
-                                        onChange={e => { const next = [...damagedItems]; next[i].quantity = e.target.value; setDamagedItems(next); }} />
-                                    <input type="text" className="grid-input" placeholder="Caused by..." value={it.caused_by} required
-                                        onChange={e => { const next = [...damagedItems]; next[i].caused_by = e.target.value; setDamagedItems(next); }} />
-                                    <button type="button" className="btn-row-del" onClick={() => setDamagedItems(damagedItems.filter((_, idx) => idx !== i))} title="Remove item"><FaTrashAlt /></button>
-                                </div>
                                 ))}
                             </div>
                         </div>

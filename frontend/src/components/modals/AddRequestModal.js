@@ -13,9 +13,6 @@ const ALL_CLASS_OPTIONS = [
 ];
 
 function getClassOptionsByDepartment(department) {
-  if (!department) return ALL_CLASS_OPTIONS;
-  if (department.includes('B.Sc')) return ALL_CLASS_OPTIONS.filter(c => c.includes('B.Sc'));
-  if (department.includes('M.Sc')) return ALL_CLASS_OPTIONS.filter(c => c.includes('M.Sc'));
   return ALL_CLASS_OPTIONS;
 }
 
@@ -212,12 +209,12 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
                 </div>
 
                 {chemicalItems.map((item, i) => (
-                  <div key={i} className="grid-row chemical-row animate-fade bg-white dark:bg-[#0f172a] grid grid-cols-[2.5fr_1fr_1fr_1.5fr_80px] gap-4 items-center">
+                  <div key={i} className="grid-row chemical-row animate-fade">
                     <div className="autocomplete-wrapper">
                       <input
                         type="text"
-                        className="grid-input text-black dark:text-white bg-white dark:bg-slate-900 border border-gray-300 dark:border-gray-600"
-                        placeholder="Type to search chemicals..."
+                        className="grid-input"
+                        placeholder="Select chemicals"
                         value={item.chemical_name}
                         onChange={(e) => {
                           updateChemicalItem(i, 'chemical_name', e.target.value);
@@ -232,7 +229,7 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
                         }}
                         onBlur={() => setTimeout(() => setShowSuggestions({}), 200)}
                       />
-                      {showSuggestions[i] && item.chemical_name && item.chemical_name.trim() && (
+                      {showSuggestions[i] && item.chemical_name && (
                         <ul className="suggestions-dropdown list-style-none">
                           {availableChemicals
                             .filter(c =>
@@ -249,13 +246,7 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
                               >
                                 <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
                                   <span>{c.chemical_name}</span>
-                                  <span
-                                    style={{
-                                      fontSize: '0.75rem',
-                                      color: '#ef4444',
-                                      fontWeight: 'bold'
-                                    }}
-                                  >
+                                  <span style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 'bold' }}>
                                     Stock: {c.available_quantity_ml} ML
                                   </span>
                                 </div>
@@ -268,9 +259,9 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
                     <div className="qty-ml-wrapper">
                       <input
                         type="number"
-                        step="0.01"
+                        step="1"
                         min="0"
-                        className="grid-input grid-input-qty text-black dark:text-white bg-white dark:bg-slate-900 border border-gray-300 dark:border-gray-600"
+                        className="grid-input grid-input-qty"
                         placeholder="0ML"
                         value={item.quantity_ml === '' || item.quantity_ml == null ? '' : item.quantity_ml}
                         onChange={(e) => {

@@ -22,18 +22,17 @@
   --dept-users: #2563eb;
   /* Royal Blue */
 
-  /* Surface Colors - Professional Theme */
-  --bg-main: #f8fafc;
+  /* Surface Colors - High Contrast Theme */
+  --bg-main: #ffffff;
   --bg-surface: #ffffff;
   --bg-sidebar: #1e293b;
-  /* Professional Slate */
   --primary: var(--dept-dashboard);
   --primary-hover: #4338ca;
   --primary-glow: rgba(99, 102, 241, 0.15);
 
-  --text-main: #0f172a;
-  --text-muted: #64748b;
-  --text-on-dark: #f8fafc;
+  --text-main: #000000;
+  --text-muted: #475569;
+  --text-on-dark: #ffffff;
 
   --border: #e2e8f0;
   --border-light: rgba(0, 0, 0, 0.05);
@@ -41,14 +40,15 @@
 }
 
 :root.dark-mode {
-  --bg-main: #0b1120;
-  --bg-surface: #131c2f;
-  --bg-sidebar: #0b1120;
-
+  --bg-main: #0f172a;
+  /* Slate 900 - Bluish shade */
+  --bg-surface: #1e293b;
+  /* Slate 800 */
+  --bg-sidebar: #1a2235;
+  /* Matching bluish-black from mockup */
   --text-main: #f1f5f9;
   --text-muted: #94a3b8;
-
-  --border: #1e293b;
+  --border: #334155;
   --shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
 }
 

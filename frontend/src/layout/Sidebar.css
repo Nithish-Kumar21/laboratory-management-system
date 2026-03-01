@@ -147,64 +147,56 @@
 .nav-link {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 10px 14px;
-    color: var(--text-muted);
+    gap: 16px;
+    padding: 12px 16px;
+    color: #94a3b8;
+    /* Slate-400 */
     text-decoration: none;
-    border-radius: var(--radius-md);
-    font-size: 0.9rem;
-    font-weight: 500;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
-    overflow: hidden;
-}
-
-/* Mini Sidebar Circular Hover (Gmail style) */
-.sidebar.closed:not(:hover) .nav-link:hover .nav-icon-box {
-    background: rgba(255, 255, 255, 0.15);
-    border-radius: 50%;
-    transform: scale(1.1);
+    margin: 0 8px;
+    /* Give some space for the pill look */
 }
 
 .nav-link:hover {
-    background-color: rgba(255, 255, 255, 0.08);
+    background-color: rgba(255, 255, 255, 0.05);
     color: #ffffff;
 }
 
 .nav-link.active {
-    background: var(--primary-glow);
+    background-color: rgba(99, 102, 241, 0.15);
+    /* Indigo glow background */
     color: #ffffff;
 }
 
+/* Vertical indicator bar */
 .nav-link.active::before {
     content: '';
     position: absolute;
-    left: 0;
-    top: 20%;
-    height: 60%;
-    width: 3px;
-    background-color: var(--primary);
+    left: -8px;
+    /* Align with sidebar edge */
+    top: 15%;
+    height: 70%;
+    width: 4px;
+    background-color: #6366f1;
     border-radius: 0 4px 4px 0;
-    box-shadow: 2px 0 10px var(--primary-glow);
-    z-index: 2;
-    transition: var(--transition);
-}
-
-.sidebar.closed:not(:hover) .nav-link.active::before {
-    left: 4px;
-    height: 30%;
-    top: 35%;
+    box-shadow: 2px 0 10px rgba(99, 102, 241, 0.5);
+    z-index: 5;
 }
 
 .nav-icon-box {
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.03);
-    transition: all 0.2s;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.04);
+    transition: all 0.3s;
+    flex-shrink: 0;
 }
 
 .nav-link:hover .nav-icon-box {
@@ -212,12 +204,14 @@
 }
 
 .nav-link.active .nav-icon-box {
-    background: var(--primary);
+    background: #6366f1;
+    /* Target indigo blue */
     color: white;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
 }
 
 .nav-icon {
-    font-size: 1rem;
+    font-size: 1.1rem;
 }
 
 .nav-badge {

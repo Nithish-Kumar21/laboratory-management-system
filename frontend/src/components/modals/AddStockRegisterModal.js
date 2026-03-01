@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { FaPlusCircle, FaTimes, FaTrashAlt, FaFlask, FaBoxes, FaTags } from 'react-icons/fa';
+import { FaPlusCircle, FaTimes, FaTrashAlt, FaFlask, FaBoxes, FaTag } from 'react-icons/fa';
 import api from '../../utils/api';
 import ConfirmDialog from '../ConfirmDialog';
 import './AddStockRegisterModal.css';
@@ -266,12 +266,12 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content flexible animate-up"
+      <div className="modal-content flexible animate-up stock-entry-modal"
         onClick={e => e.stopPropagation()}
         ref={modalRef}
         style={{ transform: `translate(${position.x}px, ${position.y}px)` }}>
-        <div className="modal-header" onMouseDown={onMouseDown}>
-          <h2><FaTags style={{ color: 'var(--primary)' }} /> Secure Stock Entry</h2>
+        <div className="modal-header danger-theme" onMouseDown={onMouseDown}>
+          <h2 className="stock-register-header-text"><FaTag /> Secure Stock Register</h2>
           <button className="modal-close" onClick={onClose}><FaTimes /></button>
         </div>
 
@@ -309,7 +309,7 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
 
             <div className="items-section">
               <div className="section-header">
-                <h3><FaFlask /> Chemical Materials</h3>
+                <h3><FaFlask className="section-title-icon" /> Chemical Materials</h3>
                 <button type="button" className="btn-add-line" onClick={addChemicalRow}>
                   <FaPlusCircle /> Add Line
                 </button>
@@ -349,8 +349,8 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
                       </ul>
                     )}
                   </div>
-                  <input type="number" step="0.01" placeholder="Qty" value={it.quantity_ml ?? ''} required onChange={e => { const next = [...chemicalItems]; next[i].quantity_ml = e.target.value; setChemicalItems(next); }} />
-                  <input type="number" step="0.01" placeholder="Rate" value={it.rate ?? ''} required onChange={e => { const next = [...chemicalItems]; next[i].rate = e.target.value; setChemicalItems(next); }} />
+                  <input type="number" step="1" placeholder="Quantity" value={it.quantity_ml ?? ''} required onChange={e => { const next = [...chemicalItems]; next[i].quantity_ml = e.target.value; setChemicalItems(next); }} />
+                  <input type="number" step="1" placeholder="Price" value={it.rate ?? ''} required onChange={e => { const next = [...chemicalItems]; next[i].rate = e.target.value; setChemicalItems(next); }} />
                   <div className="autocomplete-wrapper">
                     <input type="text" placeholder="Make" value={it.make} required
                       onChange={e => { const next = [...chemicalItems]; next[i].make = e.target.value; setChemicalItems(next); setShowChemMakesSuggestions({ [i]: true }); setActiveSuggestionIndex(-1); }}
@@ -372,7 +372,7 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
 
             <div className="items-section">
               <div className="section-header">
-                <h3><FaBoxes /> Apparatus Materials</h3>
+                <h3><FaBoxes className="section-title-icon" /> Apparatus Materials</h3>
                 <button type="button" className="btn-add-line" onClick={addApparatusRow}>
                   <FaPlusCircle /> Add Line
                 </button>
@@ -412,8 +412,8 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
                       </ul>
                     )}
                   </div>
-                  <input type="number" placeholder="Qty" value={it.quantity_pieces ?? ''} required onChange={e => { const next = [...apparatusItems]; next[i].quantity_pieces = e.target.value; setApparatusItems(next); }} />
-                  <input type="number" step="0.01" placeholder="Rate" value={it.rate ?? ''} required onChange={e => { const next = [...apparatusItems]; next[i].rate = e.target.value; setApparatusItems(next); }} />
+                  <input type="number" step="1" placeholder="Quantity" value={it.quantity_pieces ?? ''} required onChange={e => { const next = [...apparatusItems]; next[i].quantity_pieces = e.target.value; setApparatusItems(next); }} />
+                  <input type="number" step="1" placeholder="Price" value={it.rate ?? ''} required onChange={e => { const next = [...apparatusItems]; next[i].rate = e.target.value; setApparatusItems(next); }} />
                   <div className="autocomplete-wrapper">
                     <input type="text" placeholder="Make" value={it.make} required
                       onChange={e => { const next = [...apparatusItems]; next[i].make = e.target.value; setApparatusItems(next); setShowAppMakesSuggestions({ [i]: true }); setActiveSuggestionIndex(-1); }}

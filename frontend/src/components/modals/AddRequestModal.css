@@ -219,6 +219,9 @@
 }
 
 .chemical-requirements-section .grid-matrix-header {
+  display: grid !important;
+  grid-template-columns: 2.5fr 1fr 60px !important;
+  gap: 20px;
   padding: 0 24px 15px 24px;
   border: none;
   border-bottom: 2px solid var(--border);
@@ -231,196 +234,120 @@
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 1px;
-  text-align: left;
-}
-
-/* QTY (ML) header aligns with start of input box */
-.chemical-requirements-section .grid-matrix-header span:nth-child(2) {
-  text-align: left;
 }
 
 .chemical-requirements-section .grid-row.chemical-row {
+  display: grid !important;
+  grid-template-columns: 2.5fr 1fr 60px !important;
+  gap: 20px;
   align-items: center;
   margin-bottom: 14px;
-  padding: 10px 24px;
+  padding: 16px 24px;
   border-radius: 20px;
+  background: #ffffff !important;
+  color: #000000 !important;
+  border: 1.5px solid #e2e8f0;
   position: relative;
+  transition: all 0.3s ease;
+  overflow: visible !important;
 }
 
-.dark .chemical-requirements-section .grid-row.chemical-row {
-}
-
-.chemical-requirements-section .grid-row.chemical-row > * {
-  min-width: 0;
-}
-
-.chemical-requirements-section .grid-input {
-  width: 100%;
-  min-height: 44px;
-  padding: 12px 18px;
-  border: 1.5px solid var(--border) !important;
-  border-radius: 12px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  transition: all 0.2s;
-}
-
-.dark .chemical-requirements-section .grid-input {
-  border: 1.5px solid #334155 !important;
-}
-
-.dark .chemical-requirements-section .grid-input:focus {
-  border-color: #3b51bf !important;
-  outline: none;
-}
-
-.chemical-requirements-section .grid-input::placeholder {
-  color: var(--text-muted);
-}
-
-/* Qty: number input with stepper, ML suffix inside input, bluish-dark theme */
-.qty-ml-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-  width: 100%;
-}
-
-.qty-ml-wrapper .grid-input-qty {
-  width: 100%;
-  padding: 12px 36px 12px 18px;
-  text-align: left;
-  border: 1.5px solid #e5e7eb !important;
-  border-radius: 12px;
-  font-size: 0.95rem;
-  font-weight: 500;
-}
-
-.qty-ml-wrapper .grid-input-qty:focus {
-  outline: none;
-  border-color: #3b51bf !important;
-}
-
-.qty-ml-wrapper .grid-input-qty::-webkit-outer-spin-button,
-.qty-ml-wrapper .grid-input-qty::-webkit-inner-spin-button {
-  opacity: 1;
-}
-
-.qty-ml-wrapper .grid-input-qty::placeholder {
-  color: var(--text-muted);
-}
-
-/* ML unit rendered inside input as suffix (left of stepper arrows) */
-.qty-ml-wrapper .input-suffix {
-  position: absolute;
-  right: 28px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--text-muted);
-  pointer-events: none;
-}
-
-.rate-rupee-wrapper .input-suffix {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #9ca3af;
-  pointer-events: none;
-}
-
-.chemical-requirements-section .btn-row-del {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: white;
-  border: 1.5px solid #e5e7eb;
-  color: #ef4444;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 1.1rem;
-  flex-shrink: 0;
-  justify-self: end;
-}
-
-.dark .chemical-requirements-section .btn-row-del {
-  background: #140808;
-  border: 1.5px solid #1a0a0a;
-}
-
-.chemical-requirements-section .btn-row-del:hover {
-  background: #f3f4f6;
-  transform: scale(1.03);
-}
-
-.dark .chemical-requirements-section .btn-row-del:hover {
-  background: #1a0a0a;
-}
-
-.chemical-requirements-section .btn-row-del:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.chemical-requirements-section .grid-row.chemical-row:focus-within {
+  z-index: 100;
+  border-color: #cbd5e1;
 }
 
 .chemical-requirements-section .autocomplete-wrapper {
-  position: relative;
-  width: 100%;
+  overflow: visible !important;
 }
 
-/* Autocomplete wrapper already styled globally; nothing special needed here */
+:root.dark-mode .chemical-requirements-section .grid-row.chemical-row {
+  background: #1a2235 !important;
+  /* Bluish dark from image */
+  color: #ffffff !important;
+  border: 1.5px solid #2d3748;
+}
 
-/* Legacy / other modals */
+.chemical-requirements-section .grid-input {
+  width: 100% !important;
+  min-height: 48px !important;
+  padding: 12px 18px !important;
+  background: #f8f9fa !important;
+  color: #000000 !important;
+  border: 1.5px solid #cbd5e1 !important;
+  border-radius: 12px !important;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+:root.dark-mode .chemical-requirements-section .grid-input {
+  background: #0f172a !important;
+  color: #ffffff !important;
+  border: 1.5px solid #334155 !important;
+}
+
+.chemical-requirements-section .grid-input:focus {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border-color: #94a3b8 !important;
+  outline: none;
+}
+
+:root.dark-mode .chemical-requirements-section .grid-input:focus {
+  background: #0f172a !important;
+  color: #ffffff !important;
+  border-color: #475569 !important;
+}
+
+.chemical-requirements-section .btn-row-del {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 12px !important;
+  background: #f1f5f9 !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #ef4444 !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  justify-self: center;
+}
+
+:root.dark-mode .chemical-requirements-section .btn-row-del {
+  background: #334155 !important;
+  border-color: #475569 !important;
+}
+
+.chemical-requirements-section .btn-row-del:hover {
+  transform: scale(1.05);
+  /* Just a slight scale, no color change */
+}
+
+:root.dark-mode .chemical-requirements-section .btn-row-del:hover {
+  transform: scale(1.05);
+}
+
+/* Generic Fallbacks */
 .btn-add-line {
-  background: #3b51bf;
+  background: #ef4444;
   color: white;
   border: none;
   padding: 10px 24px;
-  border-radius: 14px;
+  border-radius: 12px;
   font-weight: 800;
   display: flex;
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-add-line:hover {
-  background: #2d3e9e;
-  transform: translateY(-1px);
 }
 
 .grid-row {
-  display: flex !important;
-  align-items: center !important;
+  display: flex;
+  align-items: center;
   gap: 12px;
   margin-bottom: 20px;
   width: 100%;
-}
-
-.btn-row-del {
-  width: 48px;
-  height: 48px;
-  background: #0d0d0d;
-  border: 1.5px solid #1a1a1a;
-  border-radius: 12px;
-  color: #ef4444;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
-  flex-shrink: 0;
-}
-
-.btn-row-del:hover {
-  opacity: 1;
-  background: #1a1a1a;
 }
 
 @media (max-width: 500px) {
@@ -505,35 +432,14 @@
   top: 100%;
   left: 0;
   width: 100%;
-  background: #000000;
-  border: 1.5px solid #222;
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border);
   border-radius: 12px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
-  /* shadow-xl equivalent */
+  box-shadow: var(--shadow);
   z-index: 1000;
   max-height: 250px;
   overflow-y: auto;
   min-width: 250px;
-}
-
-.suggestions-dropdown.upward {
-  top: -120px !important;
-  /* Exact position requested */
-  bottom: auto !important;
-  z-index: 20 !important;
-  animation: slideUp 0.2s ease-out;
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 .list-style-none {
@@ -552,12 +458,12 @@
 }
 
 .suggestion-item:not(:last-child) {
-  border-bottom: 1px solid #1a1a1a;
+  border-bottom: 1px solid var(--border);
 }
 
 .suggestion-item:hover {
-  background: #111;
-  color: #3b51bf;
+  background: var(--bg-main);
+  color: var(--primary);
 }
 
 .error-banner {
