@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { FaUserShield, FaUserPlus, FaEdit, FaTrashAlt } from 'react-icons/fa';
 import api from '../utils/api';
 import CreateUserModal from './CreateUserModal';
 import EditUserModal from './EditUserModal';
@@ -90,11 +91,23 @@ const UserManagement = () => {
   };
 
   if (loading) {
-    return <div style={styles.loading}>Loading users...</div>;
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-gray-600 dark:text-gray-400 text-lg">Loading users...</div>
+      </div>
+    );
   }
 
   if (error) {
+<<<<<<< HEAD
     return <div className="text-center p-6 text-red-600">{error}</div>;
+=======
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-red-600 dark:text-red-400 text-lg">{error}</div>
+      </div>
+    );
+>>>>>>> bugftx
   }
 
   return (

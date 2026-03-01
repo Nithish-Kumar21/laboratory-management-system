@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { FaUser, FaEnvelope, FaPhone, FaIdCard, FaUserShield, FaCheckCircle, FaExclamationCircle } from 'react-icons/fa';
 import api from '../utils/api';
 
 const UserProfile = () => {
@@ -51,7 +52,6 @@ const UserProfile = () => {
         } else if (errorData.error) {
           setError(errorData.error);
         } else {
-          // Handle object with field errors (e.g., { email: ["..."], phone: ["..."] })
           const firstError = Object.values(errorData)[0];
           setError(Array.isArray(firstError) ? firstError[0] : 'Failed to update profile');
         }
@@ -98,6 +98,7 @@ const UserProfile = () => {
               <FaUser className="mr-3 h-4 w-4" />
               My Profile
             </a>
+<<<<<<< HEAD
             <a 
               onClick={() => navigate('/change-password')}
               className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
@@ -114,6 +115,38 @@ const UserProfile = () => {
             </a>
           </nav>
         </div>
+=======
+            <a href="#" className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+              <FaEnvelope className="mr-3 h-4 w-4" />
+              Email Templates
+            </a>
+            <a href="#" className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+              <FaIdCard className="mr-3 h-4 w-4" />
+              Employee ID
+            </a>
+            <a href="#" className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+              <FaPhone className="mr-3 h-4 w-4" />
+              Contact
+            </a>
+            <a href="#" className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+              <FaUserShield className="mr-3 h-4 w-4" />
+              Security
+            </a>
+          </nav>
+        </div>
+        
+        <div className="p-6 border-t border-gray-200 dark:border-gray-700">
+          <button
+            onClick={() => navigate('/change-password')}
+            className="w-full flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+          >
+            Change Password
+          </button>
+          <button className="w-full flex items-center px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg mt-2">
+            Sign Out
+          </button>
+        </div>
+>>>>>>> bugftx
       </div>
 
       {/* Right Content Area */}
@@ -144,6 +177,7 @@ const UserProfile = () => {
                   {error}
                 </div>
               )}
+<<<<<<< HEAD
 
               <div className="grid grid-cols-2 gap-6">
                 <div>
@@ -281,6 +315,91 @@ const UserProfile = () => {
                   </div>
                 </form>
               </div>
+=======
+              {success && (
+                <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-800 dark:bg-green-900/20 dark:border-green-800 dark:text-green-200 flex items-center gap-3">
+                  <FaCheckCircle />
+                  {success}
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Full Name
+                    </label>
+                    <input
+                      type="text"
+                      name="full_name"
+                      value={formData.full_name}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
+                      placeholder="Enter full name"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Email Address
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
+                      placeholder="Enter email"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Phone Number
+                    </label>
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
+                      placeholder="Enter phone number"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Employee ID
+                    </label>
+                    <input
+                      type="text"
+                      value={user?.employee_id || ''}
+                      disabled
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
+                      placeholder="Employee ID"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? 'Updating...' : 'Update Profile'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/')}
+                    className="px-6 py-3 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+>>>>>>> bugftx
             </div>
           </div>
         </div>

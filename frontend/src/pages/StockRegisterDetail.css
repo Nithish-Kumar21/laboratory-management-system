@@ -169,8 +169,8 @@
 .delete-action-box {
   margin-top: 64px;
   padding: 32px;
-  background: #fef2f2;
-  border: 1px dashed #fecaca;
+  background: rgba(239, 68, 68, 0.05);
+  border: 1px dashed var(--border);
   border-radius: 20px;
   display: flex;
   justify-content: space-between;
@@ -178,7 +178,7 @@
 }
 
 .delete-text {
-  color: #991b1b;
+  color: #ef4444;
 }
 
 .delete-text h4 {
