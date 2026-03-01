@@ -2,7 +2,7 @@ import urllib.request
 import json
 
 url = 'http://127.0.0.1:8000/api/users/login/'
-data = {'username': 'admin', 'password': 'admin123'}
+data = {'username': 'admin', 'password': 'admin@123456'}
 headers = {'Content-Type': 'application/json'}
 
 try:

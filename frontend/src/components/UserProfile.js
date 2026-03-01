@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { FaUser, FaEnvelope, FaPhone, FaIdCard, FaUserShield, FaCheckCircle, FaExclamationCircle } from 'react-icons/fa';
 import api from '../utils/api';
 
 const UserProfile = () => {
@@ -51,7 +52,6 @@ const UserProfile = () => {
         } else if (errorData.error) {
           setError(errorData.error);
         } else {
-          // Handle object with field errors (e.g., { email: ["..."], phone: ["..."] })
           const firstError = Object.values(errorData)[0];
           setError(Array.isArray(firstError) ? firstError[0] : 'Failed to update profile');
         }
@@ -79,267 +79,174 @@ const UserProfile = () => {
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <h1 style={styles.title}>My Profile</h1>
-        <button
-          onClick={() => navigate('/change-password')}
-          style={styles.changePasswordButton}
-        >
-          Change Password
-        </button>
-      </div>
-
-      <div style={styles.content}>
-        <div style={styles.infoSection}>
-          <h2 style={styles.sectionTitle}>Account Information</h2>
-          <div style={styles.infoGrid}>
-            <div style={styles.infoItem}>
-              <label style={styles.infoLabel}>Employee ID:</label>
-              <span style={styles.infoValue}>{user?.employee_id || '-'}</span>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
+      {/* Left Sidebar */}
+      <div className="w-64 bg-white dark:bg-gray-800 shadow-sm">
+        <div className="p-6">
+          <div className="flex items-center space-x-3 mb-8">
+            <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
+              <FaUser className="text-white" />
             </div>
-            <div style={styles.infoItem}>
-              <label style={styles.infoLabel}>Role:</label>
-              <span style={styles.infoBadge}>
-                {getRoleDisplay(user?.role)}
-              </span>
-            </div>
-            <div style={styles.infoItem}>
-              <label style={styles.infoLabel}>Status:</label>
-              <span
-                style={{
-                  ...styles.statusBadge,
-                  backgroundColor: user?.is_active ? '#e8f5e9' : '#ffebee',
-                  color: user?.is_active ? '#2e7d32' : '#c62828',
-                }}
-              >
-                {user?.is_active ? 'Active' : 'Inactive'}
-              </span>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{user?.full_name || 'User Name'}</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{getRoleDisplay(user?.role)}</p>
             </div>
           </div>
+          
+          <nav className="space-y-1">
+            <a href="#" className="flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg">
+              <FaUser className="mr-3 h-4 w-4" />
+              My Profile
+            </a>
+            <a href="#" className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+              <FaEnvelope className="mr-3 h-4 w-4" />
+              Email Templates
+            </a>
+            <a href="#" className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+              <FaIdCard className="mr-3 h-4 w-4" />
+              Employee ID
+            </a>
+            <a href="#" className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+              <FaPhone className="mr-3 h-4 w-4" />
+              Contact
+            </a>
+            <a href="#" className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+              <FaUserShield className="mr-3 h-4 w-4" />
+              Security
+            </a>
+          </nav>
         </div>
+        
+        <div className="p-6 border-t border-gray-200 dark:border-gray-700">
+          <button
+            onClick={() => navigate('/change-password')}
+            className="w-full flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+          >
+            Change Password
+          </button>
+          <button className="w-full flex items-center px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg mt-2">
+            Sign Out
+          </button>
+        </div>
+      </div>
 
-        <div style={styles.formSection}>
-          <h2 style={styles.sectionTitle}>Update Profile</h2>
+      {/* Right Content Area */}
+      <div className="flex-1 p-8">
+        <div className="max-w-4xl">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">My Profile</h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-8">Manage your profile information and preferences</p>
 
-          {error && <div style={styles.errorMessage}>{error}</div>}
-          {success && <div style={styles.successMessage}>{success}</div>}
-
-          <form onSubmit={handleSubmit}>
-            <div style={styles.formGrid}>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Full Name</label>
-                <input
-                  type="text"
-                  name="full_name"
-                  value={formData.full_name}
-                  onChange={handleChange}
-                  style={styles.input}
-                  placeholder="Enter full name"
-                />
-              </div>
-
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Email</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  style={styles.input}
-                  placeholder="Enter email"
-                  required
-                />
-              </div>
-
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Phone</label>
-                <input
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  style={styles.input}
-                  placeholder="Enter phone number"
-                />
+          <div className="bg-white dark:bg-[#0f172a] rounded-xl shadow-md border border-gray-100 dark:border-gray-800">
+            {/* Profile Header */}
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center space-x-4">
+                <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900 rounded-full flex items-center justify-center">
+                  <FaUser className="text-2xl text-indigo-600 dark:text-indigo-300" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{user?.full_name || 'User Name'}</h2>
+                  <p className="text-gray-600 dark:text-gray-400">{user?.email || 'email@example.com'}</p>
+                </div>
               </div>
             </div>
 
-            <div style={styles.buttonGroup}>
-              <button
-                type="submit"
-                disabled={loading}
-                style={styles.submitButton}
-              >
-                {loading ? 'Updating...' : 'Update Profile'}
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate('/')}
-                style={styles.cancelButton}
-              >
-                Cancel
-              </button>
+            {/* Profile Content */}
+            <div className="p-6">
+              {error && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 dark:bg-red-900/20 dark:border-red-800 dark:text-red-200 flex items-center gap-3">
+                  <FaExclamationCircle />
+                  {error}
+                </div>
+              )}
+              {success && (
+                <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-800 dark:bg-green-900/20 dark:border-green-800 dark:text-green-200 flex items-center gap-3">
+                  <FaCheckCircle />
+                  {success}
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Full Name
+                    </label>
+                    <input
+                      type="text"
+                      name="full_name"
+                      value={formData.full_name}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
+                      placeholder="Enter full name"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Email Address
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
+                      placeholder="Enter email"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Phone Number
+                    </label>
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
+                      placeholder="Enter phone number"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Employee ID
+                    </label>
+                    <input
+                      type="text"
+                      value={user?.employee_id || ''}
+                      disabled
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
+                      placeholder="Employee ID"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? 'Updating...' : 'Update Profile'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/')}
+                    className="px-6 py-3 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
             </div>
-          </form>
+          </div>
         </div>
       </div>
     </div>
   );
-};
-
-const styles = {
-  container: {
-    padding: '24px',
-    maxWidth: '1200px',
-    margin: '0 auto',
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '24px',
-  },
-  title: {
-    fontSize: '28px',
-    fontWeight: '600',
-    color: '#2c3e50',
-    margin: 0,
-  },
-  changePasswordButton: {
-    padding: '10px 20px',
-    backgroundColor: '#6366f1',
-    color: 'white',
-    border: 'none',
-    borderRadius: '6px',
-    fontSize: '14px',
-    fontWeight: '500',
-    cursor: 'pointer',
-  },
-  content: {
-    display: 'grid',
-    gap: '24px',
-  },
-  infoSection: {
-    backgroundColor: 'white',
-    padding: '24px',
-    borderRadius: '8px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-  },
-  sectionTitle: {
-    fontSize: '18px',
-    fontWeight: '600',
-    color: '#2c3e50',
-    marginTop: 0,
-    marginBottom: '20px',
-  },
-  infoGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-    gap: '20px',
-  },
-  infoItem: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px',
-  },
-  infoLabel: {
-    fontSize: '14px',
-    color: '#666',
-    fontWeight: '500',
-  },
-  infoValue: {
-    fontSize: '16px',
-    color: '#2c3e50',
-    fontWeight: '500',
-  },
-  infoBadge: {
-    display: 'inline-block',
-    padding: '6px 16px',
-    backgroundColor: '#e3f2fd',
-    color: '#1976d2',
-    borderRadius: '16px',
-    fontSize: '14px',
-    fontWeight: '500',
-    width: 'fit-content',
-  },
-  statusBadge: {
-    display: 'inline-block',
-    padding: '6px 16px',
-    borderRadius: '16px',
-    fontSize: '14px',
-    fontWeight: '500',
-    width: 'fit-content',
-  },
-  formSection: {
-    backgroundColor: 'white',
-    padding: '24px',
-    borderRadius: '8px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-  },
-  errorMessage: {
-    padding: '12px',
-    backgroundColor: '#fee',
-    color: '#c33',
-    borderRadius: '6px',
-    marginBottom: '16px',
-    fontSize: '14px',
-  },
-  successMessage: {
-    padding: '12px',
-    backgroundColor: '#e8f5e9',
-    color: '#2e7d32',
-    borderRadius: '6px',
-    marginBottom: '16px',
-    fontSize: '14px',
-  },
-  formGrid: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '20px',
-    marginBottom: '24px',
-  },
-  formGroup: {
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  label: {
-    marginBottom: '8px',
-    fontSize: '14px',
-    fontWeight: '500',
-    color: '#2c3e50',
-  },
-  input: {
-    padding: '10px 12px',
-    border: '1px solid #ddd',
-    borderRadius: '6px',
-    fontSize: '14px',
-    outline: 'none',
-  },
-  buttonGroup: {
-    display: 'flex',
-    gap: '12px',
-  },
-  submitButton: {
-    padding: '12px 24px',
-    backgroundColor: '#6366f1',
-    color: 'white',
-    border: 'none',
-    borderRadius: '6px',
-    fontSize: '14px',
-    fontWeight: '500',
-    cursor: 'pointer',
-  },
-  cancelButton: {
-    padding: '12px 24px',
-    backgroundColor: 'white',
-    color: '#666',
-    border: '1px solid #ddd',
-    borderRadius: '6px',
-    fontSize: '14px',
-    fontWeight: '500',
-    cursor: 'pointer',
-  },
 };
 
 export default UserProfile;
