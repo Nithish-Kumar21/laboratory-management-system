@@ -3,8 +3,8 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { FaUserShield, FaUserPlus, FaEdit, FaTrashAlt } from 'react-icons/fa';
 import api from '../utils/api';
-import CreateUserModal from './CreateUserModal';
-import EditUserModal from './EditUserModal';
+import CreateUserModal from './modals/CreateUserModal';
+import EditUserModal from './modals/EditUserModal';
 import ConfirmDialog from './ConfirmDialog';
 
 const UserManagement = () => {
