@@ -203,6 +203,7 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
               </div>
 
 <<<<<<< HEAD
+<<<<<<< HEAD
                   <div className="chem-select-col">
                     <select
                       value={item.chemical_name}
@@ -223,6 +224,8 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
                 placeholder="Briefly describe what these chemicals will be used for..."
 {{ ... }
 =======
+=======
+>>>>>>> f57127f563959cb9dc3a5104dcaa91cd02714fb3
               <div className="chemical-requirements-table">
                 <div className="grid-matrix-header">
                   <span>Chemical</span>
@@ -242,12 +245,18 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
                         value={item.chemical_name}
                         onChange={(e) => {
                           updateChemicalItem(i, 'chemical_name', e.target.value);
-                          setShowSuggestions({ [i]: true });
+                          if (e.target.value.trim()) {
+                            setShowSuggestions({ [i]: true });
+                          }
                         }}
-                        onFocus={() => setShowSuggestions({ [i]: true })}
+                        onFocus={() => {
+                          if (item.chemical_name && item.chemical_name.trim()) {
+                            setShowSuggestions({ [i]: true });
+                          }
+                        }}
                         onBlur={() => setTimeout(() => setShowSuggestions({}), 200)}
                       />
-                      {showSuggestions[i] && item.chemical_name && (
+                      {showSuggestions[i] && item.chemical_name && item.chemical_name.trim() && (
                         <ul className="suggestions-dropdown list-style-none">
                           {availableChemicals
                             .filter(c =>
@@ -316,7 +325,10 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
                 onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
                 placeholder="Details..."
                 rows={3}
+<<<<<<< HEAD
 >>>>>>> bugftx
+=======
+>>>>>>> f57127f563959cb9dc3a5104dcaa91cd02714fb3
                 className="modern-textarea"
               />
             </div>
