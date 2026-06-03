@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
-import TopBar from './layout/TopBar';
+import Header from './layout/Header';
 import Sidebar from './layout/Sidebar';
+import BottomNav from './layout/BottomNav';
 import ProtectedRoute from './components/ProtectedRoute';
+import StaffLayout from './layouts/StaffLayout';
 import Login from './components/Login';
 import ChangePassword from './components/ChangePassword';
 import ForgotPassword from './components/ForgotPassword';
@@ -39,28 +41,10 @@ function AdminBlock({ children, redirectTo = '/users' }) {
 
 function AppContent() {
   const { loading } = useAuth();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 1024);
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-
-  useEffect(() => {
-    const handleResize = () => {
-      const mobile = window.innerWidth <= 768;
-      setIsMobile(mobile);
-      if (mobile) {
-        setIsSidebarOpen(false);
-      } else {
-        setIsSidebarOpen(window.innerWidth > 1024);
-      }
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   if (loading) {
     return <div style={{ padding: '20px', textAlign: 'center' }}>Loading...</div>;
   }
-
-  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
   return (
     <Router>
@@ -71,19 +55,30 @@ function AppContent() {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/change-password" element={<ProtectedRoute><ChangePassword /></ProtectedRoute>} />
 
-        {/* Protected Routes with Hybrid Layout */}
+        {/* Staff Routes */}
+        <Route
+          path="/staff"
+          element={
+            <ProtectedRoute>
+              <StaffLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route path="inventory" element={<div className="page-placeholder">Inventory — coming soon</div>} />
+          <Route path="chemical-request" element={<div className="page-placeholder">Chemical Request — coming soon</div>} />
+          <Route path="draft" element={<div className="page-placeholder">Draft — coming soon</div>} />
+          <Route path="settings" element={<div className="page-placeholder">Settings — coming soon</div>} />
+          <Route index element={<Navigate to="inventory" replace />} />
+        </Route>
+
+        {/* Protected Routes with Layout */}
         <Route
           path="/*"
           element={
             <ProtectedRoute>
-              <div className={`app-layout ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
-                <TopBar onToggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
-                <Sidebar isOpen={isSidebarOpen} isMobile={isMobile} />
-
-                {isMobile && isSidebarOpen && (
-                  <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)} />
-                )}
-
+              <div className="app-layout">
+                <Header />
+                <Sidebar />
                 <div className="main-content-area">
                   <LowStockToast />
                   <div className="page-container">
@@ -120,6 +115,7 @@ function AppContent() {
                     </Routes>
                   </div>
                 </div>
+                <BottomNav />
               </div>
             </ProtectedRoute>
           }

@@ -140,18 +140,6 @@ class StockRequestViewSet(viewsets.ModelViewSet):
         obj.issued_by = request.user
         obj.save()
 
-        # DECREASE INVENTORY
-        # For each chemical item, reduce the available quantity
-        for item in obj.chemical_items.all():
-            try:
-                available_stock = AvailableChemical.objects.get(chemical_name=item.chemical_name)
-                available_stock.available_quantity_ml -= item.quantity_ml
-                available_stock.save()
-            except AvailableChemical.DoesNotExist:
-                # If chemical not found in inventory, log warning or ignore 
-                # (Ideally, request creation should validate existence, but for now we proceed)
-                pass
-
         return Response(StockRequestDetailSerializer(obj).data)
 
     @action(detail=True, methods=['post'])
@@ -212,19 +200,12 @@ class StockRequestViewSet(viewsets.ModelViewSet):
             status='completed'
         )
 
-        # 2. Process Items and Adjust Inventory
+        # 2. Process Items and Reduce Inventory
         for item in obj.chemical_items.all():
-            if item.actual_used_quantity_ml is None:
-                actual = item.quantity_ml
-            else:
-                actual = item.actual_used_quantity_ml
-            
+            actual = item.actual_used_quantity_ml if item.actual_used_quantity_ml is not None else item.quantity_ml
             requested = item.quantity_ml
-            returned = max(0, requested - actual)
-            additional = max(0, actual - requested)
 
             # Log item to legacy table 'issue_chemicals'
-            # Note: 'returned' and 'additional' are GENERATED ALWAYS columns in the DB.
             IssueChemicals.objects.create(
                 ir=issue_register,
                 chemical_name=item.chemical_name,
@@ -232,13 +213,10 @@ class StockRequestViewSet(viewsets.ModelViewSet):
                 actual_usage=actual
             )
 
-            # Adjust Inventory
+            # Reduce Inventory by actual used quantity
             try:
                 stock_item = AvailableChemical.objects.get(chemical_name=item.chemical_name)
-                if returned > 0:
-                    stock_item.available_quantity_ml += returned
-                if additional > 0:
-                    stock_item.available_quantity_ml -= additional
+                stock_item.available_quantity_ml -= actual
                 stock_item.save()
             except AvailableChemical.DoesNotExist:
                 pass

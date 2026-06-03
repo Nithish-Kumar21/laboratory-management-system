@@ -1,103 +1,104 @@
 import React, { useEffect, useState } from 'react';
-import { FaBoxes, FaClock } from 'react-icons/fa';
-import ApparatusTable from '../components/tables/ApparatusTable';
+import { FaSearch, FaFilter } from 'react-icons/fa';
 import ChemicalTable from '../components/tables/ChemicalTable';
-import LowStockAlert from '../components/LowStockAlert';
+import ApparatusTable from '../components/tables/ApparatusTable';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import './Inventory.css';
 
 function Inventory() {
-  const { isStaff, isAdmin } = useAuth();
+  const { isStaff } = useAuth();
   const [activeTab, setActiveTab] = useState('chemical');
-  const [hasLowStockChem, setHasLowStockChem] = useState(false);
-  const [hasLowStockApp, setHasLowStockApp] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [warningItems, setWarningItems] = useState([]);
 
-  const showLowStockFeature = !isStaff && !isAdmin;
-  const showReorderLevel = !isStaff;
+  const showExtra = !isStaff;
 
-  const checkLowStockStatus = async () => {
-    if (!showLowStockFeature) return;
+  const checkLowStock = async () => {
     try {
       const [chemRes, appRes] = await Promise.all([
         api.get('low_stock_chemicals/').catch(() => ({ data: [] })),
         api.get('low_stock_apparatus/').catch(() => ({ data: [] })),
       ]);
-      const chemData = Array.isArray(chemRes.data) ? chemRes.data : chemRes.data.results || [];
-      const appData = Array.isArray(appRes.data) ? appRes.data : appRes.data.results || [];
-
-      setHasLowStockChem(chemData.length > 0);
-      setHasLowStockApp(appData.length > 0);
-    } catch (err) {
-      console.error('Error checking tab low stock:', err);
+      const chem = Array.isArray(chemRes.data) ? chemRes.data : chemRes.data.results || [];
+      const app = Array.isArray(appRes.data) ? appRes.data : appRes.data.results || [];
+      setWarningItems([...chem, ...app]);
+    } catch (e) {
+      console.error('Low stock check failed', e);
     }
   };
 
   useEffect(() => {
-    checkLowStockStatus();
-    window.addEventListener('inventory-updated', checkLowStockStatus);
-    const interval = setInterval(checkLowStockStatus, 60000);
+    checkLowStock();
+    window.addEventListener('inventory-updated', checkLowStock);
+    const interval = setInterval(checkLowStock, 60000);
     return () => {
-      window.removeEventListener('inventory-updated', checkLowStockStatus);
+      window.removeEventListener('inventory-updated', checkLowStock);
       clearInterval(interval);
     };
-  }, [showLowStockFeature]);
+  }, []);
+
+  const totalWarning = warningItems.length;
 
   return (
-    <div className="inventory-page dept-inventory animate-up">
-      <div className="page-header">
-        <div className="dept-title-container">
-          <div className="dept-icon-box" style={{ color: 'var(--dept-inventory)' }}>
-            <FaBoxes />
-          </div>
-          <div>
-            <h1 className="page-title">Inventory Management</h1>
-            <p className="page-subtitle">Real-time tracking of chemicals and laboratory apparatus.</p>
-          </div>
-        </div>
-        {showLowStockFeature && (
-          <div className="status-badge-container">
-            <span className={`status-badge ${hasLowStockChem || hasLowStockApp ? 'warning' : 'success'}`}>
-              {hasLowStockChem || hasLowStockApp ? 'Attention Required' : 'Stock Optimal'}
-            </span>
-          </div>
-        )}
-      </div>
+    <div className="inventory-page animate-up">
+      <h1 className="inv-page-title">Inventory</h1>
 
-      <div className="inventory-tabs">
+      <div className="inv-tabs">
         <button
-          className={`tab-item ${activeTab === 'chemical' ? 'active' : ''}`}
+          className={`inv-tab ${activeTab === 'chemical' ? 'active' : ''}`}
           onClick={() => setActiveTab('chemical')}
         >
-          <span className="tab-text">Chemicals</span>
-          {showLowStockFeature && hasLowStockChem && <span className="tab-indicator warning animate-pulse"></span>}
+          Chemicals
         </button>
         <button
-          className={`tab-item ${activeTab === 'apparatus' ? 'active' : ''}`}
+          className={`inv-tab ${activeTab === 'apparatus' ? 'active' : ''}`}
           onClick={() => setActiveTab('apparatus')}
         >
-          <span className="tab-text">Apparatus</span>
-          {showLowStockFeature && hasLowStockApp && <span className="tab-indicator warning animate-pulse"></span>}
+          Apparatus
         </button>
-        <div className="tab-slider" style={{ left: activeTab === 'chemical' ? '0%' : '50%' }}></div>
       </div>
 
-      {showLowStockFeature && (
-        <div className="inventory-alert-box animate-fade">
-          <LowStockAlert activeTab={activeTab} />
+      <div className="inv-search-row">
+        <div className="inv-search-wrap">
+          <FaSearch className="inv-search-icon" />
+          <input
+            type="text"
+            className="inv-search-input"
+            placeholder={`Search ${activeTab === 'chemical' ? 'chemicals' : 'apparatus'}...`}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <button className="inv-filter-btn" type="button">
+          <FaFilter />
+        </button>
+      </div>
+
+      {showExtra && (
+        <div className="inv-legend">
+          <span><span className="legend-dot green" /> Healthy</span>
+          <span><span className="legend-dot yellow" /> Low Stock</span>
+          <span><span className="legend-dot red" /> Critical</span>
         </div>
       )}
 
-      <div className="inventory-card card animate-fade">
-        <div className="table-responsive">
-          {activeTab === 'chemical' ? (
-            <ChemicalTable showReorderLevel={showReorderLevel} />
-          ) : (
-            <ApparatusTable showReorderLevel={showReorderLevel} />
-          )}
+      {showExtra && totalWarning > 0 && (
+        <div className="inv-warning-banner">
+          <span className="warning-text">
+            <span className="warning-icon">🔴</span>
+            Low Stock Warning — {totalWarning} item(s) need attention
+          </span>
+          <span className="warning-action">View Items</span>
         </div>
-      </div>
-    </div >
+      )}
+
+      {activeTab === 'chemical' ? (
+        <ChemicalTable showExtra={showExtra} searchTerm={searchTerm} />
+      ) : (
+        <ApparatusTable showExtra={showExtra} searchTerm={searchTerm} />
+      )}
+    </div>
   );
 }
 

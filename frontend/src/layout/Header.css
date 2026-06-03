@@ -1,0 +1,177 @@
+.app-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1100;
+  height: 56px;
+  background: #1A3C6E;
+  border-bottom: 3px solid #4A90D9;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.header-left {
+  display: none;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-flask-icon {
+  font-size: 1rem;
+  color: #fff;
+}
+
+.header-lms {
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.header-lms-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* Theme toggle button */
+.header-theme-btn {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.85);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: color 0.2s, background 0.2s;
+  flex-shrink: 0;
+}
+
+.header-theme-btn:hover {
+  color: #ffffff;
+  background: rgba(255,255,255,0.1);
+}
+
+/* Notification bell overrides inside header */
+.header-right .action-item .topbar-action-btn {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.85);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: color 0.2s, background 0.2s;
+  flex-shrink: 0;
+  padding: 0;
+  box-shadow: none;
+  transform: none;
+}
+
+.header-right .action-item .topbar-action-btn:hover {
+  color: #ffffff;
+  background: rgba(255,255,255,0.1);
+  border-color: transparent;
+  transform: none;
+  box-shadow: none;
+}
+
+.header-right .action-item .notif-btn.has-alerts {
+  color: rgba(255,255,255,0.85);
+}
+
+.header-right .action-item .notif-btn.has-alerts:hover {
+  color: #ffffff;
+}
+
+/* User profile group */
+.header-user-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-avatar-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #4A90D9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.header-user-info {
+  display: none;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.header-user-name {
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.header-user-sub {
+  color: rgba(255,255,255,0.6);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+@media (min-width: 769px) {
+  .app-header {
+    height: 64px;
+    padding: 0 24px;
+  }
+
+  .header-left {
+    display: flex;
+    gap: 10px;
+  }
+
+  .header-lms {
+    font-size: 22px;
+  }
+
+  .header-lms-center {
+    display: none;
+  }
+
+  .header-user-info {
+    display: flex;
+  }
+
+  .header-flask-icon {
+    font-size: 1.1rem;
+  }
+}

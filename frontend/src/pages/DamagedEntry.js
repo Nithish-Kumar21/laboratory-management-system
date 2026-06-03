@@ -1,17 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaPlusCircle, FaExclamationTriangle, FaUserShield, FaGraduationCap, FaCalendarAlt, FaClock, FaSearch, FaFilter, FaSort } from 'react-icons/fa';
+import { FaPlus, FaSearch, FaExclamationTriangle, FaFilter, FaSortUp, FaSortDown } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import AddDamagedEntryModal from '../components/modals/AddDamagedEntryModal';
 import './DamagedEntry.css';
-import './StockRegister.css'; // Reuse filter and search styles
+
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
 
 function DamagedEntry() {
+  const navigate = useNavigate();
+  const { isStoreKeeper, isStaff } = useAuth();
   const [damagedEntries, setDamagedEntries] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState('date');
   const [sortOrder, setSortOrder] = useState('desc');
@@ -19,36 +26,24 @@ function DamagedEntry() {
     dateFrom: '',
     dateTo: '',
     staff: '',
-    className: '',
-    causedBy: '',
-    apparatusName: ''
+    itemName: ''
   });
-  const navigate = useNavigate();
-  const { isAdmin, isStoreKeeper, isStaff } = useAuth();
 
   const canAddEntry = isStoreKeeper;
 
-  const fetchDamagedEntries = () => {
+  const fetchEntries = async () => {
     setLoading(true);
-    const params = new URLSearchParams();
-    
-    // Add sorting
-    const orderPrefix = sortOrder === 'desc' ? '-' : '';
-    params.append('ordering', `${orderPrefix}${sortBy}`);
-    
-    api
-      .get(`damaged_entry/?${params.toString()}`)
-      .then((response) => {
-        setDamagedEntries(
-          Array.isArray(response.data) ? response.data : response.data.results || []
-        );
-      })
-      .catch((error) => {
-        console.error('Error fetching damaged entries:', error);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    try {
+      const params = new URLSearchParams();
+      const orderPrefix = sortOrder === 'desc' ? '-' : '';
+      params.append('ordering', `${orderPrefix}${sortBy}`);
+      const res = await api.get(`damaged_entry/?${params.toString()}`);
+      setDamagedEntries(Array.isArray(res.data) ? res.data : res.data.results || []);
+    } catch (err) {
+      console.error('Error fetching damaged entries:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -56,7 +51,9 @@ function DamagedEntry() {
       navigate('/');
       return;
     }
-    fetchDamagedEntries();
+    fetchEntries();
+    window.addEventListener('inventory-updated', fetchEntries);
+    return () => window.removeEventListener('inventory-updated', fetchEntries);
   }, [isStaff, navigate, sortBy, sortOrder]);
 
   const handleFilterChange = (key, value) => {
@@ -64,260 +61,204 @@ function DamagedEntry() {
   };
 
   const clearFilters = () => {
-    setFilters({
-      dateFrom: '',
-      dateTo: '',
-      staff: '',
-      className: '',
-      causedBy: '',
-      apparatusName: ''
-    });
+    setFilters({ dateFrom: '', dateTo: '', staff: '', itemName: '' });
   };
 
   const applyFilters = (entries) => {
     return entries.filter(entry => {
-      // Date range filter
       if (filters.dateFrom && entry.date < filters.dateFrom) return false;
       if (filters.dateTo && entry.date > filters.dateTo) return false;
-      
-      // Staff filter
-      if (filters.staff && !entry.staff?.toLowerCase().includes(filters.staff.toLowerCase())) {
-        return false;
-      }
-      
-      // Class filter
-      if (filters.className && !entry.class_name?.toLowerCase().includes(filters.className.toLowerCase())) {
-        return false;
-      }
-      
-      // Caused by filter
-      if (filters.causedBy && !entry.caused_by?.toLowerCase().includes(filters.causedBy.toLowerCase())) {
-        return false;
-      }
-      
-      // Apparatus name filter (check nested items)
-      if (filters.apparatusName) {
-        const hasApparatus = entry.damaged_items?.some(item => 
-          item.apparatus_name.toLowerCase().includes(filters.apparatusName.toLowerCase())
+      if (filters.staff && !entry.staff?.toLowerCase().includes(filters.staff.toLowerCase())) return false;
+      if (filters.itemName) {
+        const hasItem = entry.damaged_items?.some(item =>
+          item.apparatus_name?.toLowerCase().includes(filters.itemName.toLowerCase())
         );
-        if (!hasApparatus) return false;
+        if (!hasItem) return false;
       }
-      
       return true;
     });
   };
 
   const filtered = applyFilters(damagedEntries).filter(entry =>
+    String(entry.id).includes(search) ||
     entry.staff?.toLowerCase().includes(search.toLowerCase()) ||
     entry.class_name?.toLowerCase().includes(search.toLowerCase()) ||
-    entry.caused_by?.toLowerCase().includes(search.toLowerCase())
+    entry.caused_by?.toLowerCase().includes(search.toLowerCase()) ||
+    entry.damaged_items?.some(item =>
+      item.apparatus_name?.toLowerCase().includes(search.toLowerCase())
+    )
   );
 
+  const handleCardClick = (id) => {
+    navigate(`/damaged-entry/${id}`);
+  };
+
   return (
-    <div className="damaged-entry-page dept-damaged animate-up">
-      <div className="page-header">
-        <div className="dept-title-container">
-          <div className="dept-icon-box" style={{ color: 'var(--dept-damaged)' }}>
-            <FaExclamationTriangle />
-          </div>
-          <div>
-            <h1 className="page-title">Damaged Registry</h1>
-            <p className="page-subtitle">Incident logs for laboratory damage and consumption.</p>
-          </div>
+    <div className="de-page animate-up">
+      {/* Title Row */}
+      <div className="de-title-row">
+        <h1 className="de-title">Damaged Entry</h1>
+        <div className="de-title-right">
+          {canAddEntry && (
+            <button className="de-add-btn" onClick={() => setIsModalOpen(true)}>
+              <FaPlus /> New Damaged Entry
+            </button>
+          )}
+          {canAddEntry && (
+            <button className="de-add-btn-mobile" onClick={() => setIsModalOpen(true)}>
+              <FaPlus /> Add
+            </button>
+          )}
         </div>
-        {canAddEntry && (
-          <button className="btn-primary" onClick={() => setIsModalOpen(true)}>
-            <FaPlusCircle /> Report Damage
-          </button>
-        )}
       </div>
 
-      <div className="search-bar-container card">
-        <FaSearch className="search-icon" />
-        <input
-          type="text"
-          placeholder="Search by Staff, Class, or Cause..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="search-input"
-        />
-        <div className="search-controls">
-          <button 
-            className="btn-filter"
+      {/* Search + Filter Row */}
+      <div className="de-search-row">
+        <div className="de-search-left">
+          <FaSearch className="de-search-icon" />
+          <input
+            type="text"
+            className="de-search-input"
+            placeholder="Search damaged entries..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <div className="de-search-divider" />
+        <div className="de-search-right">
+          <button
+            className={`de-filter-btn ${showFilters ? 'active' : ''}`}
             onClick={() => setShowFilters(!showFilters)}
-            title="Toggle Filters"
           >
             <FaFilter /> Filters
           </button>
-          <div className="sort-controls">
-            <label>Sort by:</label>
-            <select 
-              value={sortBy} 
+          <div className="de-search-divider" />
+          <div className="de-sort-group">
+            <span className="de-sort-label">Sort by:</span>
+            <select
+              className="de-sort-select"
+              value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="sort-select"
             >
               <option value="date">Date</option>
-              <option value="staff">Staff</option>
-              <option value="class_name">Class</option>
             </select>
-            <button 
-              className="btn-sort-order"
+            <button
+              className="de-sort-order-btn"
               onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-              title={`Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`}
             >
-              <FaSort />
+              {sortOrder === 'asc' ? <FaSortUp /> : <FaSortDown />}
             </button>
           </div>
         </div>
       </div>
 
+      {/* Filters Panel */}
       {showFilters && (
-        <div className="filters-panel card animate-fade">
-          <h3><FaFilter /> Filters</h3>
-          <div className="filters-grid">
-            <div className="filter-group">
+        <div className="de-filters-panel animate-fade">
+          <div className="de-filters-grid">
+            <div className="de-filter-group">
               <label>Date From:</label>
-              <input
-                type="date"
-                value={filters.dateFrom}
-                onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
-                className="filter-input"
-              />
+              <input type="date" value={filters.dateFrom} onChange={(e) => handleFilterChange('dateFrom', e.target.value)} />
             </div>
-            <div className="filter-group">
+            <div className="de-filter-group">
               <label>Date To:</label>
-              <input
-                type="date"
-                value={filters.dateTo}
-                onChange={(e) => handleFilterChange('dateTo', e.target.value)}
-                className="filter-input"
-              />
+              <input type="date" value={filters.dateTo} onChange={(e) => handleFilterChange('dateTo', e.target.value)} />
             </div>
-            <div className="filter-group">
+            <div className="de-filter-group">
               <label>Staff:</label>
-              <input
-                type="text"
-                placeholder="Staff name..."
-                value={filters.staff}
-                onChange={(e) => handleFilterChange('staff', e.target.value)}
-                className="filter-input"
-              />
+              <input type="text" placeholder="Staff name..." value={filters.staff} onChange={(e) => handleFilterChange('staff', e.target.value)} />
             </div>
-            <div className="filter-group">
-              <label>Class:</label>
-              <input
-                type="text"
-                placeholder="Class name..."
-                value={filters.className}
-                onChange={(e) => handleFilterChange('className', e.target.value)}
-                className="filter-input"
-              />
-            </div>
-            <div className="filter-group">
-              <label>Caused By:</label>
-              <input
-                type="text"
-                placeholder="Cause..."
-                value={filters.causedBy}
-                onChange={(e) => handleFilterChange('causedBy', e.target.value)}
-                className="filter-input"
-              />
-            </div>
-            <div className="filter-group">
-              <label>Apparatus Name:</label>
-              <input
-                type="text"
-                placeholder="Apparatus name..."
-                value={filters.apparatusName}
-                onChange={(e) => handleFilterChange('apparatusName', e.target.value)}
-                className="filter-input"
-              />
+            <div className="de-filter-group">
+              <label>Item Name:</label>
+              <input type="text" placeholder="Item name..." value={filters.itemName} onChange={(e) => handleFilterChange('itemName', e.target.value)} />
             </div>
           </div>
-          <div className="filter-actions">
-            <button className="btn-secondary" onClick={clearFilters}>
-              Clear Filters
-            </button>
+          <div className="de-filter-actions">
+            <button className="de-filter-clear" onClick={clearFilters}>Clear Filters</button>
           </div>
         </div>
       )}
 
-      <div className="table-actions animate-fade">
-        <div className="action-buttons">
-          <span className="info-text">Showing incident logs</span>
-        </div>
-      </div>
-
-      <div className="table-card card animate-fade">
-        {loading ? (
-          <div className="loading-state">
-            <div className="spinner"></div>
-            <p>Loading incident reports...</p>
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="empty-state">
-            <FaExclamationTriangle className="empty-icon" />
-            <h3>No records found</h3>
-            <p>No incidents have been reported.</p>
-          </div>
-        ) : (
-          <div className="table-container">
-            <table className="premium-table">
-              <thead>
-                <tr>
-                  <th>Responsible Staff</th>
-                  <th>Class / Division</th>
-                  <th>Date of Incident</th>
-                  <th>Caused By</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((entry) => (
-                  <tr
-                    key={entry.id}
-                    className="table-row-hover"
-                    onClick={() => navigate(`/damaged-entry/${entry.id}`)}
-                    style={{ cursor: 'pointer' }}
+      {/* Content */}
+      {loading ? (
+        <div className="de-loading"><div className="loading-spinner" /></div>
+      ) : filtered.length > 0 ? (
+        <>
+          {/* Desktop Cards */}
+          <div className="de-card-list-desktop">
+            {filtered.map((entry) => {
+              const ref = `DMG-${String(entry.id).padStart(3, '0')}`;
+              const itemNames = entry.damaged_items?.map(i => i.apparatus_name).join(', ') || '—';
+              return (
+                <div
+                  key={entry.id}
+                  className="de-card"
+                  onClick={() => handleCardClick(entry.id)}
+                >
+                  <div className="de-card-icon-box">
+                    <FaExclamationTriangle />
+                  </div>
+                  <div className="de-card-info">
+                    <div className="de-card-ref">{ref}</div>
+                    <div className="de-card-item">{itemNames}</div>
+                  </div>
+                  <div className="de-card-date">
+                    📅 {formatDate(entry.date)}
+                  </div>
+                  <div className="de-card-type">
+                    <span className="de-type-badge de-type-apparatus">Apparatus</span>
+                  </div>
+                  <div className="de-card-reason">{entry.caused_by || '—'}</div>
+                  <button
+                    className="de-card-btn"
+                    onClick={(e) => { e.stopPropagation(); handleCardClick(entry.id); }}
                   >
-                    <td>
-                      <div className="staff-info">
-                        <FaUserShield className="row-icon" />
-                        {entry.staff}
-                      </div>
-                    </td>
-                    <td>
-                      <div className="class-info">
-                        <FaGraduationCap className="row-icon" />
-                        {entry.class_name}
-                      </div>
-                    </td>
-                    <td>
-                      <div className="date-info">
-                        <FaCalendarAlt className="row-icon-small" />
-                        {entry.date}
-                      </div>
-                    </td>
-                    <td><span className="cause-tag">{entry.caused_by}</span></td>
-                    <td><span className="status-tag red">Recorded</span></td>
-                    <td>
-                      <button className="btn-table-view" onClick={() => navigate(`/damaged-entry/${entry.id}`)}>
-                        View Details
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    View Details ›
+                  </button>
+                </div>
+              );
+            })}
           </div>
-        )}
-      </div>
+
+          {/* Mobile Cards */}
+          <div className="de-card-list-mobile">
+            {filtered.map((entry) => {
+              const ref = `DMG-${String(entry.id).padStart(3, '0')}`;
+              const itemNames = entry.damaged_items?.map(i => i.apparatus_name).join(', ') || '—';
+              return (
+                <div
+                  key={entry.id}
+                  className="de-card-mobile"
+                  onClick={() => handleCardClick(entry.id)}
+                >
+                  <div className="de-mobile-icon-box">
+                    <FaExclamationTriangle />
+                  </div>
+                  <div className="de-mobile-ref">{ref}</div>
+                  <span className="de-mobile-view" onClick={(e) => { e.stopPropagation(); handleCardClick(entry.id); }}>
+                    View ›
+                  </span>
+                  <div className="de-mobile-item">{itemNames}</div>
+                  <div className="de-mobile-meta">
+                    📅 {formatDate(entry.date)} · <span className="de-type-badge de-type-apparatus">Apparatus</span> · {entry.caused_by || '—'}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      ) : (
+        <div className="de-empty">
+          <FaExclamationTriangle className="de-empty-icon" />
+          <div className="de-empty-title">No damaged entries yet</div>
+          <div className="de-empty-sub">Log damaged items using the button above</div>
+        </div>
+      )}
 
       <AddDamagedEntryModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSuccess={fetchDamagedEntries}
+        onSuccess={fetchEntries}
       />
     </div>
   );

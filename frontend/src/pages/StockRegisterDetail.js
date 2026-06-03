@@ -1,10 +1,25 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { FaArrowLeft, FaTrash, FaFlask, FaBoxes, FaExclamationTriangle } from 'react-icons/fa';
+import { FaArrowLeft, FaFlask, FaBoxes, FaPrint } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import ConfirmDialog from '../components/ConfirmDialog';
 import './StockRegisterDetail.css';
+
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+function formatDateShort(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}-${month}-${year}`;
+}
 
 function StockRegisterDetail() {
   const { id } = useParams();
@@ -35,104 +50,178 @@ function StockRegisterDetail() {
     setDialog({ open: true, message: 'Delete this entry? Inventory will be reverted.', showCancel: true, onConfirm: runDelete });
   };
 
-  if (loading) return <div className="loading-spinner"></div>;
+  if (loading) return <div className="loading-spinner" />;
   if (error) return <div className="error-message">{error}</div>;
   if (!stockRegister) return null;
 
+  const chemItems = stockRegister.chemical_items || [];
+  const appItems = stockRegister.apparatus_items || [];
+  const chemCount = chemItems.length;
+  const appCount = appItems.length;
+
   return (
-    <div className="stock-detail-page animate-up">
-      <div className="detail-header">
-        <button className="back-button" onClick={() => navigate('/stock-register')}>
-          <FaArrowLeft />
-        </button>
-        <div className="header-title-box">
-          <h2>Stock Entry Details</h2>
-          <p>REF: {stockRegister.invoice_number}</p>
-        </div>
-      </div>
-
-      <div className="detail-info-grid">
-        <div className="info-card card">
-          <label>Invoice Number</label>
-          <span>{stockRegister.invoice_number}</span>
-        </div>
-        <div className="info-card card">
-          <label>Date of Entry</label>
-          <span>{stockRegister.date}</span>
-        </div>
-        <div className="info-card card">
-          <label>Supplier / Vendor</label>
-          <span>{stockRegister.supplier_name || 'Generic Vendor'}</span>
-        </div>
-      </div>
-
-      {stockRegister.chemical_items?.length > 0 && (
-        <div className="items-section animate-fade">
-          <h3><FaFlask /> Chemical Acquisitions</h3>
-          <div className="card no-padding">
-            <table className="detail-table">
-              <thead>
-                <tr>
-                  <th>Chemical Name</th>
-                  <th>Quantity</th>
-                  <th>Rate</th>
-                  <th>Make</th>
-                </tr>
-              </thead>
-              <tbody>
-                {stockRegister.chemical_items.map(it => (
-                  <tr key={it.id}>
-                    <td className="item-name">{it.chemical_name}</td>
-                    <td><span className="qty-badge">{it.quantity_ml} ml</span></td>
-                    <td>₹{it.rate}</td>
-                    <td>{it.make}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+    <div className="srd-page animate-up">
+      {/* ===== STICKY TOP BAR ===== */}
+      <div className="srd-topbar">
+        {/* ---- Desktop ---- */}
+        <div className="srd-topbar-desktop-content">
+          <div className="srd-topbar-left">
+            <button className="srd-back-btn" onClick={() => navigate('/stock-register')}>
+              <FaArrowLeft />
+            </button>
+            <div className="srd-topbar-title-group">
+              <span className="srd-topbar-title">Stock Entry Details</span>
+              <span className="srd-ref-pill">REF: {stockRegister.invoice_number}</span>
+            </div>
           </div>
-        </div>
-      )}
-
-      {stockRegister.apparatus_items?.length > 0 && (
-        <div className="items-section animate-fade" style={{ animationDelay: '0.1s' }}>
-          <h3><FaBoxes /> Apparatus Acquisitions</h3>
-          <div className="card no-padding">
-            <table className="detail-table">
-              <thead>
-                <tr>
-                  <th>Apparatus Name</th>
-                  <th>Quantity</th>
-                  <th>Rate</th>
-                  <th>Make</th>
-                </tr>
-              </thead>
-              <tbody>
-                {stockRegister.apparatus_items.map(it => (
-                  <tr key={it.id}>
-                    <td className="item-name">{it.apparatus_name}</td>
-                    <td><span className="qty-badge">{it.quantity_pieces} pcs</span></td>
-                    <td>₹{it.rate}</td>
-                    <td>{it.make}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {isStoreKeeper && (
-        <div className="delete-action-box">
-          <div className="delete-text">
-            <h4><FaExclamationTriangle /> Danger Zone</h4>
-            <p>Deleting this record will irreversibly undo inventory adjustments.</p>
-          </div>
-          <button className="btn-delete-danger" onClick={handleDelete} disabled={deleting}>
-            <FaTrash /> {deleting ? 'Removing...' : 'Permanently Delete Entry'}
+          <button className="srd-print-btn" onClick={() => window.print()}>
+            <FaPrint /> Print
+          </button>
+          <button className="srd-print-icon-btn" onClick={() => window.print()}>
+            <FaPrint />
           </button>
         </div>
-      )}
+
+        {/* ---- Mobile ---- */}
+        <div className="srd-topbar-mobile-content">
+          <button className="srd-back-btn-mobile" onClick={() => navigate('/stock-register')}>
+            <FaArrowLeft />
+          </button>
+          <span className="srd-topbar-title-mobile">Stock Details</span>
+        </div>
+      </div>
+
+      <div className="srd-body">
+        {/* ===== INFO STRIP (Desktop) ===== */}
+        <div className="srd-info-strip">
+          <div className="srd-info-card">
+            <div className="srd-info-label">Invoice Number</div>
+            <div className="srd-info-value">{stockRegister.invoice_number}</div>
+          </div>
+          <div className="srd-info-card">
+            <div className="srd-info-label">Date of Entry</div>
+            <div className="srd-info-value">{formatDate(stockRegister.date)}</div>
+          </div>
+          <div className="srd-info-card">
+            <div className="srd-info-label">Added By</div>
+            <div className="srd-info-value">{stockRegister.supplier_name}</div>
+          </div>
+        </div>
+
+        {/* ===== INFO CARD (Mobile) ===== */}
+        <div className="srd-mobile-info-card">
+          <div className="srd-card-label">INVOICE INFO</div>
+          <div className="srd-mobile-info-grid">
+            <div className="srd-mobile-info-col">
+              <div className="srd-mobile-info-label">Invoice Number</div>
+              <div className="srd-mobile-info-value">{stockRegister.invoice_number}</div>
+            </div>
+            <div className="srd-mobile-info-vdivider" />
+            <div className="srd-mobile-info-col">
+              <div className="srd-mobile-info-label">Date Received</div>
+              <div className="srd-mobile-info-value">{formatDateShort(stockRegister.date)}</div>
+            </div>
+          </div>
+          <div className="srd-mobile-info-hdivider" />
+          <div className="srd-mobile-info-bottom">
+            <div className="srd-mobile-info-label">Supplier Name</div>
+            <div className="srd-mobile-info-value">{stockRegister.supplier_name}</div>
+          </div>
+        </div>
+
+        {/* ===== CHEMICAL ACQUISITIONS ===== */}
+        {chemCount > 0 && (
+          <div className="srd-section">
+            <div className="srd-section-header">
+              <div className="srd-section-title">
+                <FaFlask className="srd-section-icon" />
+                <span>Chemical Acquisitions</span>
+              </div>
+              <span className="srd-count-badge chem-badge">{chemCount} items</span>
+            </div>
+
+            <div className="srd-mobile-section-top">
+              <div className="srd-card-label">CHEMICAL LIST</div>
+              <div className="srd-mobile-section-divider" />
+            </div>
+
+            <div className="srd-table-wrap">
+              <table className="srd-table">
+                <thead>
+                  <tr>
+                    <th className="srd-th-name">Chemical</th>
+                    <th className="srd-th-qty">Qty</th>
+                    <th className="srd-th-rate">Rate</th>
+                    <th className="srd-th-make">Make</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {chemItems.map(item => (
+                    <tr key={item.id}>
+                      <td className="srd-td-name">{item.chemical_name}</td>
+                      <td className="srd-td-qty"><span className="srd-qty-pill">{item.quantity_ml} ml</span></td>
+                      <td className="srd-td-rate">₹{parseFloat(item.rate).toFixed(2)}</td>
+                      <td className="srd-td-make">{item.make}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* ===== APPARATUS ACQUISITIONS ===== */}
+        {appCount > 0 && (
+          <div className="srd-section">
+            <div className="srd-section-header">
+              <div className="srd-section-title">
+                <FaBoxes className="srd-section-icon" />
+                <span>Apparatus Acquisitions</span>
+              </div>
+              <span className="srd-count-badge app-badge">{appCount} items</span>
+            </div>
+
+            <div className="srd-mobile-section-top">
+              <div className="srd-card-label">APPARATUS LIST</div>
+              <div className="srd-mobile-section-divider" />
+            </div>
+
+            <div className="srd-table-wrap">
+              <table className="srd-table">
+                <thead>
+                  <tr>
+                    <th className="srd-th-name">Apparatus</th>
+                    <th className="srd-th-qty">Qty</th>
+                    <th className="srd-th-rate">Rate</th>
+                    <th className="srd-th-make">Make</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {appItems.map(item => (
+                    <tr key={item.id}>
+                      <td className="srd-td-name">{item.apparatus_name}</td>
+                      <td className="srd-td-qty"><span className="srd-qty-pill">{item.quantity_pieces} pcs</span></td>
+                      <td className="srd-td-rate">₹{parseFloat(item.rate).toFixed(2)}</td>
+                      <td className="srd-td-make">{item.make}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* ===== DANGER ZONE ===== */}
+        {isStoreKeeper && (
+          <div className="srd-danger-zone">
+            <div className="srd-danger-title">⚠️ Danger Zone</div>
+            <div className="srd-danger-sub">Deleting this record will permanently undo inventory quantity adjustments.</div>
+            <button className="srd-delete-btn" onClick={handleDelete} disabled={deleting}>
+              🗑 {deleting ? 'Removing...' : 'Permanently Delete Entry'}
+            </button>
+          </div>
+        )}
+      </div>
 
       <ConfirmDialog
         open={dialog.open}

@@ -7,6 +7,9 @@ import api from '../utils/api';
 import AddRequestModal from '../components/modals/AddRequestModal';
 import './Home.css';
 import './VintageClock.css';
+import '../components/modals/AddDamagedEntryModal.css';
+import '../pages/StockRequestDetail.css';
+import '../components/modals/AddRequestModal.css';
 
 function Home() {
   const { isStaff, isHOD, isAdmin } = useAuth();
@@ -26,6 +29,8 @@ function Home() {
   const [pendingRequests, setPendingRequests] = useState([]);
   const [requestsLoading, setRequestsLoading] = useState(false);
   const [hasPendingRequest, setHasPendingRequest] = useState(false);
+  const [rejectState, setRejectState] = useState({ show: false, id: null, reason: '' });
+  const [actionError, setActionError] = useState('');
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -115,23 +120,33 @@ function Home() {
   }, [isHOD, isStaff, isAdmin]);
 
   const handleAccept = (id) => {
+    setActionError('');
     api
       .post(`/stock_request/${id}/accept/`)
       .then(() => {
         fetchRequests();
         window.dispatchEvent(new CustomEvent('inventory-updated'));
       })
-      .catch((err) => console.error('Error accepting:', err));
+      .catch((err) => setActionError(err.response?.data?.error || 'Failed to accept'));
   };
 
-  const handleReject = (id) => {
+  const handleRejectWithReason = () => {
+    const reason = rejectState.reason.trim();
+    if (!reason) return;
+    setActionError('');
     api
-      .post(`/stock_request/${id}/reject/`)
+      .post(`/stock_request/${rejectState.id}/reject/`, { rejection_reason: reason })
       .then(() => {
+        setRejectState({ show: false, id: null, reason: '' });
         fetchRequests();
         window.dispatchEvent(new CustomEvent('inventory-updated'));
       })
-      .catch((err) => console.error('Error rejecting:', err));
+      .catch((err) => setActionError(err.response?.data?.error || 'Failed to reject'));
+  };
+
+  const openRejectDialog = (id) => {
+    setActionError('');
+    setRejectState({ show: true, id, reason: '' });
   };
 
   const handleRequestSuccess = () => {
@@ -292,6 +307,7 @@ function Home() {
               <h3>📋 Pending Chemical Approvals</h3>
               <Link to="/requests?status=pending" className="view-all-link">Manage All</Link>
             </div>
+            {actionError && <div className="error-banner">{actionError}</div>}
             {requestsLoading ? (
               <p>Loading...</p>
             ) : pendingRequests.length === 0 ? (
@@ -312,7 +328,7 @@ function Home() {
                       </div>
                       <div className="request-mini-actions">
                         <button className="btn-icon accept" title="Accept" onClick={(e) => { e.stopPropagation(); handleAccept(req.id); }}><FaCheck /></button>
-                        <button className="btn-icon reject" title="Reject" onClick={(e) => { e.stopPropagation(); handleReject(req.id); }}><FaTimes /></button>
+                        <button className="btn-icon reject" title="Reject" onClick={(e) => { e.stopPropagation(); openRejectDialog(req.id); }}><FaTimes /></button>
                       </div>
                     </div>
                     <div className="request-summary">
@@ -323,6 +339,42 @@ function Home() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Reject Reason Modal */}
+        {rejectState.show && (
+          <div className="modal-overlay" onClick={() => setRejectState({ ...rejectState, show: false })}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px' }}>
+              <div className="modal-header">
+                <h3>Reason for Rejection</h3>
+                <button type="button" className="modal-close" onClick={() => setRejectState({ ...rejectState, show: false })} aria-label="Close">×</button>
+              </div>
+              <div className="modal-body">
+                <p className="section-helper-text">Please provide a reason before rejecting this request.</p>
+                <textarea
+                  value={rejectState.reason}
+                  onChange={(e) => setRejectState({ ...rejectState, reason: e.target.value })}
+                  placeholder="Enter reason for rejection..."
+                  rows={4}
+                  className="modern-textarea"
+                  style={{ width: '100%', marginTop: '8px' }}
+                />
+              </div>
+              <div className="modal-footer" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                <button type="button" className="btn-secondary" onClick={() => setRejectState({ show: false, id: null, reason: '' })}>
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn-reject"
+                  onClick={handleRejectWithReason}
+                  disabled={!rejectState.reason.trim()}
+                >
+                  Reject Request
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

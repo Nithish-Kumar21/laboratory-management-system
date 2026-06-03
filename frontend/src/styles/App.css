@@ -1,8 +1,9 @@
 :root {
   /* Layout Dimensions */
-  --sidebar-width: 280px;
-  --sidebar-mini-width: 80px;
-  --topbar-height: 70px;
+  --sidebar-width: 220px;
+  --topbar-height: 56px;
+  --header-height: 56px;
+  --bottomnav-height: 60px;
   --transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
   --radius-sm: 10px;
   --radius-md: 16px;
@@ -167,23 +168,34 @@ body {
 }
 
 .main-content-area {
-  margin-top: var(--topbar-height);
+  margin-top: 56px;
   flex: 1;
   display: flex;
-  transition: padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding-bottom: 60px;
 }
 
-.app-layout.sidebar-open .main-content-area {
-  padding-left: var(--sidebar-width);
+@media (min-width: 769px) {
+  .main-content-area {
+    margin-top: 56px;
+    padding-left: var(--sidebar-width);
+    padding-bottom: 0;
+  }
 }
 
-.app-layout.sidebar-closed .main-content-area {
-  padding-left: var(--sidebar-mini-width);
+.staff-main-content {
+  margin-top: 56px;
+  flex: 1;
+  min-height: calc(100vh - 56px);
+  background: #F0F2F5;
+  padding: 16px;
+  padding-bottom: 76px;
 }
 
-@media (max-width: 768px) {
-  .app-layout.sidebar-closed .main-content-area {
-    padding-left: 0;
+@media (min-width: 1024px) {
+  .staff-main-content {
+    margin-left: 220px;
+    padding: 24px;
+    padding-bottom: 24px;
   }
 }
 
@@ -224,6 +236,12 @@ body {
 
 .animate-fade {
   animation: fadeIn 0.4s ease forwards;
+}
+
+.page-placeholder {
+  padding: 16px;
+  font-size: 16px;
+  color: #6b7280;
 }
 
 /* Premium Table Styles */

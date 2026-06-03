@@ -41,7 +41,25 @@ class StockRegisterViewSet(viewsets.ModelViewSet):
 
     @transaction.atomic
     def perform_create(self, serializer):
-        serializer.save()
+        stock_register = serializer.save()
+
+        # Increase inventory for each chemical item
+        for chem in stock_register.chemical_items.all():
+            try:
+                available = AvailableChemical.objects.get(chemical_name=chem.chemical_name)
+                available.available_quantity_ml += chem.quantity_ml
+                available.save()
+            except AvailableChemical.DoesNotExist:
+                pass
+
+        # Increase inventory for each apparatus item
+        for app in stock_register.apparatus_items.all():
+            try:
+                available = AvailableApparatus.objects.get(apparatus_name=app.apparatus_name)
+                available.available_quantity_pieces += app.quantity_pieces
+                available.save()
+            except AvailableApparatus.DoesNotExist:
+                pass
 
     @action(detail=False, methods=['get'])
     def chemical_names(self, request):

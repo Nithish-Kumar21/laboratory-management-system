@@ -103,7 +103,7 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
 
       const selectedChem = availableChemicals.find(c => c.chemical_name === item.chemical_name);
       if (selectedChem && q > parseFloat(selectedChem.available_quantity_ml)) {
-        newErrors[`chemical_quantity_${i}`] = `Max: ${selectedChem.available_quantity_ml}ml`;
+        newErrors[`chemical_quantity_${i}`] = `Requested quantity exceeds available stock (Available: ${selectedChem.available_quantity_ml})`;
       }
     });
     setErrors(newErrors);
@@ -135,7 +135,25 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
       onSuccess();
       onClose();
     } catch (error) {
-      setErrors({ submit: error.response?.data?.detail || 'Transaction failed' });
+      const errData = error.response?.data;
+      let errMsg = 'Transaction failed';
+      if (errData) {
+        if (typeof errData === 'string') {
+          errMsg = errData;
+        } else if (errData.detail) {
+          errMsg = errData.detail;
+        } else if (errData.error) {
+          errMsg = Array.isArray(errData.error) ? errData.error[0] : errData.error;
+        } else {
+          const firstKey = Object.keys(errData)[0];
+          if (firstKey && Array.isArray(errData[firstKey])) {
+            errMsg = errData[firstKey][0];
+          } else if (firstKey && typeof errData[firstKey] === 'string') {
+            errMsg = errData[firstKey];
+          }
+        }
+      }
+      setErrors({ submit: errMsg });
     } finally {
       setSubmitting(false);
     }
@@ -186,8 +204,9 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
                   type="date"
                   value={formData.date}
                   onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  className="modern-input"
+                  className={`modern-input ${errors.date ? 'input-error' : ''}`}
                 />
+                {errors.date && <span className="field-error">{errors.date}</span>}
               </div>
             </div>
 
@@ -213,7 +232,7 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
                     <div className="autocomplete-wrapper">
                       <input
                         type="text"
-                        className="grid-input"
+                        className={`grid-input ${errors[`chemical_name_${i}`] ? 'input-error' : ''}`}
                         placeholder="Select chemicals"
                         value={item.chemical_name}
                         onChange={(e) => {
@@ -229,6 +248,7 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
                         }}
                         onBlur={() => setTimeout(() => setShowSuggestions({}), 200)}
                       />
+                      {errors[`chemical_name_${i}`] && <span className="field-error">Required</span>}
                       {showSuggestions[i] && item.chemical_name && (
                         <ul className="suggestions-dropdown list-style-none">
                           {availableChemicals
@@ -261,7 +281,7 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
                         type="number"
                         step="1"
                         min="0"
-                        className="grid-input grid-input-qty"
+                        className={`grid-input grid-input-qty ${errors[`chemical_quantity_${i}`] ? 'input-error' : ''}`}
                         placeholder="0ML"
                         value={item.quantity_ml === '' || item.quantity_ml == null ? '' : item.quantity_ml}
                         onChange={(e) => {
@@ -269,6 +289,7 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
                           updateChemicalItem(i, 'quantity_ml', v === '' ? '' : v);
                         }}
                       />
+                      {errors[`chemical_quantity_${i}`] && <span className="field-error">{errors[`chemical_quantity_${i}`]}</span>}
                     </div>
 
                     <button
@@ -322,7 +343,7 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
                 type="submit"
                 className="btn-primary-action"
                 onClick={(e) => handleAction(e, true)}
-                disabled={submitting || (hasActiveRequest && !editData)}
+                disabled={submitting}
               >
                 {submitting ? '...' : editData ? 'Update' : 'Submit'}
               </button>

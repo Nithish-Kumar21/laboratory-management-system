@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.utils import timezone
 from .models import StockRequest, StockRequestChemicalItem, StockRequestApparatusItem, IssueRegister, IssueChemicals
+from inventory.models import AvailableChemical
 
 
 class ChemicalItemWriteSerializer(serializers.Serializer):
@@ -53,6 +54,19 @@ class StockRequestCreateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     {"class_name": "Class must belong to your department (M.Sc Chemistry)."}
                 )
+        for item in chemicals:
+            chem_name = item.get('chemical_name')
+            qty = item.get('quantity_ml')
+            if chem_name and qty:
+                try:
+                    chem = AvailableChemical.objects.get(chemical_name=chem_name)
+                    if qty > chem.available_quantity_ml:
+                        raise serializers.ValidationError(
+                            f"Requested quantity for '{chem_name}' exceeds available stock (Available: {chem.available_quantity_ml})"
+                        )
+                except AvailableChemical.DoesNotExist:
+                    pass
+
         status = data.get('status', 'pending')
         if status == 'pending' and user.role == 'staff':
             active_statuses = ['pending', 'accepted', 'issued', 'reported']

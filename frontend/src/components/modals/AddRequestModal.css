@@ -487,3 +487,33 @@
   background: rgba(245, 158, 11, 0.1);
   color: #d97706;
 }
+
+.field-error {
+  display: block;
+  color: #ef4444;
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-top: 6px;
+  text-align: left;
+}
+
+.input-error {
+  border-color: #ef4444 !important;
+}
+
+.qty-ml-wrapper {
+  position: relative;
+}
+
+.qty-ml-wrapper .field-error {
+  position: absolute;
+  bottom: -20px;
+  left: 0;
+  white-space: nowrap;
+}
+
+.autocomplete-wrapper .field-error {
+  position: absolute;
+  bottom: -20px;
+  left: 0;
+}
