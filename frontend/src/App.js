@@ -1,5 +1,6 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
+import { FaPlus } from 'react-icons/fa';
 import { useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import Header from './layout/Header';
@@ -13,7 +14,7 @@ import ForgotPassword from './components/ForgotPassword';
 import ResetPassword from './components/ResetPassword';
 import UserManagement from './components/UserManagement';
 import UserProfile from './components/UserProfile';
-import Home from './pages/Home';
+
 import Inventory from './pages/Inventory';
 import StockRegister from './pages/StockRegister';
 import StockRegisterDetail from './pages/StockRegisterDetail';
@@ -23,21 +24,10 @@ import DamagedEntry from './pages/DamagedEntry';
 import DamagedEntryDetail from './pages/DamagedEntryDetail';
 import StockRequest from './pages/StockRequest';
 import StockRequestDetail from './pages/StockRequestDetail';
+import NewChemicalRequest from './pages/NewChemicalRequest';
 import Settings from './components/Settings';
 import LowStockToast from './components/LowStockToast';
 import './styles/App.css';
-
-function HomeOrRedirect() {
-  const { isAdmin, isHOD } = useAuth();
-  if (isAdmin && !isHOD) return <Navigate to="/users" replace />;
-  return <Home />;
-}
-
-function AdminBlock({ children, redirectTo = '/users' }) {
-  const { isAdmin } = useAuth();
-  if (isAdmin) return <Navigate to={redirectTo} replace />;
-  return children;
-}
 
 function AppContent() {
   const { loading } = useAuth();
@@ -83,7 +73,7 @@ function AppContent() {
                   <LowStockToast />
                   <div className="page-container">
                     <Routes>
-                      <Route path="" element={<HomeOrRedirect />} />
+                      <Route path="" element={<Navigate to="/inventory" replace />} />
                       <Route path="profile" element={<UserProfile />} />
 
                       {/* HOD Only */}
@@ -108,6 +98,7 @@ function AppContent() {
                       <Route path="damaged-entry/:id" element={<DamagedEntryDetail />} />
                       <Route path="requests" element={<StockRequest />} />
                       <Route path="requests/:id" element={<StockRequestDetail />} />
+                      <Route path="new-request" element={<NewChemicalRequest />} />
                       <Route path="drafts" element={<StockRequest draftsOnly />} />
 
                       {/* Catch all - redirect to home */}
@@ -116,12 +107,27 @@ function AppContent() {
                   </div>
                 </div>
                 <BottomNav />
+
+                <FabButton />
               </div>
             </ProtectedRoute>
           }
         />
       </Routes>
     </Router>
+  );
+}
+
+function FabButton() {
+  const location = useLocation();
+  const { isStaff } = useAuth();
+
+  if (!isStaff || location.pathname !== '/requests') return null;
+
+  return (
+    <Link to="/new-request" className="cr-fab">
+      <FaPlus />
+    </Link>
   );
 }
 

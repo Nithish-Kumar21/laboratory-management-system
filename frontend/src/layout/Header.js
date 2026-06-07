@@ -33,17 +33,19 @@ function Header() {
       </div>
       <span className="header-lms-center">LMS</span>
       <div className="header-right">
-        <NotificationCenter />
-        <button className="header-theme-btn" onClick={toggleTheme} title="Toggle theme">
-          {themeMode === 'dark' ? <FaSun /> : <FaMoon />}
-        </button>
-        <div className="header-user-group">
-          <div className="header-avatar-circle">
-            {getInitials(user)}
-          </div>
-          <div className="header-user-info">
-            <span className="header-user-name">{getRoleLabel(user?.role)}</span>
-            <span className="header-user-sub">Store Department</span>
+        <div className="header-right-group">
+          <NotificationCenter />
+          <button className="header-theme-btn" onClick={toggleTheme} title="Toggle theme">
+            {themeMode === 'dark' ? <FaSun /> : <FaMoon />}
+          </button>
+          <div className="header-user-group">
+            <div className="header-avatar-circle">
+              {getInitials(user)}
+            </div>
+            <div className="header-user-info">
+              <span className="header-user-name">{getRoleLabel(user?.role)}</span>
+              <span className="header-user-sub">Store Department</span>
+            </div>
           </div>
         </div>
       </div>

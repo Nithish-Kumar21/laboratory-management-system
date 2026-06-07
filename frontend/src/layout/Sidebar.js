@@ -27,7 +27,7 @@ function Sidebar() {
     { path: '/requests', label: 'Chemical Request', icon: FaClipboardList, show: true },
     { path: '/damaged-entry', label: 'Damaged Entry', icon: FaExclamationTriangle, show: isHOD || isStoreKeeper },
     { path: '/issue-register', label: 'Issue Register', icon: FaFileAlt, show: isHOD || isStoreKeeper },
-    { path: '/drafts', label: 'My Draft', icon: FaEdit, show: isStaff },
+    { path: '/drafts', label: 'Draft', icon: FaEdit, show: isStaff },
   ];
 
   return (
