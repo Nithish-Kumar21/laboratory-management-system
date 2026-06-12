@@ -521,180 +521,212 @@ function StockRequestDetail() {
     }
 
     // ===== HOD / STOREKEEPER VIEW =====
+    const steps = getTimelineSteps(request.status);
     return (
-        <div className="request-detail-wrapper">
-            <div className="request-detail-page animate-up">
-            <div className="detail-header">
-                <button className="back-button" onClick={() => navigate('/requests')}>
+        <div className="staff-detail-wrapper">
+            <div className="staff-detail-page animate-up">
+                <div className="staff-detail-inner">
+
+                {/* Back Row */}
+                <div className="sd-back-row" onClick={() => navigate('/requests')}>
                     <FaArrowLeft />
-                </button>
-                <div className="header-title-box">
-                    <h2>Chemical Request Details</h2>
-                    <p><FaIdCard /> {request.request_id}</p>
+                    <span>Request Details</span>
                 </div>
-                <div className="header-actions">
-                    {(user?.employee_id === request.requested_by_id && (request.status === 'draft' || request.status === 'rejected')) && (
-                        <button className="edit-request-btn" onClick={() => setShowEditModal(true)} disabled={actionLoading}>
+
+                {/* Info Card */}
+                <div className="sd-card">
+                    <div className="sd-card-header">
+                        <span className="sd-req-id">{request.request_id}</span>
+                        <div className="sd-header-right">
+                            {getStatusBadge(request.status)}
+                        </div>
+                    </div>
+                    <hr className="sd-divider" />
+                    <div className="sd-meta-grid">
+                        <div className="sd-meta-item">
+                            <div className="sd-meta-label"><FaUser /> Requested By</div>
+                            <div className="sd-meta-value">{request.requested_by_name}</div>
+                        </div>
+                        <div className="sd-meta-item">
+                            <div className="sd-meta-label"><FaIdCard /> Staff ID</div>
+                            <div className="sd-meta-value">{request.requested_by_id}</div>
+                        </div>
+                        <div className="sd-meta-item">
+                            <div className="sd-meta-label"><FaGraduationCap /> Class</div>
+                            <div className="sd-meta-value">{request.class_name}</div>
+                        </div>
+                        <div className="sd-meta-item">
+                            <div className="sd-meta-label"><FaCalendarAlt /> Date</div>
+                            <div className="sd-meta-value">{request.date ? new Date(request.date).toLocaleDateString() : new Date(request.created_at).toLocaleDateString()}</div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Chemical Requirements Card */}
+                <div className="sd-card">
+                    <div className="sd-card-title">
+                        <FaFlask /> Chemical Requirements
+                    </div>
+                    <hr className="sd-divider" />
+                    <div className="sd-chem-list">
+                        {request.chemical_items?.map((item, idx) => (
+                            <div key={idx} className="sd-chem-row">
+                                <span className="sd-chem-name">{item.chemical_name}</span>
+                                <span className="sd-chem-qty">{item.quantity_ml}<span className="sd-chem-unit"> ml</span></span>
+                            </div>
+                        ))}
+                        {(!request.chemical_items || request.chemical_items.length === 0) && (
+                            <div className="sd-empty-text">No chemicals listed</div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Purpose / Remarks Card */}
+                {request.reason && (
+                    <div className="sd-card">
+                        <div className="sd-card-title">Purpose / Remarks</div>
+                        <hr className="sd-divider" />
+                        <p className="sd-remarks-text">{request.reason}</p>
+                    </div>
+                )}
+
+                {/* Request Status Card */}
+                <div className="sd-card">
+                    <div className="sd-card-title">Request Status</div>
+                    <hr className="sd-divider" />
+                    <div className="sd-timeline">
+                        {steps.map((step, i) => (
+                            <div key={i} className="sd-tl-item">
+                                <div className="sd-tl-left">
+                                    <div className={`sd-tl-dot ${step.done ? 'done' : ''} ${step.active ? 'active' : ''} ${step.pending ? 'pending' : ''}`}></div>
+                                    {i < steps.length - 1 && <div className={`sd-tl-line ${step.done ? 'done' : ''}`}></div>}
+                                </div>
+                                <div className="sd-tl-content">
+                                    <div className={`sd-tl-label ${step.active ? 'active' : ''} ${step.pending ? 'faded' : ''}`}>{step.label}</div>
+                                    {step.sub && <div className="sd-tl-sub">{step.sub}</div>}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Rejection Reason (if rejected) */}
+                {request.status === 'rejected' && request.rejection_reason && (
+                    <div className="sd-card sd-card-error">
+                        <div className="sd-card-title"><FaExclamationTriangle /> Rejection Reason</div>
+                        <hr className="sd-divider" />
+                        <p className="sd-remarks-text">{request.rejection_reason}</p>
+                    </div>
+                )}
+
+                {/* Completion Review for Store Keeper */}
+                {isStoreKeeper && request.status === 'reported' && (
+                    <div className="sd-card">
+                        <div className="sd-card-title"><FaCheckCircle /> Verify & Complete Request</div>
+                        <hr className="sd-divider" />
+                        <p className="sd-section-helper">Review the usage report submitted by the staff. Inventory will be automatically adjusted upon confirmation.</p>
+                        <div className="card no-padding">
+                            <table className="detail-table comparison-mode">
+                                <thead>
+                                    <tr>
+                                        <th>Chemical</th>
+                                        <th>Requested</th>
+                                        <th>Actual Used</th>
+                                        <th>Returned</th>
+                                        <th>Additional</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {request.chemical_items?.map(item => {
+                                        const req = parseFloat(item.quantity_ml);
+                                        const act = parseFloat(item.actual_used_quantity_ml || 0);
+                                        const ret = Math.max(0, req - act);
+                                        const add = Math.max(0, act - req);
+                                        return (
+                                            <tr key={item.id}>
+                                                <td className="item-name">{item.chemical_name}</td>
+                                                <td><span className="qty-badge muted">{req} ml</span></td>
+                                                <td><span className="qty-badge primary">{act} ml</span></td>
+                                                <td>{ret > 0 ? <span className="diff-badge positive"><FaArrowLeft /> {ret.toFixed(2)} ml</span> : <span className="diff-none">-</span>}</td>
+                                                <td>{add > 0 ? <span className="diff-badge negative"><FaArrowRight /> {add.toFixed(2)} ml</span> : <span className="diff-none">-</span>}</td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                        <button className="sd-btn sd-btn-primary sd-btn-full" onClick={handleMarkAsCompleted} disabled={actionLoading} style={{marginTop: '16px'}}>
+                            {actionLoading ? 'Processing...' : <><FaCheckCircle /> Confirm & Adjust Inventory</>}
+                        </button>
+                    </div>
+                )}
+
+                {/* Read-Only Usage Summary */}
+                {['reported', 'completed'].includes(request.status) && !(isStoreKeeper && request.status === 'reported') && (
+                    <div className="sd-card">
+                        <div className="sd-card-title"><FaClipboardList /> Execution Summary</div>
+                        <hr className="sd-divider" />
+                        <div className="sd-chem-list">
+                            {request.chemical_items?.map(item => (
+                                <div key={item.id} className="sd-chem-row">
+                                    <span className="sd-chem-name">{item.chemical_name}</span>
+                                    <span className="sd-chem-qty">{item.actual_used_quantity_ml}<span className="sd-chem-unit"> ml</span></span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* HOD Actions */}
+                {isHOD && request.status === 'pending' && (
+                    <div className="sd-actions">
+                        <button className="sd-btn sd-btn-danger" onClick={() => setShowRejectModal(true)} disabled={actionLoading}>
+                            <FaTimesCircle /> Reject
+                        </button>
+                        <button className="sd-btn sd-btn-primary" onClick={handleAccept} disabled={actionLoading}>
+                            {actionLoading ? 'Processing...' : <><FaCheckCircle /> Approve</>}
+                        </button>
+                    </div>
+                )}
+
+                {/* StoreKeeper Issue Action */}
+                {isStoreKeeper && request.status === 'accepted' && (
+                    <div className="sd-actions">
+                        <button className="sd-btn sd-btn-primary sd-btn-full" onClick={handleMarkAsIssued} disabled={actionLoading}>
+                            {actionLoading ? 'Processing...' : <><FaCheckCircle /> Mark as Issued</>}
+                        </button>
+                    </div>
+                )}
+
+                {/* Draft Submit */}
+                {user?.employee_id === request.requested_by_id && request.status === 'draft' && (
+                    <div className="sd-actions">
+                        {hasActiveRequest && (
+                            <div className="sd-warning">
+                                <FaClock /> You already have an active request. Complete it before submitting this one.
+                            </div>
+                        )}
+                        <button className="sd-btn sd-btn-primary sd-btn-full" onClick={() => !hasActiveRequest && handleSend()} disabled={actionLoading || hasActiveRequest}>
+                            {actionLoading ? 'Submitting...' : <><FaCheckCircle /> Submit for Approval</>}
+                        </button>
+                    </div>
+                )}
+
+                {/* Edit / Delete */}
+                <div className="sd-actions">
+                    {user?.employee_id === request.requested_by_id && (request.status === 'draft' || request.status === 'rejected') && (
+                        <button className="sd-btn sd-btn-outline" onClick={() => setShowEditModal(true)} disabled={actionLoading}>
                             <FaEdit /> Edit
                         </button>
                     )}
-                    {(user?.employee_id === request.requested_by_id && (request.status === 'draft' || request.status === 'pending' || request.status === 'rejected')) && (
-                        <button className="delete-request-btn" onClick={handleDelete} disabled={actionLoading}>
+                    {user?.employee_id === request.requested_by_id && (request.status === 'draft' || request.status === 'pending' || request.status === 'rejected') && (
+                        <button className="sd-btn sd-btn-danger" onClick={handleDelete} disabled={actionLoading}>
                             <FaTrash /> {actionLoading ? 'Deleting...' : 'Delete'}
                         </button>
                     )}
                 </div>
+
             </div>
-
-            <div className="detail-info-grid">
-                <div className="info-card card">
-                    <label><FaUser /> Requested By</label>
-                    <span>{request.requested_by_name}</span>
-                    <small>Emp ID: {request.requested_by_id}</small>
-                </div>
-                <div className="info-card card">
-                    <label><FaGraduationCap /> Class</label>
-                    <span>{request.class_name}</span>
-                </div>
-                <div className="info-card card">
-                    <label><FaCalendarAlt /> Date</label>
-                    <span>{request.date ? new Date(request.date).toLocaleDateString() : new Date(request.created_at).toLocaleDateString()}</span>
-                </div>
-                <div className="info-card card">
-                    <label>Status</label>
-                    {getStatusBadge(request.status)}
-                </div>
-            </div>
-
-            <div className="items-section animate-fade">
-                <h3><FaFlask /> Requested Chemicals</h3>
-                <div className="card no-padding">
-                    <table className="detail-table">
-                        <thead>
-                            <tr>
-                                <th>Chemical Name</th>
-                                <th>Quantity Requested</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {request.chemical_items?.map((it, idx) => (
-                                <tr key={idx}>
-                                    <td className="item-name">{it.chemical_name}</td>
-                                    <td><span className="qty-badge">{it.quantity_ml} ml</span></td>
-                                </tr>
-                            ))}
-                            {(!request.chemical_items || request.chemical_items.length === 0) && (
-                                <tr><td colSpan="2" className="empty-row text-center">No chemicals listed</td></tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            {request.reason && (
-                <div className="reason-section card animate-fade">
-                    <h3>Purpose / Reason</h3>
-                    <p className="reason-text">{request.reason}</p>
-                </div>
-            )}
-
-            {request.reviewed_by_name && (
-                <div className="review-info-section card animate-fade">
-                    <label>History</label>
-                    <ul className="history-list">
-                        <li><strong>Requested:</strong> {new Date(request.created_at).toLocaleString()} by {request.requested_by_name}</li>
-                        {request.reviewed_at && <li><strong>{request.status === 'rejected' ? 'Rejected' : 'Approved'}:</strong> {new Date(request.reviewed_at).toLocaleString()} by {request.reviewed_by_name}</li>}
-                        {request.status === 'rejected' && request.rejection_reason && (
-                            <li className="rejection-reason"><strong>Reason:</strong> {request.rejection_reason}</li>
-                        )}
-                        {request.issued_at && <li><strong>Issued:</strong> {new Date(request.issued_at).toLocaleString()} by {request.issued_by_name}</li>}
-                        {request.reported_at && <li><strong>Reported:</strong> {new Date(request.reported_at).toLocaleString()}</li>}
-                        {request.completed_at && <li><strong>Completed:</strong> {new Date(request.completed_at).toLocaleString()}</li>}
-                    </ul>
-                </div>
-            )}
-
-            {/* Completion Review for Store Keeper */}
-            {isStoreKeeper && request.status === 'reported' && (
-                <div className="completion-review-section animate-fade">
-                    <div className="section-header">
-                        <h3><FaCheckCircle /> Verify & Complete Request</h3>
-                        <button className="btn-approve pulse-btn" onClick={handleMarkAsCompleted} disabled={actionLoading}>
-                            {actionLoading ? 'Processing...' : <><FaCheckCircle /> Confirm & Adjust Inventory</>}
-                        </button>
-                    </div>
-                    <p className="section-helper-text">Review the usage report submitted by the staff. Inventory will be automatically adjusted upon confirmation.</p>
-                    <div className="card no-padding margin-top-md">
-                        <table className="detail-table comparison-mode">
-                            <thead>
-                                <tr>
-                                    <th>Chemical</th>
-                                    <th>Requested</th>
-                                    <th>Actual Used</th>
-                                    <th>Returned to Stock</th>
-                                    <th>Additional Used</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {request.chemical_items?.map(item => {
-                                    const req = parseFloat(item.quantity_ml);
-                                    const act = parseFloat(item.actual_used_quantity_ml || 0);
-                                    const ret = Math.max(0, req - act);
-                                    const add = Math.max(0, act - req);
-                                    return (
-                                        <tr key={item.id}>
-                                            <td className="item-name">{item.chemical_name}</td>
-                                            <td><span className="qty-badge muted">{req} ml</span></td>
-                                            <td><span className="qty-badge primary">{act} ml</span></td>
-                                            <td>{ret > 0 ? <span className="diff-badge positive"><FaArrowLeft /> {ret.toFixed(2)} ml</span> : <span className="diff-none">-</span>}</td>
-                                            <td>{add > 0 ? <span className="diff-badge negative"><FaArrowRight /> {add.toFixed(2)} ml</span> : <span className="diff-none">-</span>}</td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            )}
-
-            {/* Read-Only Usage Summary */}
-            {['reported', 'completed'].includes(request.status) && !(isStoreKeeper && request.status === 'reported') && !(user?.employee_id === request.requested_by_id && request.status === 'issued') && (
-                <div className="usage-summary-section animate-fade">
-                    <h3><FaClipboardList /> Execution Summary</h3>
-                    <div className="card no-padding margin-top-md">
-                        <table className="detail-table">
-                            <thead>
-                                <tr>
-                                    <th>Chemical</th>
-                                    <th>Requested</th>
-                                    <th className="text-right">Actual Consumed</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {request.chemical_items?.map(item => (
-                                    <tr key={item.id}>
-                                        <td className="item-name">{item.chemical_name}</td>
-                                        <td><span className="qty-badge muted">{item.quantity_ml} ml</span></td>
-                                        <td className="text-right"><span className="qty-badge success highlight">{item.actual_used_quantity_ml} ml</span></td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            )}
-
-            {/* HOD Actions */}
-            {isHOD && request.status === 'pending' && (
-                <div className="approval-actions animate-fade">
-                    <button className="btn-reject" onClick={() => setShowRejectModal(true)} disabled={actionLoading}>
-                        <FaTimesCircle /> Reject Request
-                    </button>
-                    <button className="btn-approve" onClick={handleAccept} disabled={actionLoading}>
-                        {actionLoading ? 'Processing...' : <><FaCheckCircle /> Approve Request</>}
-                    </button>
-                </div>
-            )}
 
             {/* Reject Modal */}
             {showRejectModal && (
@@ -705,7 +737,7 @@ function StockRequestDetail() {
                             <button type="button" className="modal-close" onClick={() => setShowRejectModal(false)} aria-label="Close">×</button>
                         </div>
                         <div className="modal-body">
-                            <p className="section-helper-text">Please provide a reason before rejecting this request. The requester will see this reason.</p>
+                            <p className="sd-section-helper">Please provide a reason before rejecting this request. The requester will see this reason.</p>
                             <textarea value={rejectionReason} onChange={(e) => setRejectionReason(e.target.value)} placeholder="Enter reason for rejection..." rows={4} className="modern-textarea" style={{ width: '100%', marginTop: '8px' }} />
                         </div>
                         <div className="modal-footer" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
@@ -713,29 +745,6 @@ function StockRequestDetail() {
                             <button type="button" className="btn-reject" onClick={handleReject} disabled={actionLoading || !rejectionReason.trim()}>{actionLoading ? 'Processing...' : 'Reject Request'}</button>
                         </div>
                     </div>
-                </div>
-            )}
-
-            {/* StoreKeeper Issue Action */}
-            {isStoreKeeper && request.status === 'accepted' && (
-                <div className="approval-actions animate-fade">
-                    <button className="btn-approve" onClick={handleMarkAsIssued} disabled={actionLoading}>
-                        {actionLoading ? 'Processing...' : <><FaCheckCircle /> Mark as Issued</>}
-                    </button>
-                </div>
-            )}
-
-            {/* Draft Submit */}
-            {user?.employee_id === request.requested_by_id && request.status === 'draft' && (
-                <div className="approval-actions animate-fade">
-                    {hasActiveRequest && (
-                        <div className="active-request-warning margin-bottom-md">
-                            <FaClock /> You already have an active request. Complete it before submitting this one.
-                        </div>
-                    )}
-                    <button className={`btn-approve ${hasActiveRequest ? 'disabled' : ''}`} onClick={() => !hasActiveRequest && handleSend()} disabled={actionLoading || hasActiveRequest}>
-                        {actionLoading ? 'Submitting...' : <><FaCheckCircle /> Submit for Approval</>}
-                    </button>
                 </div>
             )}
 

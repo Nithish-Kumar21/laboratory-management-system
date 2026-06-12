@@ -29,48 +29,6 @@
   gap: 8px;
 }
 
-.de-add-btn {
-  display: none;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
-  background: #1A3C6E;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  font-family: Inter, sans-serif;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 0.2s;
-  white-space: nowrap;
-}
-
-.de-add-btn:hover {
-  background: #14305a;
-}
-
-.de-add-btn-mobile {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  background: #1A3C6E;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  font-family: Inter, sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 0.2s;
-  white-space: nowrap;
-}
-
-.de-add-btn-mobile:hover {
-  background: #14305a;
-}
-
 /* ===== SEARCH ROW ===== */
 .de-search-row {
   display: flex;
@@ -260,27 +218,6 @@
   border-color: #E53935;
 }
 
-/* ===== TYPE BADGES ===== */
-.de-type-badge {
-  display: inline-block;
-  font-family: Inter, sans-serif;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 20px;
-  white-space: nowrap;
-}
-
-.de-type-apparatus {
-  background: #F3F0FF;
-  color: #5E35B1;
-}
-
-.de-type-chemical {
-  background: #EEF4FF;
-  color: #1A3C6E;
-}
-
 /* ===== DESKTOP CARDS ===== */
 .de-card-list-desktop {
   display: none;
@@ -295,7 +232,6 @@
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
   padding: 20px 24px;
-  height: 72px;
   cursor: pointer;
   transition: box-shadow 0.2s, border-color 0.2s, background 0.2s;
   border: 1.5px solid transparent;
@@ -345,7 +281,7 @@
   text-overflow: ellipsis;
 }
 
-.de-card-item {
+.de-card-staff {
   font-family: Inter, sans-serif;
   font-size: 13px;
   color: #9AA3AF;
@@ -365,23 +301,13 @@
   flex-shrink: 0;
 }
 
-.de-card-type {
-  margin-left: 32px;
-  flex-shrink: 0;
-}
-
-.de-card-reason {
+.de-card-count {
   font-family: Inter, sans-serif;
   font-size: 13px;
-  color: #9AA3AF;
-  font-style: italic;
+  color: #4A4A4A;
   font-weight: 500;
-  margin-left: 16px;
-  max-width: 200px;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  flex-shrink: 0;
+  margin-left: 32px;
 }
 
 .de-card-btn {
@@ -466,7 +392,7 @@
   white-space: nowrap;
 }
 
-.de-mobile-item {
+.de-mobile-staff {
   font-family: Inter, sans-serif;
   font-size: 12px;
   color: #9AA3AF;
@@ -488,11 +414,6 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.de-mobile-meta .de-type-badge {
-  font-size: 11px;
-  padding: 2px 8px;
 }
 
 /* ===== EMPTY STATE ===== */
@@ -544,14 +465,6 @@
 
   .de-title {
     font-size: 22px;
-  }
-
-  .de-add-btn {
-    display: inline-flex;
-  }
-
-  .de-add-btn-mobile {
-    display: none;
   }
 
   .de-search-divider {
@@ -616,12 +529,24 @@
   color: #F1F5F9;
 }
 
+:root.dark-mode .de-card-staff {
+  color: #94A3B8;
+}
+
+:root.dark-mode .de-card-count {
+  color: #94A3B8;
+}
+
 :root.dark-mode .de-card-mobile {
   background: #1E293B;
 }
 
 :root.dark-mode .de-mobile-ref {
   color: #F1F5F9;
+}
+
+:root.dark-mode .de-mobile-staff {
+  color: #94A3B8;
 }
 
 :root.dark-mode .de-empty-title {

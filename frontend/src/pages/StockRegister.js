@@ -1,18 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaPlus, FaSearch, FaFileInvoice, FaFilter, FaSortUp, FaSortDown } from 'react-icons/fa';
+import { FaSearch, FaFileInvoice, FaFilter, FaSortUp, FaSortDown } from 'react-icons/fa';
 import api from '../utils/api';
-import AddStockRegisterModal from '../components/modals/AddStockRegisterModal';
-import { useAuth } from '../context/AuthContext';
 import './StockRegister.css';
 
 function StockRegister() {
-  const { isStoreKeeper } = useAuth();
   const navigate = useNavigate();
   const [stockRegisters, setStockRegisters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState('date');
   const [sortOrder, setSortOrder] = useState('desc');
@@ -105,18 +101,7 @@ function StockRegister() {
       {/* Title Row */}
       <div className="sr-title-row">
         <h1 className="sr-title">Stock Register</h1>
-        <div className="sr-title-right">
-          {isStoreKeeper && (
-            <button className="sr-add-btn" onClick={() => setIsModalOpen(true)}>
-              <FaPlus /> New Stock Entry
-            </button>
-          )}
-          {isStoreKeeper && (
-            <button className="sr-add-btn-mobile" onClick={() => setIsModalOpen(true)}>
-              <FaPlus /> Add
-            </button>
-          )}
-        </div>
+        <div className="sr-title-right"></div>
       </div>
 
       {/* Search + Filter Row */}
@@ -272,11 +257,6 @@ function StockRegister() {
         </div>
       )}
 
-      <AddStockRegisterModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSuccess={fetchRegisters}
-      />
     </div>
   );
 }

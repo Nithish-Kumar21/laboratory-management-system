@@ -8,6 +8,7 @@ import {
 } from 'react-icons/fa';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
+import { getStatus } from '../utils/inventory';
 import './NotificationCenter.css';
 
 const NotificationCenter = () => {
@@ -25,8 +26,8 @@ const NotificationCenter = () => {
         try {
             const requests = [];
             if (showLowStockInNotif) {
-                requests.push(api.get('/low_stock_chemicals/').catch(() => ({ data: [] })));
-                requests.push(api.get('/low_stock_apparatus/').catch(() => ({ data: [] })));
+                requests.push(api.get('/available_chemicals/').catch(() => ({ data: [] })));
+                requests.push(api.get('/available_apparatus/').catch(() => ({ data: [] })));
             }
 
             if (isHOD) {
@@ -55,24 +56,34 @@ const NotificationCenter = () => {
                 reviewedData = Array.isArray(results[0].data) ? results[0].data : (results[0].data?.results || []);
             }
 
-            const combinedLowStock = showLowStockInNotif ? [
-                ...chemData.map(item => ({
+            let combinedLowStock = [];
+            if (showLowStockInNotif) {
+                const lowChem = chemData.filter(c => {
+                    const qty = parseFloat(c.available_quantity_ml);
+                    const reorder = parseFloat(c.reorder_level || 0);
+                    return getStatus(qty, reorder) !== 'healthy';
+                }).map(item => ({
                     id: `chem-${item.id}`,
                     name: item.chemical_name,
                     type: 'Low Stock: Chemical',
-                    qty: item.current_quantity_ml,
+                    qty: item.available_quantity_ml,
                     unit: 'ml',
                     isAlert: true
-                })),
-                ...appData.map(item => ({
+                }));
+                const lowApp = appData.filter(a => {
+                    const qty = parseFloat(a.available_quantity_pieces);
+                    const reorder = parseFloat(a.reorder_level || 0);
+                    return getStatus(qty, reorder) !== 'healthy';
+                }).map(item => ({
                     id: `app-${item.id}`,
                     name: item.apparatus_name,
                     type: 'Low Stock: Apparatus',
-                    qty: item.current_quantity_pieces,
+                    qty: item.available_quantity_pieces,
                     unit: 'pcs',
                     isAlert: true
-                }))
-            ] : [];
+                }));
+                combinedLowStock = [...lowChem, ...lowApp];
+            }
 
             setLowStockItems(combinedLowStock);
             setLowStockCount(combinedLowStock.length);

@@ -1,11 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import api from '../../utils/api';
-
-function getStatus(qty, reorder) {
-  if (qty <= reorder) return 'critical';
-  if (qty <= reorder * 1.5) return 'low-stock';
-  return 'healthy';
-}
+import { getStatus } from '../../utils/inventory';
 
 function getStatusColor(status) {
   if (status === 'critical') return { border: '#C62828', bg: '#FFEBEE', text: '#C62828', label: 'Critical' };
@@ -13,7 +8,7 @@ function getStatusColor(status) {
   return { border: '#2E7D32', bg: '#E8F5E9', text: '#2E7D32', label: 'Healthy' };
 }
 
-function ApparatusTable({ showExtra = true, searchTerm = '' }) {
+function ApparatusTable({ showExtra = true, searchTerm = '', showOnlyLowStock = false }) {
   const [apparatus, setApparatus] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -32,8 +27,14 @@ function ApparatusTable({ showExtra = true, searchTerm = '' }) {
 
   const filtered = apparatus.filter((item) => {
     const term = searchTerm.toLowerCase();
-    if (!term) return true;
-    return item.apparatus_name.toLowerCase().includes(term);
+    if (term && !item.apparatus_name.toLowerCase().includes(term)) return false;
+    if (showOnlyLowStock) {
+      const qty = parseFloat(item.available_quantity_pieces);
+      const reorder = parseFloat(item.reorder_level || 0);
+      const status = getStatus(qty, reorder);
+      return status === 'critical' || status === 'low-stock';
+    }
+    return true;
   });
 
   if (filtered.length === 0) {

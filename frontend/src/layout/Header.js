@@ -39,13 +39,13 @@ function Header() {
             {themeMode === 'dark' ? <FaSun /> : <FaMoon />}
           </button>
           <div className="header-user-group">
-            <div className="header-avatar-circle">
-              {getInitials(user)}
-            </div>
             <div className="header-user-info">
-              <span className="header-user-name">{getRoleLabel(user?.role)}</span>
-              <span className="header-user-sub">Store Department</span>
+              <span className="header-user-name">{user?.full_name || getRoleLabel(user?.role)}</span>
+              <span className="header-user-sub">{getRoleLabel(user?.role)}</span>
             </div>
+          </div>
+          <div className="header-avatar-circle">
+            {getInitials(user)}
           </div>
         </div>
       </div>

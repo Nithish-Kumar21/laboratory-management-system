@@ -10,12 +10,12 @@ class DamagedItemSerializer(serializers.ModelSerializer):
 
 
 class DamagedEntryListSerializer(serializers.ModelSerializer):
-    """Serializer for list view - basic info only"""
-    # Just list fields - no explicit declaration needed
-    
+    """Serializer for list view - includes damaged items for card display"""
+    damaged_items = DamagedItemSerializer(many=True, read_only=True)
+
     class Meta:
         model = DamagedEntry
-        fields = ['id', 'staff', 'class_name', 'date']
+        fields = ['id', 'staff', 'class_name', 'date', 'details', 'damaged_items']
 
 
 

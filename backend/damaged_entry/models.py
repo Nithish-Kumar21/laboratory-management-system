@@ -4,7 +4,7 @@ class DamagedEntry(models.Model):
     staff = models.CharField(max_length=100)
     class_name = models.CharField(max_length=50, db_column='class')
     date = models.DateField()
-    details = models.TextField()
+    details = models.TextField(blank=True, default='')
 
     class Meta:
         db_table = 'damaged_entry'

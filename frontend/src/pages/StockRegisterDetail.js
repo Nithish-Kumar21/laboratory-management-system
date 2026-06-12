@@ -12,15 +12,6 @@ function formatDate(dateStr) {
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
-function formatDateShort(dateStr) {
-  if (!dateStr) return '';
-  const d = new Date(dateStr);
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const year = d.getFullYear();
-  return `${day}-${month}-${year}`;
-}
-
 function StockRegisterDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -56,171 +47,98 @@ function StockRegisterDetail() {
 
   const chemItems = stockRegister.chemical_items || [];
   const appItems = stockRegister.apparatus_items || [];
-  const chemCount = chemItems.length;
-  const appCount = appItems.length;
 
   return (
-    <div className="srd-page animate-up">
-      {/* ===== STICKY TOP BAR ===== */}
-      <div className="srd-topbar">
-        {/* ---- Desktop ---- */}
-        <div className="srd-topbar-desktop-content">
-          <div className="srd-topbar-left">
-            <button className="srd-back-btn" onClick={() => navigate('/stock-register')}>
-              <FaArrowLeft />
-            </button>
-            <div className="srd-topbar-title-group">
-              <span className="srd-topbar-title">Stock Entry Details</span>
-              <span className="srd-ref-pill">REF: {stockRegister.invoice_number}</span>
-            </div>
-          </div>
-          <button className="srd-print-btn" onClick={() => window.print()}>
-            <FaPrint /> Print
-          </button>
-          <button className="srd-print-icon-btn" onClick={() => window.print()}>
-            <FaPrint />
-          </button>
-        </div>
+    <div className="staff-detail-wrapper">
+      <div className="staff-detail-page animate-up">
+        <div className="staff-detail-inner">
 
-        {/* ---- Mobile ---- */}
-        <div className="srd-topbar-mobile-content">
-          <button className="srd-back-btn-mobile" onClick={() => navigate('/stock-register')}>
+          <div className="sd-back-row" onClick={() => navigate('/stock-register')}>
             <FaArrowLeft />
-          </button>
-          <span className="srd-topbar-title-mobile">Stock Details</span>
-        </div>
-      </div>
+            <span>Stock Entry Details</span>
+          </div>
 
-      <div className="srd-body">
-        {/* ===== INFO STRIP (Desktop) ===== */}
-        <div className="srd-info-strip">
-          <div className="srd-info-card">
-            <div className="srd-info-label">Invoice Number</div>
-            <div className="srd-info-value">{stockRegister.invoice_number}</div>
-          </div>
-          <div className="srd-info-card">
-            <div className="srd-info-label">Date of Entry</div>
-            <div className="srd-info-value">{formatDate(stockRegister.date)}</div>
-          </div>
-          <div className="srd-info-card">
-            <div className="srd-info-label">Added By</div>
-            <div className="srd-info-value">{stockRegister.supplier_name}</div>
-          </div>
-        </div>
-
-        {/* ===== INFO CARD (Mobile) ===== */}
-        <div className="srd-mobile-info-card">
-          <div className="srd-card-label">INVOICE INFO</div>
-          <div className="srd-mobile-info-grid">
-            <div className="srd-mobile-info-col">
-              <div className="srd-mobile-info-label">Invoice Number</div>
-              <div className="srd-mobile-info-value">{stockRegister.invoice_number}</div>
-            </div>
-            <div className="srd-mobile-info-vdivider" />
-            <div className="srd-mobile-info-col">
-              <div className="srd-mobile-info-label">Date Received</div>
-              <div className="srd-mobile-info-value">{formatDateShort(stockRegister.date)}</div>
-            </div>
-          </div>
-          <div className="srd-mobile-info-hdivider" />
-          <div className="srd-mobile-info-bottom">
-            <div className="srd-mobile-info-label">Supplier Name</div>
-            <div className="srd-mobile-info-value">{stockRegister.supplier_name}</div>
-          </div>
-        </div>
-
-        {/* ===== CHEMICAL ACQUISITIONS ===== */}
-        {chemCount > 0 && (
-          <div className="srd-section">
-            <div className="srd-section-header">
-              <div className="srd-section-title">
-                <FaFlask className="srd-section-icon" />
-                <span>Chemical Acquisitions</span>
+          <div className="sd-card">
+            <div className="sd-card-header">
+              <span className="sd-req-id">REF: {stockRegister.invoice_number}</span>
+              <div className="sd-header-right">
+                <button className="sd-action-icon-btn" onClick={() => window.print()} title="Print">
+                  <FaPrint />
+                </button>
               </div>
-              <span className="srd-count-badge chem-badge">{chemCount} items</span>
             </div>
-
-            <div className="srd-mobile-section-top">
-              <div className="srd-card-label">CHEMICAL LIST</div>
-              <div className="srd-mobile-section-divider" />
-            </div>
-
-            <div className="srd-table-wrap">
-              <table className="srd-table">
-                <thead>
-                  <tr>
-                    <th className="srd-th-name">Chemical</th>
-                    <th className="srd-th-qty">Qty</th>
-                    <th className="srd-th-rate">Rate</th>
-                    <th className="srd-th-make">Make</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {chemItems.map(item => (
-                    <tr key={item.id}>
-                      <td className="srd-td-name">{item.chemical_name}</td>
-                      <td className="srd-td-qty"><span className="srd-qty-pill">{item.quantity_ml} ml</span></td>
-                      <td className="srd-td-rate">₹{parseFloat(item.rate).toFixed(2)}</td>
-                      <td className="srd-td-make">{item.make}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* ===== APPARATUS ACQUISITIONS ===== */}
-        {appCount > 0 && (
-          <div className="srd-section">
-            <div className="srd-section-header">
-              <div className="srd-section-title">
-                <FaBoxes className="srd-section-icon" />
-                <span>Apparatus Acquisitions</span>
+            <hr className="sd-divider" />
+            <div className="sd-meta-grid">
+              <div className="sd-meta-item">
+                <div className="sd-meta-label">Invoice Number</div>
+                <div className="sd-meta-value">{stockRegister.invoice_number}</div>
               </div>
-              <span className="srd-count-badge app-badge">{appCount} items</span>
-            </div>
-
-            <div className="srd-mobile-section-top">
-              <div className="srd-card-label">APPARATUS LIST</div>
-              <div className="srd-mobile-section-divider" />
-            </div>
-
-            <div className="srd-table-wrap">
-              <table className="srd-table">
-                <thead>
-                  <tr>
-                    <th className="srd-th-name">Apparatus</th>
-                    <th className="srd-th-qty">Qty</th>
-                    <th className="srd-th-rate">Rate</th>
-                    <th className="srd-th-make">Make</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {appItems.map(item => (
-                    <tr key={item.id}>
-                      <td className="srd-td-name">{item.apparatus_name}</td>
-                      <td className="srd-td-qty"><span className="srd-qty-pill">{item.quantity_pieces} pcs</span></td>
-                      <td className="srd-td-rate">₹{parseFloat(item.rate).toFixed(2)}</td>
-                      <td className="srd-td-make">{item.make}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div className="sd-meta-item">
+                <div className="sd-meta-label">Date of Entry</div>
+                <div className="sd-meta-value">{formatDate(stockRegister.date)}</div>
+              </div>
+              <div className="sd-meta-item">
+                <div className="sd-meta-label">Supplier Name</div>
+                <div className="sd-meta-value">{stockRegister.supplier_name}</div>
+              </div>
             </div>
           </div>
-        )}
 
-        {/* ===== DANGER ZONE ===== */}
-        {isStoreKeeper && (
-          <div className="srd-danger-zone">
-            <div className="srd-danger-title">⚠️ Danger Zone</div>
-            <div className="srd-danger-sub">Deleting this record will permanently undo inventory quantity adjustments.</div>
-            <button className="srd-delete-btn" onClick={handleDelete} disabled={deleting}>
-              🗑 {deleting ? 'Removing...' : 'Permanently Delete Entry'}
-            </button>
-          </div>
-        )}
+          {chemItems.length > 0 && (
+            <div className="sd-card">
+              <div className="sd-card-title">
+                <FaFlask /> Chemical Acquisitions
+              </div>
+              <hr className="sd-divider" />
+              <div className="sd-chem-list">
+                {chemItems.map(item => (
+                  <div key={item.id} className="sd-chem-row multi-col">
+                    <span className="sd-chem-name">{item.chemical_name}</span>
+                    <span className="sd-chem-qty">{item.quantity_ml}<span className="sd-chem-unit"> ml</span></span>
+                    <span className="sd-chem-rate">₹{parseFloat(item.rate).toFixed(2)}</span>
+                    <span className="sd-chem-make">{item.make || '-'}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {appItems.length > 0 && (
+            <div className="sd-card">
+              <div className="sd-card-title">
+                <FaBoxes /> Apparatus Acquisitions
+              </div>
+              <hr className="sd-divider" />
+              <div className="sd-chem-list">
+                {appItems.map(item => (
+                  <div key={item.id} className="sd-chem-row multi-col">
+                    <span className="sd-chem-name">{item.apparatus_name}</span>
+                    <span className="sd-chem-qty">{item.quantity_pieces}<span className="sd-chem-unit"> pcs</span></span>
+                    <span className="sd-chem-rate">₹{parseFloat(item.rate).toFixed(2)}</span>
+                    <span className="sd-chem-make">{item.make || '-'}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {stockRegister.remarks && (
+            <div className="sd-card">
+              <div className="sd-card-title">Remarks / Description</div>
+              <hr className="sd-divider" />
+              <p className="sd-remarks-text">{stockRegister.remarks}</p>
+            </div>
+          )}
+
+          {isStoreKeeper && (
+            <div className="sd-actions">
+              <button className="sd-btn sd-btn-danger" onClick={handleDelete} disabled={deleting}>
+                {deleting ? 'Removing...' : 'Permanently Delete Entry'}
+              </button>
+            </div>
+          )}
+
+        </div>
       </div>
 
       <ConfirmDialog

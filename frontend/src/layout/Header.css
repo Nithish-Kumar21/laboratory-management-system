@@ -109,6 +109,10 @@
   margin-left: auto;
 }
 
+.header-avatar-circle {
+  margin-left: auto;
+}
+
 /* User profile group */
 .header-user-group {
   display: flex;

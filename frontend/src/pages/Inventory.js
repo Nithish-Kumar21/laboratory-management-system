@@ -6,23 +6,41 @@ import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import './Inventory.css';
 
+function getStatus(qty, reorder) {
+  if (qty <= reorder) return 'critical';
+  if (qty <= reorder * 1.5) return 'low-stock';
+  return 'healthy';
+}
+
 function Inventory() {
   const { isStaff } = useAuth();
   const [activeTab, setActiveTab] = useState('chemical');
   const [searchTerm, setSearchTerm] = useState('');
   const [warningItems, setWarningItems] = useState([]);
+  const [showOnlyLowStock, setShowOnlyLowStock] = useState(false);
 
   const showExtra = !isStaff;
 
   const checkLowStock = async () => {
     try {
       const [chemRes, appRes] = await Promise.all([
-        api.get('low_stock_chemicals/').catch(() => ({ data: [] })),
-        api.get('low_stock_apparatus/').catch(() => ({ data: [] })),
+        api.get('available_chemicals/').catch(() => ({ data: [] })),
+        api.get('available_apparatus/').catch(() => ({ data: [] })),
       ]);
       const chem = Array.isArray(chemRes.data) ? chemRes.data : chemRes.data.results || [];
       const app = Array.isArray(appRes.data) ? appRes.data : appRes.data.results || [];
-      setWarningItems([...chem, ...app]);
+
+      const lowChem = chem.filter(c => {
+        const qty = parseFloat(c.available_quantity_ml);
+        const reorder = parseFloat(c.reorder_level || 0);
+        return getStatus(qty, reorder) !== 'healthy';
+      });
+      const lowApp = app.filter(a => {
+        const qty = parseFloat(a.available_quantity_pieces);
+        const reorder = parseFloat(a.reorder_level || 0);
+        return getStatus(qty, reorder) !== 'healthy';
+      });
+      setWarningItems([...lowChem, ...lowApp]);
     } catch (e) {
       console.error('Low stock check failed', e);
     }
@@ -89,14 +107,16 @@ function Inventory() {
             <span className="warning-icon">🔴</span>
             Low Stock Warning — {totalWarning} item(s) need attention
           </span>
-          <span className="warning-action">View Items</span>
+          <span className="warning-action" onClick={() => setShowOnlyLowStock(s => !s)} style={{ cursor: 'pointer' }}>
+            {showOnlyLowStock ? 'Show All' : 'View Items'}
+          </span>
         </div>
       )}
 
       {activeTab === 'chemical' ? (
-        <ChemicalTable showExtra={showExtra} searchTerm={searchTerm} />
+        <ChemicalTable showExtra={showExtra} searchTerm={searchTerm} showOnlyLowStock={showOnlyLowStock} />
       ) : (
-        <ApparatusTable showExtra={showExtra} searchTerm={searchTerm} />
+        <ApparatusTable showExtra={showExtra} searchTerm={searchTerm} showOnlyLowStock={showOnlyLowStock} />
       )}
     </div>
   );

@@ -27,7 +27,7 @@ class StockRegisterListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = StockRegister
-        fields = ['id', 'invoice_number', 'date', 'supplier_name', 'chemical_items_count', 'apparatus_items_count']
+        fields = ['id', 'invoice_number', 'date', 'supplier_name', 'remarks', 'chemical_items_count', 'apparatus_items_count']
 
     def get_chemical_items_count(self, obj):
         return obj.chemical_items.count()
@@ -45,7 +45,7 @@ class StockRegisterDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = StockRegister
-        fields = ['id', 'invoice_number', 'date', 'supplier_name', 'chemical_items', 'apparatus_items']  # Added 'supplier_name'
+        fields = ['id', 'invoice_number', 'date', 'supplier_name', 'remarks', 'chemical_items', 'apparatus_items']
 
 
 
@@ -92,7 +92,7 @@ class StockRegisterCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = StockRegister
-        fields = ['invoice_number', 'date', 'supplier_name', 'chemical_items', 'apparatus_items']  # Added 'supplier_name'
+        fields = ['invoice_number', 'date', 'supplier_name', 'remarks', 'chemical_items', 'apparatus_items']
     
     def validate_invoice_number(self, value):
         if StockRegister.objects.filter(invoice_number=value).exists():

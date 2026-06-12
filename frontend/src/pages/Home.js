@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import AddRequestModal from '../components/modals/AddRequestModal';
 import './Home.css';
+import { getStatus } from '../utils/inventory';
 import './VintageClock.css';
 import '../components/modals/AddDamagedEntryModal.css';
 import '../pages/StockRequestDetail.css';
@@ -69,19 +70,28 @@ function Home() {
     if (isStaff || isAdmin) return;
     try {
       const [chemRes, appRes] = await Promise.all([
-        api.get('/low_stock_chemicals/').catch(() => ({ data: [] })),
-        api.get('/low_stock_apparatus/').catch(() => ({ data: [] })),
+        api.get('/available_chemicals/').catch(() => ({ data: [] })),
+        api.get('/available_apparatus/').catch(() => ({ data: [] })),
       ]);
 
       const chemData = Array.isArray(chemRes.data) ? chemRes.data : chemRes.data.results || [];
       const appData = Array.isArray(appRes.data) ? appRes.data : appRes.data.results || [];
 
-      const combined = [
-        ...chemData.map(item => ({ ...item, type: 'Chemical', icon: FaFlask })),
-        ...appData.map(item => ({ ...item, type: 'Apparatus', icon: FaBoxes }))
-      ].slice(0, 5);
+      const lowChem = chemData.filter(c => {
+        const qty = parseFloat(c.available_quantity_ml);
+        const reorder = parseFloat(c.reorder_level || 0);
+        const status = getStatus(qty, reorder);
+        return status === 'critical' || status === 'low-stock';
+      }).map(item => ({ ...item, type: 'Chemical', icon: FaFlask, quantity_ml: item.available_quantity_ml }));
 
-      setLowStockItems(combined);
+      const lowApp = appData.filter(a => {
+        const qty = parseFloat(a.available_quantity_pieces);
+        const reorder = parseFloat(a.reorder_level || 0);
+        const status = getStatus(qty, reorder);
+        return status === 'critical' || status === 'low-stock';
+      }).map(item => ({ ...item, type: 'Apparatus', icon: FaBoxes, quantity_pieces: item.available_quantity_pieces }));
+
+      setLowStockItems([...lowChem, ...lowApp].slice(0, 5));
     } catch (err) {
       console.error('Error fetching low stock:', err);
     }

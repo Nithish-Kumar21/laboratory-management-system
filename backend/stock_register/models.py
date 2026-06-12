@@ -3,7 +3,8 @@ from django.db import models
 class StockRegister(models.Model):
     invoice_number = models.CharField(max_length=50, unique=True)
     date = models.DateField()
-    supplier_name = models.CharField(max_length=100)  # ✅ Matches DB VARCHAR(100)
+    supplier_name = models.CharField(max_length=100)
+    remarks = models.TextField(blank=True, default='')  # ✅ Matches DB VARCHAR(100)
 
     class Meta:
         db_table = 'stock_register'

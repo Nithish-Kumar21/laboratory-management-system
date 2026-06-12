@@ -25,6 +25,8 @@ import DamagedEntryDetail from './pages/DamagedEntryDetail';
 import StockRequest from './pages/StockRequest';
 import StockRequestDetail from './pages/StockRequestDetail';
 import NewChemicalRequest from './pages/NewChemicalRequest';
+import NewStockRegister from './pages/NewStockRegister';
+import NewDamagedEntry from './pages/NewDamagedEntry';
 import Settings from './components/Settings';
 import LowStockToast from './components/LowStockToast';
 import './styles/App.css';
@@ -99,6 +101,8 @@ function AppContent() {
                       <Route path="requests" element={<StockRequest />} />
                       <Route path="requests/:id" element={<StockRequestDetail />} />
                       <Route path="new-request" element={<NewChemicalRequest />} />
+                      <Route path="new-stock-register" element={<NewStockRegister />} />
+                      <Route path="new-damaged-entry" element={<NewDamagedEntry />} />
                       <Route path="drafts" element={<StockRequest draftsOnly />} />
 
                       {/* Catch all - redirect to home */}
@@ -120,15 +124,33 @@ function AppContent() {
 
 function FabButton() {
   const location = useLocation();
-  const { isStaff } = useAuth();
+  const { isStaff, isStoreKeeper } = useAuth();
 
-  if (!isStaff || location.pathname !== '/requests') return null;
+  if (isStaff && location.pathname === '/requests') {
+    return (
+      <Link to="/new-request" className="cr-fab">
+        <FaPlus />
+      </Link>
+    );
+  }
 
-  return (
-    <Link to="/new-request" className="cr-fab">
-      <FaPlus />
-    </Link>
-  );
+  if (isStoreKeeper && location.pathname === '/stock-register') {
+    return (
+      <Link to="/new-stock-register" className="cr-fab">
+        <FaPlus />
+      </Link>
+    );
+  }
+
+  if (isStoreKeeper && location.pathname === '/damaged-entry') {
+    return (
+      <Link to="/new-damaged-entry" className="cr-fab">
+        <FaPlus />
+      </Link>
+    );
+  }
+
+  return null;
 }
 
 function App() {

@@ -1,0 +1,186 @@
+import React, { useEffect, useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { FaArrowLeft, FaPlus, FaTrash, FaUserTie, FaGraduationCap, FaCalendarAlt, FaTools } from 'react-icons/fa';
+import api from '../utils/api';
+import ConfirmDialog from '../components/ConfirmDialog';
+import './NewDamagedEntry.css';
+
+function NewDamagedEntry() {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    staff: '',
+    class_name: '',
+    date: new Date().toISOString().split('T')[0],
+    details: '',
+  });
+  const [damagedItems, setDamagedItems] = useState([{ apparatus_name: '', quantity: '', caused_by: '' }]);
+  const [apparatusNames, setApparatusNames] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [alertDialog, setAlertDialog] = useState({ open: false, message: '' });
+  const [showSuggestions, setShowSuggestions] = useState({});
+  const [activeIndex, setActiveIndex] = useState(-1);
+
+  const formRef = useRef(null);
+  const scrollRef = useRef(null);
+
+  useEffect(() => {
+    api.get('available_apparatus/names/')
+      .then(res => setApparatusNames(Array.isArray(res.data) ? res.data : []))
+      .catch(err => console.error(err));
+  }, []);
+
+  const scrollToBottom = () => {
+    if (scrollRef.current) {
+      setTimeout(() => {
+        scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+      }, 50);
+    }
+  };
+
+  const addRow = () => {
+    setDamagedItems([...damagedItems, { apparatus_name: '', quantity: '', caused_by: '' }]);
+    scrollToBottom();
+  };
+
+  const selectApparatus = (i, n) => {
+    const next = [...damagedItems];
+    next[i].apparatus_name = n;
+    setDamagedItems(next);
+    setShowSuggestions({});
+    setActiveIndex(-1);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      const payload = {
+        ...formData,
+        damaged_items: damagedItems.filter(it => it.apparatus_name).map(it => ({
+          apparatus_name: it.apparatus_name,
+          quantity: parseInt(it.quantity),
+          caused_by: it.caused_by
+        }))
+      };
+      await api.post('damaged_entry/', payload);
+      window.dispatchEvent(new Event('inventory-updated'));
+      navigate('/damaged-entry');
+    } catch (err) {
+      const serverErr = err.response?.data;
+      const msg = serverErr?.error || (typeof serverErr === 'object' ? Object.values(serverErr).flat().join('; ') : '') || 'Failed to submit report';
+      setAlertDialog({ open: true, message: msg });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    const { key } = e;
+    const rowIdx = Object.keys(showSuggestions).find(idx => showSuggestions[idx]);
+
+    if (rowIdx !== undefined) {
+      const query = damagedItems[rowIdx].apparatus_name;
+      const options = apparatusNames.filter(n => n.name.toLowerCase().startsWith(query.toLowerCase()));
+
+      if (key === 'ArrowDown') { e.preventDefault(); setActiveIndex(prev => Math.min(prev + 1, options.length - 1)); return; }
+      if (key === 'ArrowUp') { e.preventDefault(); setActiveIndex(prev => Math.max(prev - 1, 0)); return; }
+      if (key === 'Enter' && activeIndex >= 0) { e.preventDefault(); selectApparatus(rowIdx, options[activeIndex].name); return; }
+      if (key === 'Escape' || key === 'Tab') { setShowSuggestions({}); return; }
+    }
+  };
+
+  return (
+    <div className="nrf-page animate-up">
+      <div className="nrf-form-container">
+        <div className="nrf-back-row" onClick={() => navigate('/damaged-entry')}>
+          <FaArrowLeft />
+          <span>New Damaged Entry</span>
+        </div>
+
+        <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} ref={formRef}>
+        <div className="nrf-card">
+          <div className="nrf-auto-row">
+            <div className="nrf-field">
+              <label className="nrf-field-label"><FaUserTie /> Responsible Staff</label>
+              <input type="text" className="nrf-input" value={formData.staff} required placeholder="Name of staff"
+                onChange={e => setFormData({ ...formData, staff: e.target.value })} />
+            </div>
+            <div className="nrf-field">
+              <label className="nrf-field-label"><FaGraduationCap /> Class / Division</label>
+              <input type="text" className="nrf-input" value={formData.class_name} required placeholder="e.g. 10th A"
+                onChange={e => setFormData({ ...formData, class_name: e.target.value })} />
+            </div>
+          </div>
+
+          <div className="nrf-field">
+            <label className="nrf-field-label"><FaCalendarAlt /> Date of Incident</label>
+            <input type="date" className="nrf-input" value={formData.date} required
+              onChange={e => setFormData({ ...formData, date: e.target.value })} />
+          </div>
+
+          {/* Damaged Items */}
+          <div className="nrf-section">
+            <div className="nrf-section-header">
+              <div className="nrf-section-title"><FaTools /> Damaged Items List</div>
+              <button type="button" className="nrf-add-btn" onClick={addRow}><FaPlus /> Add Line</button>
+            </div>
+            <div className="nrf-grid-cols cols-3">
+              <span><FaTools /> Apparatus Name</span>
+              <span>Quantity Broken</span>
+              <span>Caused By</span>
+              <span></span>
+            </div>
+            {damagedItems.map((it, i) => (
+              <div key={i} className="nrf-grid-row cols-3">
+                <div className="nrf-autocomplete">
+                  <input type="text" className="nrf-input" placeholder="Search apparatus..." value={it.apparatus_name} required autoComplete="off"
+                    onChange={e => { const next = [...damagedItems]; next[i].apparatus_name = e.target.value; setDamagedItems(next); setShowSuggestions({ [i]: true }); setActiveIndex(-1); }}
+                    onFocus={() => { setShowSuggestions({ [i]: true }); setActiveIndex(-1); }}
+                    onBlur={() => setTimeout(() => setShowSuggestions({}), 250)} />
+                  {showSuggestions[i] && it.apparatus_name && (
+                    <ul className="nrf-suggestions">
+                      {apparatusNames.filter(n => n.name.toLowerCase().startsWith(it.apparatus_name.toLowerCase())).slice(0, 6).map((n, idx) => (
+                        <li key={idx} className={`nrf-suggestion-item ${activeIndex === idx ? 'active' : ''}`}
+                          onMouseDown={() => selectApparatus(i, n.name)}>
+                          <span>{n.name}</span>
+                          <span className="nrf-stock">Stock: {n.available_quantity}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <input type="number" step="1" className="nrf-input" placeholder="Qty" value={it.quantity ?? ''} required
+                  onChange={e => { const next = [...damagedItems]; next[i].quantity = e.target.value; setDamagedItems(next); }} />
+                <input type="text" className="nrf-input" placeholder="Caused by..." value={it.caused_by} required
+                  onChange={e => { const next = [...damagedItems]; next[i].caused_by = e.target.value; setDamagedItems(next); }} />
+                <button type="button" className="nrf-del-btn" onClick={() => setDamagedItems(damagedItems.filter((_, idx) => idx !== i))} title="Remove"><FaTrash /></button>
+              </div>
+            ))}
+          </div>
+
+          <div className="nrf-field">
+            <label className="nrf-field-label">Incident Details / Observations</label>
+            <textarea className="nrf-textarea" rows="3" value={formData.details} required placeholder="Describe how it happened in detail..."
+              onChange={e => setFormData({ ...formData, details: e.target.value })} />
+          </div>
+
+          <div className="nrf-action-row">
+            <button type="button" className="nrf-btn nrf-btn-ghost" onClick={() => navigate('/damaged-entry')}>
+              Cancel
+            </button>
+            <div className="nrf-spacer"></div>
+            <button type="submit" className="nrf-btn nrf-btn-submit" disabled={submitting}>
+              {submitting ? 'Recording...' : 'File Damage Report'}
+            </button>
+          </div>
+        </div>
+        </form>
+
+        <ConfirmDialog open={alertDialog.open} message={alertDialog.message} showCancel={false} confirmLabel="OK" onConfirm={() => setAlertDialog({ open: false })} />
+      </div>
+    </div>
+  );
+}
+
+export default NewDamagedEntry;

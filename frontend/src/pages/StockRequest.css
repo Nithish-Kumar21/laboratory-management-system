@@ -1188,8 +1188,8 @@
   gap: 10px;
   cursor: pointer;
   color: #1A3C6E;
-  font-weight: 700;
-  font-size: 15px;
+  font-weight: 600;
+  font-size: 16px;
   margin-bottom: 20px;
 }
 
@@ -1201,11 +1201,10 @@
   background: #fff;
   border-radius: 12px;
   border: 0.5px solid #e2e8f0;
-  padding: 24px;
-  max-width: 680px;
+  padding: 28px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 22px;
 }
 
 :root.dark-mode .nrf-card {
@@ -1233,16 +1232,16 @@
 }
 
 .nrf-auto-label {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--text-muted);
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   margin-bottom: 4px;
 }
 
 .nrf-auto-value {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   color: #1A3C6E;
 }
@@ -1259,10 +1258,10 @@
 }
 
 .nrf-field-label {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-muted);
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
@@ -1282,11 +1281,11 @@
 
 .nrf-select {
   width: 100%;
-  height: 40px;
+  height: 42px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
   padding: 0 12px;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text-main);
   background: #fff;
   appearance: none;
@@ -1310,11 +1309,11 @@
 
 .nrf-date-input {
   width: 100%;
-  height: 40px;
+  height: 42px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
   padding: 0 36px 0 12px;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text-main);
   background: #fff;
   outline: none;
@@ -1359,7 +1358,7 @@
 }
 
 .nrf-chem-title {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--text-main);
   display: flex;
@@ -1368,7 +1367,7 @@
 }
 
 .nrf-chem-title svg {
-  font-size: 17px;
+  font-size: 18px;
   color: #1A3C6E;
 }
 
@@ -1380,12 +1379,12 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  padding: 5px 12px;
+  padding: 6px 14px;
   background: #1A3C6E;
   color: #fff;
   border: none;
   border-radius: 6px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
 }
@@ -1411,10 +1410,10 @@
 }
 
 .nrf-chem-cols span {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--text-muted);
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
@@ -1431,11 +1430,11 @@
 
 .nrf-chem-input {
   width: 100%;
-  height: 38px;
+  height: 40px;
   border: 1px solid #d1d5db;
   border-radius: 7px;
   padding: 0 30px 0 10px;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text-main);
   background: #fff;
   outline: none;
@@ -1456,7 +1455,7 @@
 }
 
 .nrf-qty-wrap {
-  height: 38px;
+  height: 40px;
   border: 1px solid #d1d5db;
   border-radius: 7px;
   display: flex;
@@ -1472,7 +1471,7 @@
   flex: 1;
   border: none;
   padding: 0 10px;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text-main);
   background: transparent;
   outline: none;
@@ -1481,7 +1480,7 @@
 
 .nrf-qty-unit {
   padding: 0 8px;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-muted);
   border-left: 1px solid #e5e7eb;
   height: 100%;
@@ -1543,7 +1542,7 @@
 .nrf-suggestion-item {
   padding: 10px 14px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text-main);
   display: flex;
   justify-content: space-between;
@@ -1559,7 +1558,7 @@
 }
 
 .nrf-stock {
-  font-size: 11px;
+  font-size: 12px;
   color: #EF4444;
   font-weight: 600;
 }
@@ -1570,7 +1569,7 @@
   border: 1px solid #d1d5db;
   border-radius: 8px;
   padding: 10px 12px;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text-main);
   background: #fff;
   outline: none;
@@ -1593,28 +1592,28 @@
   color: #EF4444;
   padding: 12px;
   border-radius: 8px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
 }
 
 /* Action Row */
 .nrf-action-row {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   padding-top: 4px;
 }
 
 .nrf-btn {
-  height: 42px;
+  height: 44px;
   border-radius: 8px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 0 20px;
+  padding: 0 24px;
   border: none;
   transition: all 0.2s;
 }
@@ -1736,7 +1735,7 @@
 
 .nrf-form-container {
   width: 100%;
-  max-width: 680px;
+  max-width: 860px;
 }
 
 

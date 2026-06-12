@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaPlus, FaSearch, FaExclamationTriangle, FaFilter, FaSortUp, FaSortDown } from 'react-icons/fa';
+import { FaSearch, FaExclamationTriangle, FaFilter, FaSortUp, FaSortDown } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
-import AddDamagedEntryModal from '../components/modals/AddDamagedEntryModal';
 import './DamagedEntry.css';
 
 function formatDate(dateStr) {
@@ -14,11 +13,10 @@ function formatDate(dateStr) {
 
 function DamagedEntry() {
   const navigate = useNavigate();
-  const { isStoreKeeper, isStaff } = useAuth();
+  const { isStaff } = useAuth();
   const [damagedEntries, setDamagedEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState('date');
   const [sortOrder, setSortOrder] = useState('desc');
@@ -28,8 +26,6 @@ function DamagedEntry() {
     staff: '',
     itemName: ''
   });
-
-  const canAddEntry = isStoreKeeper;
 
   const fetchEntries = async () => {
     setLoading(true);
@@ -83,7 +79,6 @@ function DamagedEntry() {
     String(entry.id).includes(search) ||
     entry.staff?.toLowerCase().includes(search.toLowerCase()) ||
     entry.class_name?.toLowerCase().includes(search.toLowerCase()) ||
-    entry.caused_by?.toLowerCase().includes(search.toLowerCase()) ||
     entry.damaged_items?.some(item =>
       item.apparatus_name?.toLowerCase().includes(search.toLowerCase())
     )
@@ -98,18 +93,7 @@ function DamagedEntry() {
       {/* Title Row */}
       <div className="de-title-row">
         <h1 className="de-title">Damaged Entry</h1>
-        <div className="de-title-right">
-          {canAddEntry && (
-            <button className="de-add-btn" onClick={() => setIsModalOpen(true)}>
-              <FaPlus /> New Damaged Entry
-            </button>
-          )}
-          {canAddEntry && (
-            <button className="de-add-btn-mobile" onClick={() => setIsModalOpen(true)}>
-              <FaPlus /> Add
-            </button>
-          )}
-        </div>
+        <div className="de-title-right"></div>
       </div>
 
       {/* Search + Filter Row */}
@@ -188,7 +172,7 @@ function DamagedEntry() {
           <div className="de-card-list-desktop">
             {filtered.map((entry) => {
               const ref = `DMG-${String(entry.id).padStart(3, '0')}`;
-              const itemNames = entry.damaged_items?.map(i => i.apparatus_name).join(', ') || '—';
+              const itemsCount = entry.damaged_items?.length || 0;
               return (
                 <div
                   key={entry.id}
@@ -200,15 +184,14 @@ function DamagedEntry() {
                   </div>
                   <div className="de-card-info">
                     <div className="de-card-ref">{ref}</div>
-                    <div className="de-card-item">{itemNames}</div>
+                    <div className="de-card-staff">{entry.staff}</div>
                   </div>
                   <div className="de-card-date">
                     📅 {formatDate(entry.date)}
                   </div>
-                  <div className="de-card-type">
-                    <span className="de-type-badge de-type-apparatus">Apparatus</span>
+                  <div className="de-card-count">
+                    {itemsCount} Item{itemsCount !== 1 ? 's' : ''}
                   </div>
-                  <div className="de-card-reason">{entry.caused_by || '—'}</div>
                   <button
                     className="de-card-btn"
                     onClick={(e) => { e.stopPropagation(); handleCardClick(entry.id); }}
@@ -224,7 +207,7 @@ function DamagedEntry() {
           <div className="de-card-list-mobile">
             {filtered.map((entry) => {
               const ref = `DMG-${String(entry.id).padStart(3, '0')}`;
-              const itemNames = entry.damaged_items?.map(i => i.apparatus_name).join(', ') || '—';
+              const itemsCount = entry.damaged_items?.length || 0;
               return (
                 <div
                   key={entry.id}
@@ -238,9 +221,9 @@ function DamagedEntry() {
                   <span className="de-mobile-view" onClick={(e) => { e.stopPropagation(); handleCardClick(entry.id); }}>
                     View ›
                   </span>
-                  <div className="de-mobile-item">{itemNames}</div>
+                  <div className="de-mobile-staff">{entry.staff}</div>
                   <div className="de-mobile-meta">
-                    📅 {formatDate(entry.date)} · <span className="de-type-badge de-type-apparatus">Apparatus</span> · {entry.caused_by || '—'}
+                    📅 {formatDate(entry.date)} · {itemsCount} Item{itemsCount !== 1 ? 's' : ''}
                   </div>
                 </div>
               );
@@ -255,11 +238,6 @@ function DamagedEntry() {
         </div>
       )}
 
-      <AddDamagedEntryModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSuccess={fetchEntries}
-      />
     </div>
   );
 }

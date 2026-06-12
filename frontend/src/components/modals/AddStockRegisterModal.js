@@ -1,10 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { FaPlusCircle, FaTimes, FaTrashAlt, FaFlask, FaBoxes, FaTag } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
+import { FaArrowLeft, FaPlusCircle, FaTimes, FaTrashAlt, FaFlask, FaBoxes, FaTag } from 'react-icons/fa';
 import api from '../../utils/api';
 import ConfirmDialog from '../ConfirmDialog';
 import './AddStockRegisterModal.css';
 
-function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
+function AddStockRegisterModal({ isOpen, onClose, onSuccess, standalone }) {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     invoice_number: '',
     date: new Date().toISOString().split('T')[0],
@@ -251,7 +253,11 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
       await api.post('stock_register/', payload);
       window.dispatchEvent(new Event('inventory-updated'));
       onSuccess();
-      onClose();
+      if (standalone) {
+        navigate('/stock-register');
+      } else {
+        onClose();
+      }
       setChemicalItems([{ chemical_name: '', quantity_ml: '', rate: '', make: '' }]);
       setApparatusItems([{ apparatus_name: '', quantity_pieces: '', rate: '', make: '' }]);
       setFormData({ invoice_number: '', date: new Date().toISOString().split('T')[0], supplier_name: '' });
@@ -261,6 +267,194 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
       setSubmitting(false);
     }
   };
+
+  const renderFormContent = () => (
+    <>
+      <div className="modal-body" ref={scrollRef}>
+        <div className="form-header-card">
+          <div className="form-group">
+            <label>Invoice Number</label>
+            <input type="text" value={formData.invoice_number} required placeholder="INV-REF-001"
+              onChange={e => setFormData({ ...formData, invoice_number: e.target.value })} />
+          </div>
+          <div className="form-group">
+            <label>Date Received</label>
+            <input type="date" value={formData.date} required max={new Date().toISOString().split('T')[0]}
+              onChange={e => setFormData({ ...formData, date: e.target.value })} />
+          </div>
+          <div className="form-group">
+            <label>Supplier Details</label>
+            <div className="autocomplete-wrapper">
+              <input type="text" value={formData.supplier_name} required placeholder="Vendor full name..."
+                onChange={e => { setFormData({ ...formData, supplier_name: e.target.value }); setShowSupplierSuggestions(true); setActiveSuggestionIndex(-1); }}
+                onFocus={() => { setShowSupplierSuggestions(true); setActiveSuggestionIndex(-1); }}
+                onBlur={() => setTimeout(() => setShowSupplierSuggestions(false), 250)} />
+              {showSupplierSuggestions && formData.supplier_name && (
+                <div className="suggestions-dropdown">
+                  {supplierNames.filter(n => n.toLowerCase().startsWith(formData.supplier_name.toLowerCase())).map((n, idx) => (
+                    <div key={idx} className={`suggestion-item ${activeSuggestionIndex === idx ? 'active' : ''}`}
+                      onMouseDown={() => { setFormData({ ...formData, supplier_name: n }); setShowSupplierSuggestions(false); }}>{n}</div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="items-section">
+          <div className="section-header">
+            <h3><FaFlask className="section-title-icon" /> Chemical Materials</h3>
+            <button type="button" className="btn-add-line" onClick={addChemicalRow}>
+              <FaPlusCircle /> Add Line
+            </button>
+          </div>
+
+          <div className="grid-matrix-header">
+            <span>Material Name</span>
+            <span>Qty (ML)</span>
+            <span>Rate (₹)</span>
+            <span>Make / Brand</span>
+            <span></span>
+          </div>
+          {chemicalItems.map((it, i) => (
+            <div key={i} className="grid-row animate-fade">
+              <div className="autocomplete-wrapper">
+                <input type="text" placeholder="Item name..." value={it.chemical_name} required autoComplete="off"
+                  onChange={e => {
+                    const next = [...chemicalItems]; next[i].chemical_name = e.target.value; setChemicalItems(next);
+                    setShowChemicalSuggestions({ [i]: true }); setActiveSuggestionIndex(-1);
+                  }}
+                  onFocus={e => {
+                    setShowChemicalSuggestions({ [i]: true });
+                    setActiveSuggestionIndex(-1);
+                  }}
+                  onBlur={() => setTimeout(() => setShowChemicalSuggestions({}), 250)} />
+                {showChemicalSuggestions[i] && it.chemical_name && (
+                  <ul className="suggestions-dropdown list-style-none">
+                    {chemicalNames.filter(n => (n.name || '').toLowerCase().startsWith((it.chemical_name || '').toLowerCase())).map((n, idx) => (
+                      <li key={idx} className={`suggestion-item ${activeSuggestionIndex === idx ? 'active' : ''}`}
+                        onMouseDown={() => selectChemical(i, n.name)}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                          <span>{n.name}</span>
+                          <span style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 'bold' }}>Stock: {n.available_quantity} ML</span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <input type="number" step="1" placeholder="Quantity" value={it.quantity_ml ?? ''} required onChange={e => { const next = [...chemicalItems]; next[i].quantity_ml = e.target.value; setChemicalItems(next); }} />
+              <input type="number" step="1" placeholder="Price" value={it.rate ?? ''} required onChange={e => { const next = [...chemicalItems]; next[i].rate = e.target.value; setChemicalItems(next); }} />
+              <div className="autocomplete-wrapper">
+                <input type="text" placeholder="Make" value={it.make} required
+                  onChange={e => { const next = [...chemicalItems]; next[i].make = e.target.value; setChemicalItems(next); setShowChemMakesSuggestions({ [i]: true }); setActiveSuggestionIndex(-1); }}
+                  onFocus={() => { setShowChemMakesSuggestions({ [i]: true }); setActiveSuggestionIndex(-1); }}
+                  onBlur={() => setTimeout(() => setShowChemMakesSuggestions({}), 250)} />
+                {showChemMakesSuggestions[i] && it.make && (
+                  <ul className="suggestions-dropdown list-style-none">
+                    {chemMakes.filter(n => n.toLowerCase().startsWith(it.make.toLowerCase())).map((n, idx) => (
+                      <li key={idx} className={`suggestion-item ${activeSuggestionIndex === idx ? 'active' : ''}`}
+                        onMouseDown={() => { const next = [...chemicalItems]; next[i].make = n; setChemicalItems(next); setShowChemMakesSuggestions({}); }}>{n}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <button type="button" className="btn-row-del" onClick={() => setChemicalItems(chemicalItems.filter((_, idx) => idx !== i))} title="Remove line"><FaTrashAlt /></button>
+            </div>
+          ))}
+        </div>
+
+        <div className="items-section">
+          <div className="section-header">
+            <h3><FaBoxes className="section-title-icon" /> Apparatus Materials</h3>
+            <button type="button" className="btn-add-line" onClick={addApparatusRow}>
+              <FaPlusCircle /> Add Line
+            </button>
+          </div>
+
+          <div className="grid-matrix-header">
+            <span>Material Name</span>
+            <span>Qty (PCS)</span>
+            <span>Rate (₹)</span>
+            <span>Make / Brand</span>
+            <span></span>
+          </div>
+          {apparatusItems.map((it, i) => (
+            <div key={i} className="grid-row animate-fade">
+              <div className="autocomplete-wrapper">
+                <input type="text" placeholder="Item name..." value={it.apparatus_name} required autoComplete="off"
+                  onChange={e => {
+                    const next = [...apparatusItems]; next[i].apparatus_name = e.target.value; setApparatusItems(next);
+                    setShowApparatusSuggestions({ [i]: true }); setActiveSuggestionIndex(-1);
+                  }}
+                  onFocus={e => {
+                    setShowApparatusSuggestions({ [i]: true });
+                    setActiveSuggestionIndex(-1);
+                  }}
+                  onBlur={() => setTimeout(() => setShowApparatusSuggestions({}), 250)} />
+                {showApparatusSuggestions[i] && it.apparatus_name && (
+                  <ul className="suggestions-dropdown list-style-none">
+                    {apparatusNames.filter(n => (n.name || '').toLowerCase().startsWith((it.apparatus_name || '').toLowerCase())).map((n, idx) => (
+                      <li key={idx} className={`suggestion-item ${activeSuggestionIndex === idx ? 'active' : ''}`}
+                        onMouseDown={() => selectApparatus(i, n.name)}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                          <span>{n.name}</span>
+                          <span style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 'bold' }}>Stock: {n.available_quantity} PCS</span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <input type="number" step="1" placeholder="Quantity" value={it.quantity_pieces ?? ''} required onChange={e => { const next = [...apparatusItems]; next[i].quantity_pieces = e.target.value; setApparatusItems(next); }} />
+              <input type="number" step="1" placeholder="Price" value={it.rate ?? ''} required onChange={e => { const next = [...apparatusItems]; next[i].rate = e.target.value; setApparatusItems(next); }} />
+              <div className="autocomplete-wrapper">
+                <input type="text" placeholder="Make" value={it.make} required
+                  onChange={e => { const next = [...apparatusItems]; next[i].make = e.target.value; setApparatusItems(next); setShowAppMakesSuggestions({ [i]: true }); setActiveSuggestionIndex(-1); }}
+                  onFocus={() => { setShowAppMakesSuggestions({ [i]: true }); setActiveSuggestionIndex(-1); }}
+                  onBlur={() => setTimeout(() => setShowAppMakesSuggestions({}), 250)} />
+                {showAppMakesSuggestions[i] && it.make && (
+                  <ul className="suggestions-dropdown list-style-none">
+                    {appMakes.filter(n => n.toLowerCase().startsWith(it.make.toLowerCase())).map((n, idx) => (
+                      <li key={idx} className={`suggestion-item ${activeSuggestionIndex === idx ? 'active' : ''}`}
+                        onMouseDown={() => { const next = [...apparatusItems]; next[i].make = n; setApparatusItems(next); setShowAppMakesSuggestions({}); }}>{n}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <button type="button" className="btn-row-del" onClick={() => setApparatusItems(apparatusItems.filter((_, idx) => idx !== i))} title="Remove line"><FaTrashAlt /></button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="modal-footer">
+        <button type="button" className="btn-cancel" onClick={standalone ? () => navigate('/stock-register') : onClose}>
+          {standalone ? 'Cancel' : 'Discard'}
+        </button>
+        <button type="submit" className="btn-submit" disabled={submitting}>{submitting ? 'Verifying...' : 'Finalize Stock Entry'}</button>
+      </div>
+    </>
+  );
+
+  if (standalone) {
+    return (
+      <div className="new-entry-page">
+        <div className="new-entry-container">
+          <div className="new-entry-header">
+            <button className="new-entry-back" onClick={() => navigate('/stock-register')}>
+              <FaArrowLeft />
+            </button>
+            <h2><FaTag /> New Stock Entry</h2>
+          </div>
+          <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} ref={modalRef}>
+            {renderFormContent()}
+          </form>
+        </div>
+        <ConfirmDialog open={alertDialog.open} message={alertDialog.message} showCancel={false} confirmLabel="OK" onConfirm={() => setAlertDialog({ open: false })} />
+      </div>
+    );
+  }
 
   if (!isOpen) return null;
 
@@ -276,168 +470,7 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess }) {
         </div>
 
         <form onSubmit={handleSubmit} onKeyDown={handleKeyDown}>
-          <div className="modal-body" ref={scrollRef}>
-            <div className="form-header-card">
-              <div className="form-group">
-                <label>Invoice Number</label>
-                <input type="text" value={formData.invoice_number} required placeholder="INV-REF-001"
-                  onChange={e => setFormData({ ...formData, invoice_number: e.target.value })} />
-              </div>
-              <div className="form-group">
-                <label>Date Received</label>
-                <input type="date" value={formData.date} required max={new Date().toISOString().split('T')[0]}
-                  onChange={e => setFormData({ ...formData, date: e.target.value })} />
-              </div>
-              <div className="form-group">
-                <label>Supplier Details</label>
-                <div className="autocomplete-wrapper">
-                  <input type="text" value={formData.supplier_name} required placeholder="Vendor full name..."
-                    onChange={e => { setFormData({ ...formData, supplier_name: e.target.value }); setShowSupplierSuggestions(true); setActiveSuggestionIndex(-1); }}
-                    onFocus={() => { setShowSupplierSuggestions(true); setActiveSuggestionIndex(-1); }}
-                    onBlur={() => setTimeout(() => setShowSupplierSuggestions(false), 250)} />
-                  {showSupplierSuggestions && formData.supplier_name && (
-                    <div className="suggestions-dropdown">
-                      {supplierNames.filter(n => n.toLowerCase().startsWith(formData.supplier_name.toLowerCase())).map((n, idx) => (
-                        <div key={idx} className={`suggestion-item ${activeSuggestionIndex === idx ? 'active' : ''}`}
-                          onMouseDown={() => { setFormData({ ...formData, supplier_name: n }); setShowSupplierSuggestions(false); }}>{n}</div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="items-section">
-              <div className="section-header">
-                <h3><FaFlask className="section-title-icon" /> Chemical Materials</h3>
-                <button type="button" className="btn-add-line" onClick={addChemicalRow}>
-                  <FaPlusCircle /> Add Line
-                </button>
-              </div>
-
-              <div className="grid-matrix-header">
-                <span>Material Name</span>
-                <span>Qty (ML)</span>
-                <span>Rate (₹)</span>
-                <span>Make / Brand</span>
-                <span></span>
-              </div>
-              {chemicalItems.map((it, i) => (
-                <div key={i} className="grid-row animate-fade">
-                  <div className="autocomplete-wrapper">
-                    <input type="text" placeholder="Item name..." value={it.chemical_name} required autoComplete="off"
-                      onChange={e => {
-                        const next = [...chemicalItems]; next[i].chemical_name = e.target.value; setChemicalItems(next);
-                        setShowChemicalSuggestions({ [i]: true }); setActiveSuggestionIndex(-1);
-                      }}
-                      onFocus={e => {
-                        setShowChemicalSuggestions({ [i]: true });
-                        setActiveSuggestionIndex(-1);
-                      }}
-                      onBlur={() => setTimeout(() => setShowChemicalSuggestions({}), 250)} />
-                    {showChemicalSuggestions[i] && it.chemical_name && (
-                      <ul className="suggestions-dropdown list-style-none">
-                        {chemicalNames.filter(n => (n.name || '').toLowerCase().startsWith((it.chemical_name || '').toLowerCase())).map((n, idx) => (
-                          <li key={idx} className={`suggestion-item ${activeSuggestionIndex === idx ? 'active' : ''}`}
-                            onMouseDown={() => selectChemical(i, n.name)}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                              <span>{n.name}</span>
-                              <span style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 'bold' }}>Stock: {n.available_quantity} ML</span>
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                  <input type="number" step="1" placeholder="Quantity" value={it.quantity_ml ?? ''} required onChange={e => { const next = [...chemicalItems]; next[i].quantity_ml = e.target.value; setChemicalItems(next); }} />
-                  <input type="number" step="1" placeholder="Price" value={it.rate ?? ''} required onChange={e => { const next = [...chemicalItems]; next[i].rate = e.target.value; setChemicalItems(next); }} />
-                  <div className="autocomplete-wrapper">
-                    <input type="text" placeholder="Make" value={it.make} required
-                      onChange={e => { const next = [...chemicalItems]; next[i].make = e.target.value; setChemicalItems(next); setShowChemMakesSuggestions({ [i]: true }); setActiveSuggestionIndex(-1); }}
-                      onFocus={() => { setShowChemMakesSuggestions({ [i]: true }); setActiveSuggestionIndex(-1); }}
-                      onBlur={() => setTimeout(() => setShowChemMakesSuggestions({}), 250)} />
-                    {showChemMakesSuggestions[i] && it.make && (
-                      <ul className="suggestions-dropdown list-style-none">
-                        {chemMakes.filter(n => n.toLowerCase().startsWith(it.make.toLowerCase())).map((n, idx) => (
-                          <li key={idx} className={`suggestion-item ${activeSuggestionIndex === idx ? 'active' : ''}`}
-                            onMouseDown={() => { const next = [...chemicalItems]; next[i].make = n; setChemicalItems(next); setShowChemMakesSuggestions({}); }}>{n}</li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                  <button type="button" className="btn-row-del" onClick={() => setChemicalItems(chemicalItems.filter((_, idx) => idx !== i))} title="Remove line"><FaTrashAlt /></button>
-                </div>
-              ))}
-            </div>
-
-            <div className="items-section">
-              <div className="section-header">
-                <h3><FaBoxes className="section-title-icon" /> Apparatus Materials</h3>
-                <button type="button" className="btn-add-line" onClick={addApparatusRow}>
-                  <FaPlusCircle /> Add Line
-                </button>
-              </div>
-
-              <div className="grid-matrix-header">
-                <span>Material Name</span>
-                <span>Qty (PCS)</span>
-                <span>Rate (₹)</span>
-                <span>Make / Brand</span>
-                <span></span>
-              </div>
-              {apparatusItems.map((it, i) => (
-                <div key={i} className="grid-row animate-fade">
-                  <div className="autocomplete-wrapper">
-                    <input type="text" placeholder="Item name..." value={it.apparatus_name} required autoComplete="off"
-                      onChange={e => {
-                        const next = [...apparatusItems]; next[i].apparatus_name = e.target.value; setApparatusItems(next);
-                        setShowApparatusSuggestions({ [i]: true }); setActiveSuggestionIndex(-1);
-                      }}
-                      onFocus={e => {
-                        setShowApparatusSuggestions({ [i]: true });
-                        setActiveSuggestionIndex(-1);
-                      }}
-                      onBlur={() => setTimeout(() => setShowApparatusSuggestions({}), 250)} />
-                    {showApparatusSuggestions[i] && it.apparatus_name && (
-                      <ul className="suggestions-dropdown list-style-none">
-                        {apparatusNames.filter(n => (n.name || '').toLowerCase().startsWith((it.apparatus_name || '').toLowerCase())).map((n, idx) => (
-                          <li key={idx} className={`suggestion-item ${activeSuggestionIndex === idx ? 'active' : ''}`}
-                            onMouseDown={() => selectApparatus(i, n.name)}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                              <span>{n.name}</span>
-                              <span style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 'bold' }}>Stock: {n.available_quantity} PCS</span>
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                  <input type="number" step="1" placeholder="Quantity" value={it.quantity_pieces ?? ''} required onChange={e => { const next = [...apparatusItems]; next[i].quantity_pieces = e.target.value; setApparatusItems(next); }} />
-                  <input type="number" step="1" placeholder="Price" value={it.rate ?? ''} required onChange={e => { const next = [...apparatusItems]; next[i].rate = e.target.value; setApparatusItems(next); }} />
-                  <div className="autocomplete-wrapper">
-                    <input type="text" placeholder="Make" value={it.make} required
-                      onChange={e => { const next = [...apparatusItems]; next[i].make = e.target.value; setApparatusItems(next); setShowAppMakesSuggestions({ [i]: true }); setActiveSuggestionIndex(-1); }}
-                      onFocus={() => { setShowAppMakesSuggestions({ [i]: true }); setActiveSuggestionIndex(-1); }}
-                      onBlur={() => setTimeout(() => setShowAppMakesSuggestions({}), 250)} />
-                    {showAppMakesSuggestions[i] && it.make && (
-                      <ul className="suggestions-dropdown list-style-none">
-                        {appMakes.filter(n => n.toLowerCase().startsWith(it.make.toLowerCase())).map((n, idx) => (
-                          <li key={idx} className={`suggestion-item ${activeSuggestionIndex === idx ? 'active' : ''}`}
-                            onMouseDown={() => { const next = [...apparatusItems]; next[i].make = n; setApparatusItems(next); setShowAppMakesSuggestions({}); }}>{n}</li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                  <button type="button" className="btn-row-del" onClick={() => setApparatusItems(apparatusItems.filter((_, idx) => idx !== i))} title="Remove line"><FaTrashAlt /></button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="modal-footer">
-            <button type="button" className="btn-cancel" onClick={onClose}>Discard</button>
-            <button type="submit" className="btn-submit" disabled={submitting}>{submitting ? 'Verifying...' : 'Finalize Stock Entry'}</button>
-          </div>
+          {renderFormContent()}
         </form>
       </div>
       <ConfirmDialog open={alertDialog.open} message={alertDialog.message} showCancel={false} confirmLabel="OK" onConfirm={() => setAlertDialog({ open: false })} />

@@ -1,10 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { FaPlusCircle, FaTimes, FaTrashAlt, FaExclamationTriangle, FaUserTie, FaGraduationCap, FaCalendarAlt, FaTools, FaChevronDown } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
+import { FaArrowLeft, FaPlusCircle, FaTimes, FaTrashAlt, FaExclamationTriangle, FaUserTie, FaGraduationCap, FaCalendarAlt, FaTools, FaChevronDown } from 'react-icons/fa';
 import api from '../../utils/api';
 import ConfirmDialog from '../ConfirmDialog';
 import './AddDamagedEntryModal.css';
 
-function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
+function AddDamagedEntryModal({ isOpen, onClose, onSuccess, standalone }) {
+  const navigate = useNavigate();
     const [formData, setFormData] = useState({
         staff: '',
         class_name: '',
@@ -167,18 +169,140 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
                     caused_by: it.caused_by
                 }))
             };
-            await api.post('damaged_entry/', payload);
-            window.dispatchEvent(new Event('inventory-updated'));
-            onSuccess();
-            onClose();
-            setFormData({ staff: '', class_name: '', date: new Date().toISOString().split('T')[0], details: '' });
-            setDamagedItems([{ apparatus_name: '', quantity: '', caused_by: '' }]);
+      await api.post('damaged_entry/', payload);
+      window.dispatchEvent(new Event('inventory-updated'));
+      onSuccess();
+      if (standalone) {
+        navigate('/damaged-entry');
+      } else {
+        onClose();
+      }
+      setFormData({ staff: '', class_name: '', date: new Date().toISOString().split('T')[0], details: '' });
+      setDamagedItems([{ apparatus_name: '', quantity: '', caused_by: '' }]);
         } catch (err) {
             setAlertDialog({ open: true, message: 'Error: ' + (err.response?.data?.error || 'Failed to submit report') });
         } finally {
             setSubmitting(false);
         }
     };
+
+    const renderFormContent = () => (
+        <>
+            <div className="modal-body" ref={scrollRef}>
+                <div className="form-header-card">
+                    <div className="form-group">
+                        <label><FaUserTie /> Responsible Staff</label>
+                        <input type="text" value={formData.staff} required placeholder="Name of staff"
+                            onChange={e => setFormData({ ...formData, staff: e.target.value })} />
+                    </div>
+                    <div className="form-group">
+                        <label><FaGraduationCap /> Class / Division</label>
+                        <input type="text" value={formData.class_name} required placeholder="e.g. 10th A"
+                            onChange={e => setFormData({ ...formData, class_name: e.target.value })} />
+                    </div>
+                    <div className="form-group">
+                        <label><FaCalendarAlt /> Date of Incident</label>
+                        <input type="date" value={formData.date} required
+                            onChange={e => setFormData({ ...formData, date: e.target.value })} />
+                    </div>
+                </div>
+
+                <div className="items-section">
+                    <div className="section-header">
+                        <h3><FaTools className="section-title-icon" /> Damaged Items List</h3>
+                        <button type="button" className="btn-add-line" onClick={addRow}>
+                            <FaPlusCircle /> Add Line
+                        </button>
+                    </div>
+
+                    <div className="damaged-items-table">
+                        <div className="grid-matrix-header">
+                            <span><FaTools /> Apparatus Name</span>
+                            <span>Quantity Broken</span>
+                            <span>Caused By</span>
+                            <span></span>
+                        </div>
+
+                        {damagedItems.map((it, i) => (
+                            <div key={i} className="grid-row animate-fade">
+                                <div className="autocomplete-wrapper">
+                                    <input type="text" className="grid-input" placeholder="Search apparatus..." value={it.apparatus_name} required autoComplete="off"
+                                        onChange={e => {
+                                            const next = [...damagedItems]; next[i].apparatus_name = e.target.value; setDamagedItems(next);
+                                            setShowSuggestions({ [i]: true }); setActiveIndex(-1);
+                                        }}
+                                        onFocus={e => {
+                                            setShowSuggestions({ [i]: true });
+                                            setActiveIndex(-1);
+                                        }}
+                                        onBlur={() => setTimeout(() => setShowSuggestions({}), 250)} />
+                                    {showSuggestions[i] && it.apparatus_name && (
+                                        <ul className="suggestions-dropdown list-style-none">
+                                            {[
+                                                { name: 'Beaker 250ml', available_quantity: 30 },
+                                                { name: 'Test Tube', available_quantity: 150 },
+                                                { name: 'Pipette', available_quantity: 45 },
+                                                { name: 'Burette', available_quantity: 20 },
+                                                { name: 'Funnel', available_quantity: 80 },
+                                                { name: 'Flask 500ml', available_quantity: 15 }
+                                            ].filter(n => (n.name || '').toLowerCase().startsWith((it.apparatus_name || '').toLowerCase())).slice(0, 6).map((n, idx) => (
+                                                <li key={idx} className={`suggestion-item ${activeIndex === idx ? 'active' : ''}`}
+                                                    onMouseDown={() => selectApparatus(i, n.name)}>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                                                        <span>{n.name}</span>
+                                                        <span style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 'bold' }}>Stock: {n.available_quantity}</span>
+                                                    </div>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                </div>
+                                <input type="number" className="grid-input" placeholder="Qty" value={it.quantity ?? ''} required
+                                    onChange={e => { const next = [...damagedItems]; next[i].quantity = e.target.value; setDamagedItems(next); }} />
+                                <input type="text" className="grid-input" placeholder="Caused by..." value={it.caused_by} required
+                                    onChange={e => { const next = [...damagedItems]; next[i].caused_by = e.target.value; setDamagedItems(next); }} />
+                                <button type="button" className="btn-row-del" onClick={() => setDamagedItems(damagedItems.filter((_, idx) => idx !== i))} title="Remove item"><FaTrashAlt /></button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="form-group full-width mt-30">
+                    <label>Incident Details / Observations</label>
+                    <textarea rows="3" value={formData.details} required placeholder="Describe how it happened in detail..."
+                        onChange={e => setFormData({ ...formData, details: e.target.value })} />
+                </div>
+            </div>
+
+            <div className="modal-footer">
+                <button type="button" className="btn-cancel" onClick={standalone ? () => navigate('/damaged-entry') : onClose}>
+                    {standalone ? 'Cancel' : 'Discard'}
+                </button>
+                <button type="submit" className="btn-submit danger-btn" disabled={submitting}>
+                    {submitting ? 'Recording...' : 'File Damage Report'}
+                </button>
+            </div>
+        </>
+    );
+
+    if (standalone) {
+        return (
+            <div className="new-entry-page">
+                <div className="new-entry-container">
+                    <div className="new-entry-header">
+                        <button className="new-entry-back" onClick={() => navigate('/damaged-entry')}>
+                            <FaArrowLeft />
+                        </button>
+                        <h2><FaExclamationTriangle /> New Damaged Entry</h2>
+                    </div>
+                    <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} ref={modalRef}>
+                        {renderFormContent()}
+                    </form>
+                </div>
+                <ConfirmDialog open={alertDialog.open} message={alertDialog.message} showCancel={false} confirmLabel="OK" onConfirm={() => setAlertDialog({ open: false })} />
+            </div>
+        );
+    }
 
     if (!isOpen) return null;
 
@@ -194,98 +318,7 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess }) {
                 </div>
 
                 <form onSubmit={handleSubmit} onKeyDown={handleKeyDown}>
-                    <div className="modal-body" ref={scrollRef}>
-                        <div className="form-header-card">
-                            <div className="form-group">
-                                <label><FaUserTie /> Responsible Staff</label>
-                                <input type="text" value={formData.staff} required placeholder="Name of staff"
-                                    onChange={e => setFormData({ ...formData, staff: e.target.value })} />
-                            </div>
-                            <div className="form-group">
-                                <label><FaGraduationCap /> Class / Division</label>
-                                <input type="text" value={formData.class_name} required placeholder="e.g. 10th A"
-                                    onChange={e => setFormData({ ...formData, class_name: e.target.value })} />
-                            </div>
-                            <div className="form-group">
-                                <label><FaCalendarAlt /> Date of Incident</label>
-                                <input type="date" value={formData.date} required
-                                    onChange={e => setFormData({ ...formData, date: e.target.value })} />
-                            </div>
-                        </div>
-
-                        <div className="items-section">
-                            <div className="section-header">
-                                <h3><FaTools className="section-title-icon" /> Damaged Items List</h3>
-                                <button type="button" className="btn-add-line" onClick={addRow}>
-                                    <FaPlusCircle /> Add Line
-                                </button>
-                            </div>
-
-                            <div className="damaged-items-table">
-                                <div className="grid-matrix-header">
-                                    <span><FaTools /> Apparatus Name</span>
-                                    <span>Quantity Broken</span>
-                                    <span>Caused By</span>
-                                    <span></span>
-                                </div>
-
-                                {damagedItems.map((it, i) => (
-                                    <div key={i} className="grid-row animate-fade">
-                                        <div className="autocomplete-wrapper">
-                                            <input type="text" className="grid-input" placeholder="Search apparatus..." value={it.apparatus_name} required autoComplete="off"
-                                                onChange={e => {
-                                                    const next = [...damagedItems]; next[i].apparatus_name = e.target.value; setDamagedItems(next);
-                                                    setShowSuggestions({ [i]: true }); setActiveIndex(-1);
-                                                }}
-                                                onFocus={e => {
-                                                    setShowSuggestions({ [i]: true });
-                                                    setActiveIndex(-1);
-                                                }}
-                                                onBlur={() => setTimeout(() => setShowSuggestions({}), 250)} />
-                                            {showSuggestions[i] && it.apparatus_name && (
-                                                <ul className="suggestions-dropdown list-style-none">
-                                                    {[
-                                                        { name: 'Beaker 250ml', available_quantity: 30 },
-                                                        { name: 'Test Tube', available_quantity: 150 },
-                                                        { name: 'Pipette', available_quantity: 45 },
-                                                        { name: 'Burette', available_quantity: 20 },
-                                                        { name: 'Funnel', available_quantity: 80 },
-                                                        { name: 'Flask 500ml', available_quantity: 15 }
-                                                    ].filter(n => (n.name || '').toLowerCase().startsWith((it.apparatus_name || '').toLowerCase())).slice(0, 6).map((n, idx) => (
-                                                        <li key={idx} className={`suggestion-item ${activeIndex === idx ? 'active' : ''}`}
-                                                            onMouseDown={() => selectApparatus(i, n.name)}>
-                                                            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                                                                <span>{n.name}</span>
-                                                                <span style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 'bold' }}>Stock: {n.available_quantity}</span>
-                                                            </div>
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            )}
-                                        </div>
-                                        <input type="number" className="grid-input" placeholder="Qty" value={it.quantity ?? ''} required
-                                            onChange={e => { const next = [...damagedItems]; next[i].quantity = e.target.value; setDamagedItems(next); }} />
-                                        <input type="text" className="grid-input" placeholder="Caused by..." value={it.caused_by} required
-                                            onChange={e => { const next = [...damagedItems]; next[i].caused_by = e.target.value; setDamagedItems(next); }} />
-                                        <button type="button" className="btn-row-del" onClick={() => setDamagedItems(damagedItems.filter((_, idx) => idx !== i))} title="Remove item"><FaTrashAlt /></button>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="form-group full-width mt-30">
-                            <label>Incident Details / Observations</label>
-                            <textarea rows="3" value={formData.details} required placeholder="Describe how it happened in detail..."
-                                onChange={e => setFormData({ ...formData, details: e.target.value })} />
-                        </div>
-                    </div>
-
-                    <div className="modal-footer">
-                        <button type="button" className="btn-cancel" onClick={onClose}>Discard</button>
-                        <button type="submit" className="btn-submit danger-btn" disabled={submitting}>
-                            {submitting ? 'Recording...' : 'File Damage Report'}
-                        </button>
-                    </div>
+                    {renderFormContent()}
                 </form>
             </div>
             <ConfirmDialog open={alertDialog.open} message={alertDialog.message} showCancel={false} confirmLabel="OK" onConfirm={() => setAlertDialog({ open: false })} />
