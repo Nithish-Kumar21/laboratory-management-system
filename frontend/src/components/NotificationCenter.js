@@ -59,15 +59,15 @@ const NotificationCenter = () => {
             let combinedLowStock = [];
             if (showLowStockInNotif) {
                 const lowChem = chemData.filter(c => {
-                    const qty = parseFloat(c.available_quantity_ml);
+                    const qty = parseFloat(c.quantity);
                     const reorder = parseFloat(c.reorder_level || 0);
                     return getStatus(qty, reorder) !== 'healthy';
                 }).map(item => ({
                     id: `chem-${item.id}`,
                     name: item.chemical_name,
                     type: 'Low Stock: Chemical',
-                    qty: item.available_quantity_ml,
-                    unit: 'ml',
+                    qty: item.quantity,
+                    unit: item.unit || 'ml',
                     isAlert: true
                 }));
                 const lowApp = appData.filter(a => {

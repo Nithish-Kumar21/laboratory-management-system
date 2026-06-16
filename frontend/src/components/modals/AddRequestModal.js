@@ -25,7 +25,7 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
     class_name: defaultClass,
     date: new Date().toISOString().split('T')[0]
   });
-  const [chemicalItems, setChemicalItems] = useState([{ chemical_name: '', quantity_ml: '' }]);
+  const [chemicalItems, setChemicalItems] = useState([{ chemical_name: '', quantity: '' }]);
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [availableChemicals, setAvailableChemicals] = useState([]);
@@ -45,7 +45,7 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
         if (editData.chemical_items && editData.chemical_items.length > 0) {
           setChemicalItems(editData.chemical_items.map(item => ({
             chemical_name: item.chemical_name,
-            quantity_ml: item.quantity_ml
+            quantity: item.quantity
           })));
         }
       } else {
@@ -55,7 +55,7 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
           class_name: opts.length ? opts[0] : 'I B.Sc Chemistry',
           date: new Date().toISOString().split('T')[0]
         });
-        setChemicalItems([{ chemical_name: '', quantity_ml: '' }]);
+        setChemicalItems([{ chemical_name: '', quantity: '' }]);
       }
 
       api
@@ -71,7 +71,7 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
   if (!isOpen) return null;
 
   const addChemicalRow = () => {
-    setChemicalItems([...chemicalItems, { chemical_name: '', quantity_ml: '' }]);
+    setChemicalItems([...chemicalItems, { chemical_name: '', quantity: '' }]);
   };
 
   const removeChemicalRow = (i) => {
@@ -97,13 +97,13 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
     }
     chemicalItems.forEach((item, i) => {
       if (!item.chemical_name?.trim()) newErrors[`chemical_name_${i}`] = 'Required';
-      const q = parseFloat(item.quantity_ml);
-      if (!item.quantity_ml || isNaN(q) || q <= 0)
+      const q = parseFloat(item.quantity);
+      if (!item.quantity || isNaN(q) || q <= 0)
         newErrors[`chemical_quantity_${i}`] = 'Invalid';
 
       const selectedChem = availableChemicals.find(c => c.chemical_name === item.chemical_name);
-      if (selectedChem && q > parseFloat(selectedChem.available_quantity_ml)) {
-        newErrors[`chemical_quantity_${i}`] = `Requested quantity exceeds available stock (Available: ${selectedChem.available_quantity_ml})`;
+      if (selectedChem && q > parseFloat(selectedChem.quantity)) {
+        newErrors[`chemical_quantity_${i}`] = `Requested quantity exceeds available stock (Available: ${selectedChem.quantity})`;
       }
     });
     setErrors(newErrors);
@@ -122,7 +122,7 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
       status: (directSubmit && !hasActiveRequest) ? 'pending' : 'draft',
       chemical_items: chemicalItems.map((item) => ({
         chemical_name: item.chemical_name.trim(),
-        quantity_ml: parseFloat(item.quantity_ml),
+        quantity: parseFloat(item.quantity),
       })),
     };
 
@@ -221,7 +221,7 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
               <div className="chemical-requirements-table">
                 <div className="grid-matrix-header">
                   <span>Chemical</span>
-                  <span>QTY (ML)</span>
+                  <span>QTY</span>
                   <span></span>
                   <span></span>
                   <span></span>
@@ -267,7 +267,7 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
                                 <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
                                   <span>{c.chemical_name}</span>
                                   <span style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 'bold' }}>
-                                    Stock: {c.available_quantity_ml} ML
+                                    Stock: {c.quantity} {c.unit || 'ml'}
                                   </span>
                                 </div>
                               </li>
@@ -282,11 +282,11 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
                         step="1"
                         min="0"
                         className={`grid-input grid-input-qty ${errors[`chemical_quantity_${i}`] ? 'input-error' : ''}`}
-                        placeholder="0ML"
-                        value={item.quantity_ml === '' || item.quantity_ml == null ? '' : item.quantity_ml}
+                        placeholder="0"
+                        value={item.quantity === '' || item.quantity == null ? '' : item.quantity}
                         onChange={(e) => {
                           const v = e.target.value;
-                          updateChemicalItem(i, 'quantity_ml', v === '' ? '' : v);
+                          updateChemicalItem(i, 'quantity', v === '' ? '' : v);
                         }}
                       />
                       {errors[`chemical_quantity_${i}`] && <span className="field-error">{errors[`chemical_quantity_${i}`]}</span>}

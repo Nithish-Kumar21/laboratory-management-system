@@ -78,11 +78,11 @@ function Home() {
       const appData = Array.isArray(appRes.data) ? appRes.data : appRes.data.results || [];
 
       const lowChem = chemData.filter(c => {
-        const qty = parseFloat(c.available_quantity_ml);
+        const qty = parseFloat(c.quantity);
         const reorder = parseFloat(c.reorder_level || 0);
         const status = getStatus(qty, reorder);
         return status === 'critical' || status === 'low-stock';
-      }).map(item => ({ ...item, type: 'Chemical', icon: FaFlask, quantity_ml: item.available_quantity_ml }));
+      }).map(item => ({ ...item, type: 'Chemical', icon: FaFlask, quantity: item.quantity }));
 
       const lowApp = appData.filter(a => {
         const qty = parseFloat(a.available_quantity_pieces);
@@ -266,8 +266,8 @@ function Home() {
                     <span className="stock-item-type">{item.type}</span>
                   </div>
                   <div className="stock-item-quantity">
-                    <span className="quantity-value">{item.quantity_ml || item.quantity_pieces}</span>
-                    <span className="quantity-unit">{item.quantity_ml ? 'ML' : 'PCS'}</span>
+                    <span className="quantity-value">{item.quantity || item.quantity_pieces}</span>
+                    <span className="quantity-unit">{item.quantity ? (item.unit || 'ml').toUpperCase() : 'PCS'}</span>
                   </div>
                 </div>
               ))}

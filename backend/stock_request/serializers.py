@@ -6,9 +6,10 @@ from inventory.models import AvailableChemical
 
 class ChemicalItemWriteSerializer(serializers.Serializer):
     chemical_name = serializers.CharField(max_length=64)
-    quantity_ml = serializers.DecimalField(max_digits=10, decimal_places=2)
+    quantity = serializers.DecimalField(max_digits=10, decimal_places=2)
+    unit = serializers.ChoiceField(choices=['ml', 'g'], default='ml')
 
-    def validate_quantity_ml(self, value):
+    def validate_quantity(self, value):
         if value <= 0:
             raise serializers.ValidationError("Quantity must be greater than 0")
         return value
@@ -17,7 +18,7 @@ class ChemicalItemWriteSerializer(serializers.Serializer):
 class ChemicalItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = StockRequestChemicalItem
-        fields = ['id', 'chemical_name', 'quantity_ml', 'actual_used_quantity_ml']
+        fields = ['id', 'chemical_name', 'quantity', 'unit', 'actual_used_quantity']
 
 
 class StockRequestCreateSerializer(serializers.ModelSerializer):
@@ -56,13 +57,13 @@ class StockRequestCreateSerializer(serializers.ModelSerializer):
                 )
         for item in chemicals:
             chem_name = item.get('chemical_name')
-            qty = item.get('quantity_ml')
+            qty = item.get('quantity')
             if chem_name and qty:
                 try:
                     chem = AvailableChemical.objects.get(chemical_name=chem_name)
-                    if qty > chem.available_quantity_ml:
+                    if qty > chem.quantity:
                         raise serializers.ValidationError(
-                            f"Requested quantity for '{chem_name}' exceeds available stock (Available: {chem.available_quantity_ml})"
+                            f"Requested quantity for '{chem_name}' exceeds available stock (Available: {chem.quantity})"
                         )
                 except AvailableChemical.DoesNotExist:
                     pass
@@ -159,9 +160,9 @@ class StockRequestDetailSerializer(serializers.ModelSerializer):
 class UsageReportItemSerializer(serializers.Serializer):
     """Serializer for each item's actual usage report."""
     id = serializers.IntegerField()
-    actual_used_quantity_ml = serializers.DecimalField(max_digits=10, decimal_places=2)
+    actual_used_quantity = serializers.DecimalField(max_digits=10, decimal_places=2)
 
-    def validate_actual_used_quantity_ml(self, value):
+    def validate_actual_used_quantity(self, value):
         if value < 0:
             raise serializers.ValidationError("Actual used quantity cannot be negative")
         return value
@@ -183,7 +184,7 @@ class IssueChemicalsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = IssueChemicals
-        fields = ['id', 'chemical_name', 'issued_quantity', 'actual_usage', 'returned', 'additional']
+        fields = ['id', 'chemical_name', 'issued_quantity', 'unit', 'actual_usage', 'returned', 'additional']
 
 
 class IssueRegisterSerializer(serializers.ModelSerializer):

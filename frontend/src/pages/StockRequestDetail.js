@@ -59,7 +59,7 @@ function StockRequestDetail() {
         if (request && request.status === 'issued' && request.chemical_items) {
             const initialReport = {};
             request.chemical_items.forEach(item => {
-                initialReport[item.id] = item.quantity_ml; // Default to requested qty
+                initialReport[item.id] = item.quantity; // Default to requested qty
             });
             setUsageReport(initialReport);
         }
@@ -130,7 +130,7 @@ function StockRequestDetail() {
             onConfirm: () => {
                 setDialog({ open: false });
                 setActionLoading(true);
-                const items = Object.keys(usageReport).map(k => ({ id: parseInt(k), actual_used_quantity_ml: parseFloat(usageReport[k]) }));
+                    const items = Object.keys(usageReport).map(k => ({ id: parseInt(k), actual_used_quantity: parseFloat(usageReport[k]) }));
                 api.post(`stock_request/${id}/report_usage/`, { items })
                     .then(() => { fetchRequest(); window.dispatchEvent(new CustomEvent('inventory-updated')); })
                     .catch(err => setDialog({ open: true, message: err.response?.data?.error || 'Failed to report usage', showCancel: false }))
@@ -387,7 +387,7 @@ function StockRequestDetail() {
                             {request.chemical_items?.map((item, idx) => (
                                 <div key={idx} className="sd-chem-row">
                                     <span className="sd-chem-name">{item.chemical_name}</span>
-                                    <span className="sd-chem-qty">{item.quantity_ml}<span className="sd-chem-unit"> ml</span></span>
+                                    <span className="sd-chem-qty">{item.quantity}<span className="sd-chem-unit"> {item.unit || 'ml'}</span></span>
                                 </div>
                             ))}
                             {(!request.chemical_items || request.chemical_items.length === 0) && (
@@ -444,7 +444,7 @@ function StockRequestDetail() {
                                 {request.chemical_items?.map(item => (
                                     <div key={item.id} className="sd-usage-row">
                                         <span className="sd-usage-name">{item.chemical_name}</span>
-                                        <span className="sd-usage-requested">{item.quantity_ml} ml</span>
+                                        <span className="sd-usage-requested">{item.quantity} {item.unit || 'ml'}</span>
                                         <div className="sd-usage-input-wrap">
                                             <input
                                                 type="number"
@@ -455,7 +455,7 @@ function StockRequestDetail() {
                                                 className="sd-usage-input"
                                                 placeholder="0.00"
                                             />
-                                            <span className="sd-input-unit">ml</span>
+                                            <span className="sd-input-unit">{item.unit || 'ml'}</span>
                                         </div>
                                     </div>
                                 ))}
@@ -572,7 +572,7 @@ function StockRequestDetail() {
                         {request.chemical_items?.map((item, idx) => (
                             <div key={idx} className="sd-chem-row">
                                 <span className="sd-chem-name">{item.chemical_name}</span>
-                                <span className="sd-chem-qty">{item.quantity_ml}<span className="sd-chem-unit"> ml</span></span>
+                                <span className="sd-chem-qty">{item.quantity}<span className="sd-chem-unit"> {item.unit || 'ml'}</span></span>
                             </div>
                         ))}
                         {(!request.chemical_items || request.chemical_items.length === 0) && (
@@ -638,17 +638,17 @@ function StockRequestDetail() {
                                 </thead>
                                 <tbody>
                                     {request.chemical_items?.map(item => {
-                                        const req = parseFloat(item.quantity_ml);
-                                        const act = parseFloat(item.actual_used_quantity_ml || 0);
+                                        const req = parseFloat(item.quantity);
+                                        const act = parseFloat(item.actual_used_quantity || 0);
                                         const ret = Math.max(0, req - act);
                                         const add = Math.max(0, act - req);
                                         return (
                                             <tr key={item.id}>
                                                 <td className="item-name">{item.chemical_name}</td>
-                                                <td><span className="qty-badge muted">{req} ml</span></td>
-                                                <td><span className="qty-badge primary">{act} ml</span></td>
-                                                <td>{ret > 0 ? <span className="diff-badge positive"><FaArrowLeft /> {ret.toFixed(2)} ml</span> : <span className="diff-none">-</span>}</td>
-                                                <td>{add > 0 ? <span className="diff-badge negative"><FaArrowRight /> {add.toFixed(2)} ml</span> : <span className="diff-none">-</span>}</td>
+                                                <td><span className="qty-badge muted">{req} {item.unit || 'ml'}</span></td>
+                                                <td><span className="qty-badge primary">{act} {item.unit || 'ml'}</span></td>
+                                                <td>{ret > 0 ? <span className="diff-badge positive"><FaArrowLeft /> {ret.toFixed(2)} {item.unit || 'ml'}</span> : <span className="diff-none">-</span>}</td>
+                                                <td>{add > 0 ? <span className="diff-badge negative"><FaArrowRight /> {add.toFixed(2)} {item.unit || 'ml'}</span> : <span className="diff-none">-</span>}</td>
                                             </tr>
                                         );
                                     })}
@@ -670,7 +670,7 @@ function StockRequestDetail() {
                             {request.chemical_items?.map(item => (
                                 <div key={item.id} className="sd-chem-row">
                                     <span className="sd-chem-name">{item.chemical_name}</span>
-                                    <span className="sd-chem-qty">{item.actual_used_quantity_ml}<span className="sd-chem-unit"> ml</span></span>
+                                    <span className="sd-chem-qty">{item.actual_used_quantity}<span className="sd-chem-unit"> {item.unit || 'ml'}</span></span>
                                 </div>
                             ))}
                         </div>

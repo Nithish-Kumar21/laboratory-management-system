@@ -69,12 +69,13 @@ def run_verification():
     chem_name = 'Test Chemical HCL'
     chem, created = AvailableChemical.objects.get_or_create(
         chemical_name=chem_name,
-        defaults={'available_quantity_ml': 1000.00}
+        defaults={'quantity': 1000.00, 'unit': 'ml'}
     )
     # Reset quantity for consistent test
-    chem.available_quantity_ml = 1000.00
+    chem.quantity = 1000.00
+    chem.unit = 'ml'
     chem.save()
-    print(f"    Inventory: {chem.chemical_name} = {chem.available_quantity_ml} ml")
+    print(f"    Inventory: {chem.chemical_name} = {chem.quantity} {chem.unit}")
 
     # Clients
     client_staff = Client()
@@ -96,7 +97,7 @@ def run_verification():
         'class_name': 'I B.Sc Chemistry',
         'reason': 'Lab Session 1',
         'chemical_items': [
-            {'chemical_name': chem_name, 'quantity_ml': 100.00}
+            {'chemical_name': chem_name, 'quantity': 100.00}
         ],
         'status': 'pending'  # Submit directly
     }
@@ -132,13 +133,13 @@ def run_verification():
     chem.refresh_from_db()
     print(f"    Request Status: {req.status}")
     print(f"    Issued At: {req.issued_at}")
-    print(f"    Inventory after issue: {chem.available_quantity_ml} ml")
+    print(f"    Inventory after issue: {chem.quantity} {chem.unit}")
     
     if req.status != 'issued':
          print("FAILED: Status should be 'issued'")
          return
-    if chem.available_quantity_ml != 900.00:
-         print(f"FAILED: Inventory should be 900.00, got {chem.available_quantity_ml}")
+    if chem.quantity != 900.00:
+         print(f"FAILED: Inventory should be 900.00, got {chem.quantity}")
          return
 
     # 5. Report Usage (Staff)
@@ -146,7 +147,7 @@ def run_verification():
     # Report using only 80ml (so 20ml returned)
     report_payload = {
         'items': [
-            {'id': req.chemical_items.first().id, 'actual_used_quantity_ml': 80.00}
+            {'id': req.chemical_items.first().id, 'actual_used_quantity': 80.00}
         ]
     }
     response = client_staff.post(f'/api/stock_request/{req_id}/report_usage/', report_payload, content_type='application/json')
@@ -158,12 +159,12 @@ def run_verification():
     item = req.chemical_items.first()
     print(f"    Request Status: {req.status}")
     print(f"    Reported At: {req.reported_at}")
-    print(f"    Item Actual Usage: {item.actual_used_quantity_ml}")
+    print(f"    Item Actual Usage: {item.actual_used_quantity}")
 
     if req.status != 'reported':
          print("FAILED: Status should be 'reported'")
          return
-    if item.actual_used_quantity_ml != 80.00:
+    if item.actual_used_quantity != 80.00:
          print("FAILED: Actual usage not saved correctly")
          return
 
@@ -178,15 +179,15 @@ def run_verification():
     chem.refresh_from_db()
     print(f"    Request Status: {req.status}")
     print(f"    Completed At: {req.completed_at}")
-    print(f"    Inventory after completion: {chem.available_quantity_ml} ml")
+    print(f"    Inventory after completion: {chem.quantity} {chem.unit}")
     
     # Logic: Issued 100 (Inv=900). Reported 80 used. Returned 20.
     # Inventory should increase by 20 -> 920.
     if req.status != 'completed':
          print("FAILED: Status should be 'completed'")
          return
-    if chem.available_quantity_ml != 920.00:
-         print(f"FAILED: Inventory should be 920.00 (900 + 20 returned), got {chem.available_quantity_ml}")
+    if chem.quantity != 920.00:
+         print(f"FAILED: Inventory should be 920.00 (900 + 20 returned), got {chem.quantity}")
          return
 
     # 7. Check Issue Register

@@ -94,7 +94,7 @@ function StockRegisterDetail() {
                 {chemItems.map(item => (
                   <div key={item.id} className="sd-chem-row multi-col">
                     <span className="sd-chem-name">{item.chemical_name}</span>
-                    <span className="sd-chem-qty">{item.quantity_ml}<span className="sd-chem-unit"> ml</span></span>
+                    <span className="sd-chem-qty">{item.quantity}<span className="sd-chem-unit"> {item.unit || 'ml'}</span></span>
                     <span className="sd-chem-rate">₹{parseFloat(item.rate).toFixed(2)}</span>
                     <span className="sd-chem-make">{item.make || '-'}</span>
                   </div>

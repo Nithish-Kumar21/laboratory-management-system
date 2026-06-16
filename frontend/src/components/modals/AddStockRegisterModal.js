@@ -13,7 +13,7 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess, standalone }) {
     supplier_name: '',
   });
 
-  const [chemicalItems, setChemicalItems] = useState([{ chemical_name: '', quantity_ml: '', rate: '', make: '' }]);
+  const [chemicalItems, setChemicalItems] = useState([{ chemical_name: '', quantity: '', rate: '', make: '' }]);
   const [apparatusItems, setApparatusItems] = useState([{ apparatus_name: '', quantity_pieces: '', rate: '', make: '' }]);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
@@ -119,13 +119,13 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess, standalone }) {
   };
 
   const addChemicalRow = () => {
-    setChemicalItems([...chemicalItems, { chemical_name: '', quantity_ml: '', rate: '', make: '' }]);
+    setChemicalItems([...chemicalItems, { chemical_name: '', quantity: '', rate: '', make: '' }]);
     scrollToBottom();
   };
 
   const resetForm = () => {
     setFormData({ invoice_number: '', date: new Date().toISOString().split('T')[0], supplier_name: '' });
-    setChemicalItems([{ chemical_name: '', quantity_ml: '', rate: '', make: '' }]);
+      setChemicalItems([{ chemical_name: '', quantity: '', rate: '', make: '' }]);
     setApparatusItems([{ apparatus_name: '', quantity_pieces: '', rate: '', make: '' }]);
     setErrors({});
   };
@@ -247,7 +247,7 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess, standalone }) {
     try {
       const payload = {
         ...formData,
-        chemical_items: chemicalItems.filter(it => it.chemical_name).map(it => ({ ...it, quantity_ml: parseFloat(it.quantity_ml), rate: parseFloat(it.rate), make: it.make })),
+        chemical_items: chemicalItems.filter(it => it.chemical_name).map(it => ({ ...it, quantity: parseFloat(it.quantity), rate: parseFloat(it.rate), make: it.make })),
         apparatus_items: apparatusItems.filter(it => it.apparatus_name).map(it => ({ ...it, quantity_pieces: parseInt(it.quantity_pieces), rate: parseFloat(it.rate), make: it.make }))
       };
       await api.post('stock_register/', payload);
@@ -258,7 +258,7 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess, standalone }) {
       } else {
         onClose();
       }
-      setChemicalItems([{ chemical_name: '', quantity_ml: '', rate: '', make: '' }]);
+    setChemicalItems([{ chemical_name: '', quantity: '', rate: '', make: '' }]);
       setApparatusItems([{ apparatus_name: '', quantity_pieces: '', rate: '', make: '' }]);
       setFormData({ invoice_number: '', date: new Date().toISOString().split('T')[0], supplier_name: '' });
     } catch (err) {
@@ -311,7 +311,7 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess, standalone }) {
 
           <div className="grid-matrix-header">
             <span>Material Name</span>
-            <span>Qty (ML)</span>
+            <span>Qty</span>
             <span>Rate (₹)</span>
             <span>Make / Brand</span>
             <span></span>
@@ -336,14 +336,14 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess, standalone }) {
                         onMouseDown={() => selectChemical(i, n.name)}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
                           <span>{n.name}</span>
-                          <span style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 'bold' }}>Stock: {n.available_quantity} ML</span>
+                          <span style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 'bold' }}>Stock: {n.quantity} {n.unit || 'ml'}</span>
                         </div>
                       </li>
                     ))}
                   </ul>
                 )}
               </div>
-              <input type="number" step="1" placeholder="Quantity" value={it.quantity_ml ?? ''} required onChange={e => { const next = [...chemicalItems]; next[i].quantity_ml = e.target.value; setChemicalItems(next); }} />
+              <input type="number" step="1" placeholder="Quantity" value={it.quantity ?? ''} required onChange={e => { const next = [...chemicalItems]; next[i].quantity = e.target.value; setChemicalItems(next); }} />
               <input type="number" step="1" placeholder="Price" value={it.rate ?? ''} required onChange={e => { const next = [...chemicalItems]; next[i].rate = e.target.value; setChemicalItems(next); }} />
               <div className="autocomplete-wrapper">
                 <input type="text" placeholder="Make" value={it.make} required

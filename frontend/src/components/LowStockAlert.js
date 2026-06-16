@@ -41,13 +41,13 @@ function LowStockAlert({ activeTab }) {
         const appData = Array.isArray(appRes.data) ? appRes.data : appRes.data.results || [];
 
         const lowChem = chemData.filter(c => {
-          const qty = parseFloat(c.available_quantity_ml);
+          const qty = parseFloat(c.quantity);
           const reorder = parseFloat(c.reorder_level || 0);
           return getStatus(qty, reorder) !== 'healthy';
         }).map(c => ({
           ...c,
           chemical_name: c.chemical_name,
-          current_quantity_ml: c.available_quantity_ml,
+          current_quantity: c.quantity,
           reorder_level: c.reorder_level
         }));
 
@@ -114,7 +114,7 @@ function LowStockAlert({ activeTab }) {
                   {activeTab === 'chemical' ? (
                     <>
                       <td>{item.chemical_name}</td>
-                      <td><span className="qty-pill">{item.current_quantity_ml}</span></td>
+                      <td><span className="qty-pill">{item.current_quantity}</span></td>
                       <td>{item.reorder_level}</td>
                     </>
                   ) : (

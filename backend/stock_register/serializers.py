@@ -9,7 +9,7 @@ from inventory.models import AvailableChemical, AvailableApparatus
 class ChemicalItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChemicalItem
-        fields = ['id', 'chemical_name', 'make', 'quantity_ml', 'rate']  # Added 'make'
+        fields = ['id', 'chemical_name', 'make', 'quantity', 'unit', 'rate']
 
 
 
@@ -53,9 +53,9 @@ class StockRegisterDetailSerializer(serializers.ModelSerializer):
 class ChemicalItemWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChemicalItem
-        fields = ['chemical_name', 'make', 'quantity_ml', 'rate']  # Added 'make'
+        fields = ['chemical_name', 'make', 'quantity', 'unit', 'rate']
     
-    def validate_quantity_ml(self, value):
+    def validate_quantity(self, value):
         if value <= 0:
             raise serializers.ValidationError("Quantity must be greater than 0")
         return value

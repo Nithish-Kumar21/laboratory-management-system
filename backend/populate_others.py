@@ -30,7 +30,8 @@ try:
         ChemicalItem.objects.create(
             stock_register=stock_entry,
             chemical_name="Sulfuric Acid",
-            quantity_ml=Decimal("1000.00"),
+            quantity=Decimal("1000.00"),
+            unit='ml',
             rate=Decimal("1500.00"),
             make="Merck"
         )

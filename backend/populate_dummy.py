@@ -33,7 +33,7 @@ def populate_dummy_data():
     for name, qty, reorder in chemicals:
         AvailableChemical.objects.update_or_create(
             chemical_name=name,
-            defaults={'available_quantity_ml': qty, 'reorder_level': reorder}
+            defaults={'quantity': qty, 'unit': 'ml', 'reorder_level': reorder}
         )
     print("    Added 5 Chemicals.")
 
@@ -65,8 +65,8 @@ def populate_dummy_data():
         StockRequestChemicalItem.objects.create(
             stock_request=sr,
             chemical_name=chemicals[i%5][0],
-            quantity_ml=100.00,
-            actual_used_quantity_ml=80.00 if stage in ['reported', 'completed'] else None
+            quantity=100.00,
+            actual_used_quantity=80.00 if stage in ['reported', 'completed'] else None
         )
         if stage in ['accepted', 'issued', 'reported', 'completed']:
             sr.reviewed_by = hod
@@ -86,7 +86,8 @@ def populate_dummy_data():
         ChemicalItem.objects.create(
             stock_register=reg,
             chemical_name=chemicals[i%5][0],
-            quantity_ml=1000.00,
+            quantity=1000.00,
+            unit='ml',
             make="TestBrand",
             rate=150.00
         )

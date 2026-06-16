@@ -169,7 +169,7 @@ function Settings() {
                             {((activeSection === 'chem_levels' ? chemicalMode : apparatusMode) === 'common') ? (
                                 <div className="common-input-area">
                                     <div className="input-group">
-                                        <label>Minimum Stock Level ({activeSection === 'chem_levels' ? 'ml' : 'units'})</label>
+                                        <label>Minimum Stock Level ({activeSection === 'chem_levels' ? 'mL/g' : 'units'})</label>
                                         <input
                                             type="number"
                                             value={activeSection === 'chem_levels' ? config.common_chemical_reorder_level : config.common_apparatus_reorder_level}

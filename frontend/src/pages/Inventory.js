@@ -31,7 +31,7 @@ function Inventory() {
       const app = Array.isArray(appRes.data) ? appRes.data : appRes.data.results || [];
 
       const lowChem = chem.filter(c => {
-        const qty = parseFloat(c.available_quantity_ml);
+        const qty = parseFloat(c.quantity);
         const reorder = parseFloat(c.reorder_level || 0);
         return getStatus(qty, reorder) !== 'healthy';
       });

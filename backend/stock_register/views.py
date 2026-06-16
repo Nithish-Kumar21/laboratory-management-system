@@ -47,7 +47,7 @@ class StockRegisterViewSet(viewsets.ModelViewSet):
         for chem in stock_register.chemical_items.all():
             try:
                 available = AvailableChemical.objects.get(chemical_name=chem.chemical_name)
-                available.available_quantity_ml += chem.quantity_ml
+                available.quantity += chem.quantity
                 available.save()
             except AvailableChemical.DoesNotExist:
                 pass
@@ -64,9 +64,9 @@ class StockRegisterViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def chemical_names(self, request):
         """Get list of unique chemical names and available quantity for autocomplete"""
-        data = AvailableChemical.objects.values('chemical_name', 'available_quantity_ml').order_by('chemical_name')
+        data = AvailableChemical.objects.values('chemical_name', 'quantity', 'unit').order_by('chemical_name')
         # Map to consistent keys
-        result = [{'name': item['chemical_name'], 'available_quantity': float(item['available_quantity_ml'])} for item in data]
+        result = [{'name': item['chemical_name'], 'available_quantity': float(item['quantity']), 'unit': item['unit']} for item in data]
         return Response(result)
     
     @action(detail=False, methods=['get'])
@@ -113,7 +113,7 @@ class StockRegisterViewSet(viewsets.ModelViewSet):
         for chem in instance.chemical_items.all():
             try:
                 available = AvailableChemical.objects.get(chemical_name=chem.chemical_name)
-                available.available_quantity_ml -= chem.quantity_ml
+                available.quantity -= chem.quantity
                 available.save()
             except AvailableChemical.DoesNotExist:
                 pass

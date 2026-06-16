@@ -94,8 +94,8 @@ function IssueRegisterDetail() {
                 {chemItems.map((item, idx) => (
                   <div key={idx} className="sd-chem-row multi-col" style={{gridTemplateColumns: '1fr 100px 100px'}}>
                     <span className="sd-chem-name">{item.chemical_name}</span>
-                    <span className="sd-chem-qty">{item.issued_quantity}<span className="sd-chem-unit"> ml</span></span>
-                    <span className="sd-chem-qty">{item.actual_usage || '—'}<span className="sd-chem-unit"> ml</span></span>
+                    <span className="sd-chem-qty">{item.issued_quantity}<span className="sd-chem-unit"> {item.unit || 'ml'}</span></span>
+                    <span className="sd-chem-qty">{item.actual_usage || '—'}<span className="sd-chem-unit"> {item.unit || 'ml'}</span></span>
                   </div>
                 ))}
               </div>

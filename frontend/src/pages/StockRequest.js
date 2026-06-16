@@ -337,7 +337,7 @@ const StockRequest = ({ draftsOnly = false }) => {
                     <div className="sr-card-supplier">{req.reason || '—'}</div>
                   </div>
                   <div className="sr-card-date">📅 {formatDate(req.date)}</div>
-                  <div className="sr-card-count">{req.chemical_items?.reduce((s, c) => s + (c.quantity_ml || 0), 0) || 0} ml</div>
+                  <div className="sr-card-count">{req.chemical_items?.reduce((s, c) => s + (c.quantity || 0), 0) || 0} ml</div>
                   <button className="sr-card-btn" onClick={(e) => { e.stopPropagation(); navigate(`/requests/${req.id}`); }}>
                     View Details ›
                   </button>
@@ -352,7 +352,7 @@ const StockRequest = ({ draftsOnly = false }) => {
                   <div className="sr-mobile-ref">{req.requested_by_name}</div>
                   <span className="sr-mobile-view" onClick={(e) => { e.stopPropagation(); navigate(`/requests/${req.id}`); }}>View ›</span>
                   <div className="sr-mobile-supplier">{req.reason || '—'}</div>
-                  <div className="sr-mobile-meta">📅 {formatDate(req.date)} · {req.chemical_items?.reduce((s, c) => s + (c.quantity_ml || 0), 0) || 0} ml</div>
+                  <div className="sr-mobile-meta">📅 {formatDate(req.date)} · {req.chemical_items?.reduce((s, c) => s + (c.quantity || 0), 0) || 0} ml</div>
                 </div>
               ))}
             </div>
@@ -443,7 +443,7 @@ const StockRequest = ({ draftsOnly = false }) => {
                     <div className="sr-card-supplier">{req.reason || '—'}</div>
                   </div>
                   <div className="sr-card-date">📅 {formatDate(req.date)}</div>
-                  <div className="sr-card-count">{req.chemical_items?.reduce((s, c) => s + (c.quantity_ml || 0), 0) || 0} ml</div>
+                  <div className="sr-card-count">{req.chemical_items?.reduce((s, c) => s + (c.quantity || 0), 0) || 0} ml</div>
                   <button className="sr-card-btn" onClick={(e) => { e.stopPropagation(); navigate(`/requests/${req.id}`); }}>
                     View Details ›
                   </button>
@@ -458,7 +458,7 @@ const StockRequest = ({ draftsOnly = false }) => {
                   <div className="sr-mobile-ref">{req.requested_by_name}</div>
                   <span className="sr-mobile-view" onClick={(e) => { e.stopPropagation(); navigate(`/requests/${req.id}`); }}>View ›</span>
                   <div className="sr-mobile-supplier">{req.reason || '—'}</div>
-                  <div className="sr-mobile-meta">📅 {formatDate(req.date)} · {req.chemical_items?.reduce((s, c) => s + (c.quantity_ml || 0), 0) || 0} ml</div>
+                  <div className="sr-mobile-meta">📅 {formatDate(req.date)} · {req.chemical_items?.reduce((s, c) => s + (c.quantity || 0), 0) || 0} ml</div>
                 </div>
               ))}
             </div>

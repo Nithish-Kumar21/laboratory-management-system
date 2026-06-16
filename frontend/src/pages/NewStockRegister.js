@@ -13,7 +13,7 @@ function NewStockRegister() {
     supplier_name: '',
     remarks: '',
   });
-  const [chemicalItems, setChemicalItems] = useState([{ chemical_name: '', quantity_ml: '', rate: '', make: '' }]);
+  const [chemicalItems, setChemicalItems] = useState([{ chemical_name: '', quantity: '', rate: '', make: '' }]);
   const [apparatusItems, setApparatusItems] = useState([{ apparatus_name: '', quantity_pieces: '', rate: '', make: '' }]);
   const [submitting, setSubmitting] = useState(false);
   const [alertDialog, setAlertDialog] = useState({ open: false, message: '' });
@@ -71,7 +71,7 @@ function NewStockRegister() {
   };
 
   const addChemicalRow = () => {
-    setChemicalItems([...chemicalItems, { chemical_name: '', quantity_ml: '', rate: '', make: '' }]);
+    setChemicalItems([...chemicalItems, { chemical_name: '', quantity: '', rate: '', make: '' }]);
     scrollToBottom();
   };
 
@@ -87,7 +87,7 @@ function NewStockRegister() {
     try {
       const payload = {
         ...formData,
-        chemical_items: chemicalItems.filter(it => it.chemical_name).map(it => ({ ...it, quantity_ml: parseFloat(it.quantity_ml), rate: parseFloat(it.rate), make: it.make })),
+        chemical_items: chemicalItems.filter(it => it.chemical_name).map(it => ({ ...it, quantity: parseFloat(it.quantity), rate: parseFloat(it.rate), make: it.make })),
         apparatus_items: apparatusItems.filter(it => it.apparatus_name).map(it => ({ ...it, quantity_pieces: parseInt(it.quantity_pieces), rate: parseFloat(it.rate), make: it.make }))
       };
       await api.post('stock_register/', payload);
@@ -196,7 +196,7 @@ function NewStockRegister() {
             </div>
             <div className="nrf-grid-cols cols-4">
               <span>Material Name</span>
-              <span>Qty (ML)</span>
+              <span>Qty</span>
               <span>Rate (₹)</span>
               <span>Make / Brand</span>
               <span></span>
@@ -214,14 +214,14 @@ function NewStockRegister() {
                         <li key={idx} className={`nrf-suggestion-item ${activeSuggestionIndex === idx ? 'active' : ''}`}
                           onMouseDown={() => selectChemical(i, n.name)}>
                           <span>{n.name}</span>
-                          <span className="nrf-stock">Stock: {n.available_quantity} ML</span>
+                          <span className="nrf-stock">Stock: {n.quantity} {n.unit || 'ml'}</span>
                         </li>
                       ))}
                     </ul>
                   )}
                 </div>
-                <input type="number" step="1" className="nrf-input" placeholder="Qty" value={it.quantity_ml ?? ''} required
-                  onChange={e => { const next = [...chemicalItems]; next[i].quantity_ml = e.target.value; setChemicalItems(next); }} />
+                <input type="number" step="1" className="nrf-input" placeholder="Qty" value={it.quantity ?? ''} required
+                  onChange={e => { const next = [...chemicalItems]; next[i].quantity = e.target.value; setChemicalItems(next); }} />
                 <input type="number" step="1" className="nrf-input" placeholder="Price" value={it.rate ?? ''} required
                   onChange={e => { const next = [...chemicalItems]; next[i].rate = e.target.value; setChemicalItems(next); }} />
                 <div className="nrf-autocomplete">

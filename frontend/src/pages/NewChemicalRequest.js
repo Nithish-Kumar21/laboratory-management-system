@@ -23,7 +23,7 @@ function NewChemicalRequest() {
     class_name: classOptions[0],
     date: new Date().toISOString().split('T')[0]
   });
-  const [chemicalItems, setChemicalItems] = useState([{ chemical_name: '', quantity_ml: '' }]);
+  const [chemicalItems, setChemicalItems] = useState([{ chemical_name: '', quantity: '' }]);
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [availableChemicals, setAvailableChemicals] = useState([]);
@@ -51,7 +51,7 @@ function NewChemicalRequest() {
         if (data.chemical_items?.length) {
           setChemicalItems(data.chemical_items.map(item => ({
             chemical_name: item.chemical_name,
-            quantity_ml: item.quantity_ml,
+            quantity: item.quantity,
           })));
         }
       })
@@ -60,7 +60,7 @@ function NewChemicalRequest() {
   }, [editId]);
 
   const addChemicalRow = () => {
-    setChemicalItems([...chemicalItems, { chemical_name: '', quantity_ml: '' }]);
+    setChemicalItems([...chemicalItems, { chemical_name: '', quantity: '' }]);
   };
 
   const removeChemicalRow = (i) => {
@@ -81,11 +81,11 @@ function NewChemicalRequest() {
     if (formData.date < today) newErrors.date = 'Date cannot be in the past.';
     chemicalItems.forEach((item, i) => {
       if (!item.chemical_name?.trim()) newErrors[`chemical_name_${i}`] = 'Required';
-      const q = parseFloat(item.quantity_ml);
-      if (!item.quantity_ml || isNaN(q) || q <= 0) newErrors[`chemical_quantity_${i}`] = 'Invalid';
+      const q = parseFloat(item.quantity);
+      if (!item.quantity || isNaN(q) || q <= 0) newErrors[`chemical_quantity_${i}`] = 'Invalid';
       const selectedChem = availableChemicals.find(c => c.chemical_name === item.chemical_name);
-      if (selectedChem && q > parseFloat(selectedChem.available_quantity_ml)) {
-        newErrors[`chemical_quantity_${i}`] = `Exceeds stock (Available: ${selectedChem.available_quantity_ml})`;
+      if (selectedChem && q > parseFloat(selectedChem.quantity)) {
+        newErrors[`chemical_quantity_${i}`] = `Exceeds stock (Available: ${selectedChem.quantity})`;
       }
     });
     setErrors(newErrors);
@@ -103,7 +103,7 @@ function NewChemicalRequest() {
       status: directSubmit ? 'pending' : 'draft',
       chemical_items: chemicalItems.map(item => ({
         chemical_name: item.chemical_name.trim(),
-        quantity_ml: parseFloat(item.quantity_ml),
+        quantity: parseFloat(item.quantity),
       })),
     };
     try {
@@ -205,7 +205,7 @@ function NewChemicalRequest() {
 
           <div className="nrf-chem-cols">
             <span>Chemical</span>
-            <span>QTY (ML)</span>
+            <span>QTY</span>
             <span></span>
           </div>
 
@@ -239,7 +239,7 @@ function NewChemicalRequest() {
                           onMouseDown={() => { updateChemicalItem(i, 'chemical_name', c.chemical_name); setShowSuggestions({}); }}
                         >
                           <span>{c.chemical_name}</span>
-                          <span className="nrf-stock">Stock: {c.available_quantity_ml} ML</span>
+                          <span className="nrf-stock">Stock: {c.quantity} {c.unit || 'ml'}</span>
                         </li>
                       ))}
                   </ul>
@@ -252,13 +252,13 @@ function NewChemicalRequest() {
                   min="0"
                   className={`nrf-qty-input ${errors[`chemical_quantity_${i}`] ? 'nrf-error' : ''}`}
                   placeholder="0"
-                  value={item.quantity_ml === '' || item.quantity_ml == null ? '' : item.quantity_ml}
+                  value={item.quantity === '' || item.quantity == null ? '' : item.quantity}
                   onChange={(e) => {
                     const v = e.target.value;
-                    updateChemicalItem(i, 'quantity_ml', v === '' ? '' : v);
+                    updateChemicalItem(i, 'quantity', v === '' ? '' : v);
                   }}
                 />
-                <span className="nrf-qty-unit">ml</span>
+                <span className="nrf-qty-unit">{availableChemicals.find(c => c.chemical_name === item.chemical_name)?.unit || 'ml'}</span>
               </div>
               <button
                 type="button"
