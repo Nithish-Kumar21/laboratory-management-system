@@ -98,19 +98,16 @@ class StockRequestChemicalItem(models.Model):
         related_name='chemical_items'
     )
     chemical_name = models.CharField(max_length=64)
-    quantity = models.DecimalField(max_digits=10, decimal_places=2, db_column='quantity_ml')
-    actual_used_quantity = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, db_column='actual_used_quantity_ml')
+    quantity = models.DecimalField(max_digits=10, decimal_places=2)
+    unit = models.CharField(max_length=2, choices=[('ml', 'mL'), ('g', 'g')], default='ml')
+    actual_used_quantity = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
     class Meta:
         db_table = 'stock_request_chemical_item'
         managed = False
 
-    @property
-    def unit(self):
-        return 'ml'
-
     def __str__(self):
-        return f"{self.chemical_name} - {self.quantity} ml"
+        return f"{self.chemical_name} - {self.quantity} {self.unit}"
 
 
 class StockRequestApparatusItem(models.Model):
@@ -151,11 +148,8 @@ class IssueChemicals(models.Model):
     ir = models.ForeignKey(IssueRegister, on_delete=models.CASCADE, related_name='chemicals')
     chemical_name = models.CharField(max_length=64)
     issued_quantity = models.DecimalField(max_digits=10, decimal_places=2)
+    unit = models.CharField(max_length=2, choices=[('ml', 'mL'), ('g', 'g')], default='ml')
     actual_usage = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-
-    @property
-    def unit(self):
-        return 'ml'
 
     @property
     def returned(self):
