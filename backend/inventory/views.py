@@ -18,7 +18,7 @@ class AvailableChemicalViewSet(viewsets.ModelViewSet):
     """
     API endpoint for viewing and updating available chemicals.
     """
-    queryset = AvailableChemical.objects.all()
+    queryset = AvailableChemical.objects.filter(quantity__gte=0)
     serializer_class = AvailableChemicalSerializer
     permission_classes = [InventoryPermission]
     http_method_names = ['get', 'patch', 'head', 'options']
@@ -37,7 +37,7 @@ class AvailableApparatusViewSet(viewsets.ModelViewSet):
     """
     API endpoint for viewing and updating available apparatus.
     """
-    queryset = AvailableApparatus.objects.all()
+    queryset = AvailableApparatus.objects.filter(available_quantity_pieces__gte=0)
     serializer_class = AvailableApparatusSerializer
     permission_classes = [InventoryPermission]
     http_method_names = ['get', 'patch', 'head', 'options']

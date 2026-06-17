@@ -7,7 +7,6 @@ from inventory.models import AvailableChemical
 class ChemicalItemWriteSerializer(serializers.Serializer):
     chemical_name = serializers.CharField(max_length=64)
     quantity = serializers.DecimalField(max_digits=10, decimal_places=2)
-    unit = serializers.ChoiceField(choices=['ml', 'g'], default='ml')
 
     def validate_quantity(self, value):
         if value <= 0:
@@ -16,9 +15,14 @@ class ChemicalItemWriteSerializer(serializers.Serializer):
 
 
 class ChemicalItemSerializer(serializers.ModelSerializer):
+    unit = serializers.SerializerMethodField()
+
     class Meta:
         model = StockRequestChemicalItem
         fields = ['id', 'chemical_name', 'quantity', 'unit', 'actual_used_quantity']
+
+    def get_unit(self, obj):
+        return obj.unit
 
 
 class StockRequestCreateSerializer(serializers.ModelSerializer):
@@ -181,10 +185,14 @@ class UsageReportSerializer(serializers.Serializer):
 class IssueChemicalsSerializer(serializers.ModelSerializer):
     returned = serializers.ReadOnlyField()
     additional = serializers.ReadOnlyField()
+    unit = serializers.SerializerMethodField()
 
     class Meta:
         model = IssueChemicals
         fields = ['id', 'chemical_name', 'issued_quantity', 'unit', 'actual_usage', 'returned', 'additional']
+
+    def get_unit(self, obj):
+        return obj.unit
 
 
 class IssueRegisterSerializer(serializers.ModelSerializer):

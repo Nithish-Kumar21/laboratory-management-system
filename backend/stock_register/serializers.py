@@ -7,16 +7,21 @@ from inventory.models import AvailableChemical, AvailableApparatus
 
 # Read-only serializers (existing + NEW 'make' field)
 class ChemicalItemSerializer(serializers.ModelSerializer):
+    unit = serializers.SerializerMethodField()
+
     class Meta:
         model = ChemicalItem
         fields = ['id', 'chemical_name', 'make', 'quantity', 'unit', 'rate']
+
+    def get_unit(self, obj):
+        return obj.unit
 
 
 
 class ApparatusItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = ApparatusItem
-        fields = ['id', 'apparatus_name', 'make', 'quantity_pieces', 'rate']  # Added 'make'
+        fields = ['id', 'apparatus_name', 'make', 'quantity_pieces', 'rate']
 
 
 
@@ -27,7 +32,7 @@ class StockRegisterListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = StockRegister
-        fields = ['id', 'invoice_number', 'date', 'supplier_name', 'remarks', 'chemical_items_count', 'apparatus_items_count']
+        fields = ['id', 'invoice_number', 'date', 'supplier_name', 'chemical_items_count', 'apparatus_items_count']
 
     def get_chemical_items_count(self, obj):
         return obj.chemical_items.count()
@@ -45,16 +50,21 @@ class StockRegisterDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = StockRegister
-        fields = ['id', 'invoice_number', 'date', 'supplier_name', 'remarks', 'chemical_items', 'apparatus_items']
+        fields = ['id', 'invoice_number', 'date', 'supplier_name', 'chemical_items', 'apparatus_items']
 
 
 
-# Write serializers (NEW + 'make' field)
+# Write serializers
 class ChemicalItemWriteSerializer(serializers.ModelSerializer):
+    unit = serializers.SerializerMethodField()
+
     class Meta:
         model = ChemicalItem
         fields = ['chemical_name', 'make', 'quantity', 'unit', 'rate']
     
+    def get_unit(self, obj):
+        return obj.unit
+
     def validate_quantity(self, value):
         if value <= 0:
             raise serializers.ValidationError("Quantity must be greater than 0")
@@ -70,7 +80,7 @@ class ChemicalItemWriteSerializer(serializers.ModelSerializer):
 class ApparatusItemWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = ApparatusItem
-        fields = ['apparatus_name', 'make', 'quantity_pieces', 'rate']  # Added 'make'
+        fields = ['apparatus_name', 'make', 'quantity_pieces', 'rate']
     
     def validate_quantity_pieces(self, value):
         if value <= 0:
@@ -92,7 +102,7 @@ class StockRegisterCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = StockRegister
-        fields = ['invoice_number', 'date', 'supplier_name', 'remarks', 'chemical_items', 'apparatus_items']
+        fields = ['invoice_number', 'date', 'supplier_name', 'chemical_items', 'apparatus_items']
     
     def validate_invoice_number(self, value):
         if StockRegister.objects.filter(invoice_number=value).exists():

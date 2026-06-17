@@ -107,8 +107,8 @@ function Home() {
         if (isHOD) {
           setPendingRequests(data);
         } else if (isStaff) {
-          const pending = data.some(r => r.status === 'pending');
-          setHasPendingRequest(pending);
+          const hasActive = data.some(r => !['draft', 'completed', 'rejected'].includes(r.status));
+          setHasPendingRequest(hasActive);
         }
       })
       .catch((err) => console.error('Error fetching requests:', err))

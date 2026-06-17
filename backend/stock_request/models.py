@@ -57,7 +57,7 @@ class StockRequest(models.Model):
 
     class Meta:
         db_table = 'stock_request'
-        managed = True
+        managed = False
         ordering = ['-created_at']
 
     def save(self, *args, **kwargs):
@@ -92,23 +92,25 @@ class StockRequest(models.Model):
 
 
 class StockRequestChemicalItem(models.Model):
-    UNIT_CHOICES = [('ml', 'mL'), ('g', 'g')]
     stock_request = models.ForeignKey(
         StockRequest,
         on_delete=models.CASCADE,
         related_name='chemical_items'
     )
     chemical_name = models.CharField(max_length=64)
-    quantity = models.DecimalField(max_digits=10, decimal_places=2)
-    unit = models.CharField(max_length=2, choices=UNIT_CHOICES, default='ml')
-    actual_used_quantity = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    quantity = models.DecimalField(max_digits=10, decimal_places=2, db_column='quantity_ml')
+    actual_used_quantity = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, db_column='actual_used_quantity_ml')
 
     class Meta:
         db_table = 'stock_request_chemical_item'
-        managed = True
+        managed = False
+
+    @property
+    def unit(self):
+        return 'ml'
 
     def __str__(self):
-        return f"{self.chemical_name} - {self.quantity} {self.unit}"
+        return f"{self.chemical_name} - {self.quantity} ml"
 
 
 class StockRequestApparatusItem(models.Model):
@@ -122,7 +124,7 @@ class StockRequestApparatusItem(models.Model):
 
     class Meta:
         db_table = 'stock_request_apparatus_item'
-        managed = True
+        managed = False
 
     def __str__(self):
         return f"{self.apparatus_name} - {self.quantity_pieces} pcs"
@@ -130,10 +132,7 @@ class StockRequestApparatusItem(models.Model):
 
 class IssueRegister(models.Model):
     ir_id = models.AutoField(primary_key=True)
-    # request_code: human-readable identifier e.g. REQ-2026-001
-    # We use 'request_code' because 'request_id' (integer) already exists as a legacy FK.
     request_code = models.CharField(max_length=20, null=True, blank=True)
-    # stock_request_db_id: numeric PK of the originating StockRequest (used for frontend navigation)
     stock_request_db_id = models.IntegerField(null=True, blank=True)
     staff_name = models.CharField(max_length=100)
     class_field = models.CharField(db_column='class', max_length=50)
@@ -149,14 +148,15 @@ class IssueRegister(models.Model):
 
 
 class IssueChemicals(models.Model):
-    UNIT_CHOICES = [('ml', 'mL'), ('g', 'g')]
     ir = models.ForeignKey(IssueRegister, on_delete=models.CASCADE, related_name='chemicals')
     chemical_name = models.CharField(max_length=64)
     issued_quantity = models.DecimalField(max_digits=10, decimal_places=2)
-    unit = models.CharField(max_length=2, choices=UNIT_CHOICES, default='ml')
     actual_usage = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    # 'returned' and 'additional' are GENERATED ALWAYS in the DB.
-    # We omit them from the model fields to avoid Django trying to INSERT into them.
+
+    @property
+    def unit(self):
+        return 'ml'
+
     @property
     def returned(self):
         if self.actual_usage is not None and self.issued_quantity >= self.actual_usage:

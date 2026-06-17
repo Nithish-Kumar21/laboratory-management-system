@@ -6,9 +6,14 @@ from .models import (
 )
 
 class AvailableChemicalSerializer(serializers.ModelSerializer):
+    unit = serializers.SerializerMethodField()
+
     class Meta:
         model = AvailableChemical
         fields = ['id', 'chemical_name', 'quantity', 'unit', 'reorder_level', 'last_updated']
+
+    def get_unit(self, obj):
+        return obj.unit
 
 class AvailableApparatusSerializer(serializers.ModelSerializer):
     class Meta:
@@ -18,9 +23,14 @@ class AvailableApparatusSerializer(serializers.ModelSerializer):
 
 
 class LowStockChemicalSerializer(serializers.ModelSerializer):
+    unit = serializers.SerializerMethodField()
+
     class Meta:
         model = LowStockChemical
         fields = ['id', 'chemical_name', 'quantity', 'unit', 'reorder_level', 'last_checked']
+
+    def get_unit(self, obj):
+        return obj.unit
 
 
 class LowStockApparatusSerializer(serializers.ModelSerializer):

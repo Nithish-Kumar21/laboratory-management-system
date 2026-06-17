@@ -1,16 +1,18 @@
 from django.db import models
 
 class AvailableChemical(models.Model):
-    UNIT_CHOICES = [('ml', 'mL'), ('g', 'g')]
     chemical_name = models.CharField(max_length=64)
-    quantity = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    unit = models.CharField(max_length=2, choices=UNIT_CHOICES, default='ml')
+    quantity = models.DecimalField(max_digits=10, decimal_places=2, default=0, db_column='available_quantity_ml')
     last_updated = models.DateField(auto_now=True)
     reorder_level = models.DecimalField(max_digits=10, decimal_places=2, default=0, null=True)
 
     class Meta:
         db_table = 'available_chemicals'
-        managed = True
+        managed = False
+
+    @property
+    def unit(self):
+        return 'ml'
 
     def __str__(self):
         return self.chemical_name
@@ -24,23 +26,25 @@ class AvailableApparatus(models.Model):
 
     class Meta:
         db_table = 'available_apparatus'
-        managed = True
+        managed = False
 
     def __str__(self):
         return self.apparatus_name
 
 
 class LowStockChemical(models.Model):
-    UNIT_CHOICES = [('ml', 'mL'), ('g', 'g')]
     chemical_name = models.CharField(max_length=64)
-    quantity = models.DecimalField(max_digits=10, decimal_places=2)
-    unit = models.CharField(max_length=2, choices=UNIT_CHOICES, default='ml')
+    quantity = models.DecimalField(max_digits=10, decimal_places=2, db_column='current_quantity_ml')
     reorder_level = models.DecimalField(max_digits=10, decimal_places=2)
     last_checked = models.DateField()
 
     class Meta:
         db_table = 'low_stock_chemicals'
-        managed = True
+        managed = False
+
+    @property
+    def unit(self):
+        return 'ml'
 
     def __str__(self):
         return f"{self.chemical_name} (Low Stock)"
@@ -54,23 +58,20 @@ class LowStockApparatus(models.Model):
 
     class Meta:
         db_table = 'low_stock_apparatus'
-        managed = True
+        managed = False
 
     def __str__(self):
         return f"{self.apparatus_name} (Low Stock)"
 
 
 class LabConfiguration(models.Model):
-    """
-    Model to store lab-wide configurations like reorder levels.
-    """
     use_common_reorder_level = models.BooleanField(default=False)
     common_chemical_reorder_level = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     common_apparatus_reorder_level = models.IntegerField(default=0)
 
     class Meta:
         db_table = 'lab_configuration'
-        managed = True # Allow Django to create this table
+        managed = False
 
     def __str__(self):
         return "Lab Configuration"

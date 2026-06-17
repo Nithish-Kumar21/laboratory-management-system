@@ -1156,6 +1156,11 @@
   font-size: 0.9rem;
 }
 
+.cr-page .sr-card-class {
+  font-size: 0.8rem;
+  color: var(--text-muted, #888);
+}
+
 .cr-page .sr-card-date {
   font-size: 0.9rem;
 }

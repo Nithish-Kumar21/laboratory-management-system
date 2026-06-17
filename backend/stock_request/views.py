@@ -107,8 +107,8 @@ class StockRequestViewSet(viewsets.ModelViewSet):
                     return qs.filter(issued_by=self.request.user).exclude(status='draft')
                 
                 if status_filter in ('accepted', None):
-                    # Default: All approved requests waiting to be issued
-                    return qs.filter(status='accepted')
+                    # Default: All approved requests waiting to be issued or completed
+                    return qs.filter(status__in=['accepted', 'reported'])
                 
                 # If they explicitly filter by history (issued/reported/completed), show only theirs
                 if status_filter in ('issued', 'reported', 'completed'):
@@ -209,7 +209,6 @@ class StockRequestViewSet(viewsets.ModelViewSet):
             IssueChemicals.objects.create(
                 ir=issue_register,
                 chemical_name=item.chemical_name,
-                unit=item.unit,
                 issued_quantity=requested,
                 actual_usage=actual
             )

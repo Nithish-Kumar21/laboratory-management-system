@@ -53,8 +53,6 @@ const StockRequest = ({ draftsOnly = false }) => {
         params.append('status', 'draft');
       } else if (isHOD) {
         params.append('status', 'pending');
-      } else if (isStoreKeeper) {
-        params.append('status', 'accepted');
       }
 
       const queryStr = params.toString();
@@ -113,7 +111,7 @@ const StockRequest = ({ draftsOnly = false }) => {
 
   // ===== STAFF VIEW =====
   if (isStaff && !draftsOnly) {
-    const activeReq = requests.find(r => r.status === 'pending');
+    const activeReq = requests.find(r => !['draft', 'completed', 'rejected'].includes(r.status));
 
     return (
       <div className="cr-page animate-up">
@@ -123,7 +121,7 @@ const StockRequest = ({ draftsOnly = false }) => {
 
         {activeReq && (
           <>
-            <p className="cr-section-label">Pending chemical request list</p>
+            <p className="cr-section-label">Active chemical request</p>
             {/* Desktop */}
             <div className="sr-card-list-desktop">
               <div className="sr-card sr-card-pending" onClick={() => navigate(`/requests/${activeReq.id}`)}>
@@ -333,11 +331,11 @@ const StockRequest = ({ draftsOnly = false }) => {
                     <FaClipboardList />
                   </div>
                   <div className="sr-card-info">
-                    <div className="sr-card-ref">{req.requested_by_name}</div>
-                    <div className="sr-card-supplier">{req.reason || '—'}</div>
+                    <div className="sr-card-ref">{req.request_id}</div>
+                    <div className="sr-card-supplier">{req.requested_by_name}</div>
+                    <div className="sr-card-class">{req.class_name || '—'}</div>
                   </div>
                   <div className="sr-card-date">📅 {formatDate(req.date)}</div>
-                  <div className="sr-card-count">{req.chemical_items?.reduce((s, c) => s + (c.quantity || 0), 0) || 0} ml</div>
                   <button className="sr-card-btn" onClick={(e) => { e.stopPropagation(); navigate(`/requests/${req.id}`); }}>
                     View Details ›
                   </button>
@@ -349,10 +347,10 @@ const StockRequest = ({ draftsOnly = false }) => {
               {filtered.map(req => (
                 <div key={req.id} className="sr-card-mobile" onClick={() => navigate(`/requests/${req.id}`)}>
                   <div className="sr-mobile-icon-box"><FaClipboardList /></div>
-                  <div className="sr-mobile-ref">{req.requested_by_name}</div>
+                  <div className="sr-mobile-ref">{req.request_id}</div>
                   <span className="sr-mobile-view" onClick={(e) => { e.stopPropagation(); navigate(`/requests/${req.id}`); }}>View ›</span>
-                  <div className="sr-mobile-supplier">{req.reason || '—'}</div>
-                  <div className="sr-mobile-meta">📅 {formatDate(req.date)} · {req.chemical_items?.reduce((s, c) => s + (c.quantity || 0), 0) || 0} ml</div>
+                  <div className="sr-mobile-supplier">{req.requested_by_name}</div>
+                  <div className="sr-mobile-meta">{req.class_name || '—'} · 📅 {formatDate(req.date)}</div>
                 </div>
               ))}
             </div>
@@ -373,20 +371,22 @@ const StockRequest = ({ draftsOnly = false }) => {
   // ===== STOREKEEPER VIEW =====
   if (isStoreKeeper) {
     const approvedCount = requests.filter(r => r.status === 'accepted').length;
+    const reportedCount = requests.filter(r => r.status === 'reported').length;
 
     return (
       <div className="cr-page animate-up">
         <div className="sr-title-row">
           <h1 className="sr-title">Chemical Request</h1>
           <div className="sr-title-right">
-            <span className="cr-count-badge cr-count-green">{approvedCount} Approved</span>
+            <span className="cr-count-badge cr-count-green">{approvedCount} To Issue</span>
+            {reportedCount > 0 && <span className="cr-count-badge cr-count-blue">{reportedCount} To Complete</span>}
           </div>
         </div>
 
         <div className="sr-search-row">
           <div className="sr-search-left">
             <FaSearch className="sr-search-icon" />
-            <input type="text" className="sr-search-input" placeholder="Search approved requests..." value={search} onChange={(e) => setSearch(e.target.value)} />
+            <input type="text" className="sr-search-input" placeholder="Search requests..." value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
           <div className="sr-search-divider" />
           <div className="sr-search-right">
@@ -439,11 +439,11 @@ const StockRequest = ({ draftsOnly = false }) => {
                     <FaClipboardList />
                   </div>
                   <div className="sr-card-info">
-                    <div className="sr-card-ref">{req.requested_by_name}</div>
-                    <div className="sr-card-supplier">{req.reason || '—'}</div>
+                    <div className="sr-card-ref">{req.request_id}</div>
+                    <div className="sr-card-supplier">{req.requested_by_name}</div>
+                    <div className="sr-card-class">{req.class_name || '—'}</div>
                   </div>
                   <div className="sr-card-date">📅 {formatDate(req.date)}</div>
-                  <div className="sr-card-count">{req.chemical_items?.reduce((s, c) => s + (c.quantity || 0), 0) || 0} ml</div>
                   <button className="sr-card-btn" onClick={(e) => { e.stopPropagation(); navigate(`/requests/${req.id}`); }}>
                     View Details ›
                   </button>
@@ -455,10 +455,10 @@ const StockRequest = ({ draftsOnly = false }) => {
               {filtered.map(req => (
                 <div key={req.id} className="sr-card-mobile" onClick={() => navigate(`/requests/${req.id}`)}>
                   <div className="sr-mobile-icon-box"><FaClipboardList /></div>
-                  <div className="sr-mobile-ref">{req.requested_by_name}</div>
+                  <div className="sr-mobile-ref">{req.request_id}</div>
                   <span className="sr-mobile-view" onClick={(e) => { e.stopPropagation(); navigate(`/requests/${req.id}`); }}>View ›</span>
-                  <div className="sr-mobile-supplier">{req.reason || '—'}</div>
-                  <div className="sr-mobile-meta">📅 {formatDate(req.date)} · {req.chemical_items?.reduce((s, c) => s + (c.quantity || 0), 0) || 0} ml</div>
+                  <div className="sr-mobile-supplier">{req.requested_by_name}</div>
+                  <div className="sr-mobile-meta">{req.class_name || '—'} · 📅 {formatDate(req.date)}</div>
                 </div>
               ))}
             </div>
@@ -466,8 +466,8 @@ const StockRequest = ({ draftsOnly = false }) => {
         ) : (
           <div className="sr-empty">
             <FaClipboardList className="sr-empty-icon" />
-            <div className="sr-empty-title">No approved requests</div>
-            <div className="sr-empty-sub">Approved requests from HOD will appear here</div>
+            <div className="sr-empty-title">No pending actions</div>
+            <div className="sr-empty-sub">Approved and reported requests will appear here</div>
           </div>
         )}
 
