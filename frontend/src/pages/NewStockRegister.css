@@ -99,6 +99,13 @@
   box-shadow: 0 0 0 2px rgba(63, 81, 181, 0.1);
 }
 
+.nrf-grid-row select.nrf-input {
+  text-align: center;
+  cursor: pointer;
+  appearance: auto;
+  padding: 0 6px;
+}
+
 /* Sections (Chemical / Apparatus / Damaged Items) */
 .nrf-section {
   display: flex;
@@ -171,6 +178,10 @@
   color: var(--text-muted);
   letter-spacing: 0.04em;
   text-transform: uppercase;
+}
+
+.cols-5 {
+  grid-template-columns: 1fr 90px 80px 90px 1fr 38px;
 }
 
 .cols-4 {

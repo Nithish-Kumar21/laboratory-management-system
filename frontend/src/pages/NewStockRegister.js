@@ -13,7 +13,7 @@ function NewStockRegister() {
     supplier_name: '',
     remarks: '',
   });
-  const [chemicalItems, setChemicalItems] = useState([{ chemical_name: '', quantity: '', rate: '', make: '' }]);
+  const [chemicalItems, setChemicalItems] = useState([{ chemical_name: '', quantity: '', unit: 'ml', rate: '', make: '' }]);
   const [apparatusItems, setApparatusItems] = useState([{ apparatus_name: '', quantity_pieces: '', rate: '', make: '' }]);
   const [submitting, setSubmitting] = useState(false);
   const [alertDialog, setAlertDialog] = useState({ open: false, message: '' });
@@ -71,7 +71,7 @@ function NewStockRegister() {
   };
 
   const addChemicalRow = () => {
-    setChemicalItems([...chemicalItems, { chemical_name: '', quantity: '', rate: '', make: '' }]);
+    setChemicalItems([...chemicalItems, { chemical_name: '', quantity: '', unit: 'ml', rate: '', make: '' }]);
     scrollToBottom();
   };
 
@@ -194,15 +194,16 @@ function NewStockRegister() {
               <div className="nrf-section-title"><FaFlask /> Chemical Materials</div>
               <button type="button" className="nrf-add-btn" onClick={addChemicalRow}><FaPlus /> Add Line</button>
             </div>
-            <div className="nrf-grid-cols cols-4">
+            <div className="nrf-grid-cols cols-5">
               <span>Material Name</span>
               <span>Qty</span>
+              <span>Unit</span>
               <span>Rate (₹)</span>
               <span>Make / Brand</span>
               <span></span>
             </div>
             {chemicalItems.map((it, i) => (
-              <div key={i} className="nrf-grid-row cols-4">
+              <div key={i} className="nrf-grid-row cols-5">
                 <div className="nrf-autocomplete">
                   <input type="text" className="nrf-input" placeholder="Item name..." value={it.chemical_name} required autoComplete="off"
                     onChange={e => { const next = [...chemicalItems]; next[i].chemical_name = e.target.value; setChemicalItems(next); setShowChemicalSuggestions({ [i]: true }); setActiveSuggestionIndex(-1); }}
@@ -222,6 +223,10 @@ function NewStockRegister() {
                 </div>
                 <input type="number" step="1" className="nrf-input" placeholder="Qty" value={it.quantity ?? ''} required
                   onChange={e => { const next = [...chemicalItems]; next[i].quantity = e.target.value; setChemicalItems(next); }} />
+                <select value={it.unit} className="nrf-input" onChange={e => { const next = [...chemicalItems]; next[i].unit = e.target.value; setChemicalItems(next); }}>
+                  <option value="ml">mL</option>
+                  <option value="g">g</option>
+                </select>
                 <input type="number" step="1" className="nrf-input" placeholder="Price" value={it.rate ?? ''} required
                   onChange={e => { const next = [...chemicalItems]; next[i].rate = e.target.value; setChemicalItems(next); }} />
                 <div className="nrf-autocomplete">

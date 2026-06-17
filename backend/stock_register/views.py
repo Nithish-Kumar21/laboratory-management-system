@@ -45,12 +45,12 @@ class StockRegisterViewSet(viewsets.ModelViewSet):
 
         # Increase inventory for each chemical item
         for chem in stock_register.chemical_items.all():
-            try:
-                available = AvailableChemical.objects.get(chemical_name=chem.chemical_name)
-                available.quantity += chem.quantity
-                available.save()
-            except AvailableChemical.DoesNotExist:
-                pass
+            available, created = AvailableChemical.objects.get_or_create(
+                chemical_name=chem.chemical_name,
+                defaults={'quantity': 0, 'unit': chem.unit}
+            )
+            available.quantity += chem.quantity
+            available.save()
 
         # Increase inventory for each apparatus item
         for app in stock_register.apparatus_items.all():

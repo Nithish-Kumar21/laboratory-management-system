@@ -263,11 +263,11 @@
   border-bottom: 1px solid var(--border);
 }
 
-/* Lock headers to columns: 2.5fr (Name) 1fr (Qty) 1fr (Rate) 1.5fr (Make) 50px (Delete) */
+/* Lock headers to columns: 2.5fr (Name) 1fr (Qty) 0.7fr (Unit) 1fr (Rate) 1.5fr (Make) 50px (Delete) */
 .stock-entry-modal .grid-matrix-header,
 .stock-entry-modal .grid-row {
   display: grid !important;
-  grid-template-columns: 2.5fr 1fr 1fr 1.5fr 50px !important;
+  grid-template-columns: 2.5fr 1fr 0.7fr 1fr 1.5fr 50px !important;
   gap: 15px;
   padding: 16px 20px;
   width: 100%;
@@ -294,7 +294,7 @@
 
   .stock-entry-modal .grid-matrix-header,
   .stock-entry-modal .grid-row {
-    grid-template-columns: 2.5fr 1fr 1fr 1fr 44px !important;
+    grid-template-columns: 2.5fr 1fr 0.7fr 1fr 1fr 44px !important;
     gap: 10px;
   }
 }
@@ -315,9 +315,10 @@
   white-space: nowrap;
 }
 
-/* Center QTY (ML) and QTY (PCS) headers in their columns */
+/* Center QTY, Unit, and Rate headers in their columns */
 .grid-matrix-header span:nth-child(2),
-.grid-matrix-header span:nth-child(3) {
+.grid-matrix-header span:nth-child(3),
+.grid-matrix-header span:nth-child(4) {
   text-align: center;
 }
 
@@ -377,6 +378,40 @@
 /* Adjust numeric inputs padding */
 .grid-row input[type="number"] {
   text-align: center;
+}
+
+.grid-row select {
+  width: 100%;
+  padding: 14px 10px;
+  min-height: 44px;
+  background: #f8f9fa !important;
+  color: #000000 !important;
+  border: 1.5px solid #cbd5e1 !important;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  box-sizing: border-box;
+  text-align: center;
+  cursor: pointer;
+  appearance: auto;
+}
+
+:root.dark-mode .grid-row select {
+  background: #0f172a !important;
+  color: #ffffff !important;
+  border: 1.5px solid #334155 !important;
+}
+
+.grid-row select:focus {
+  border-color: #94a3b8 !important;
+  background: #ffffff !important;
+  outline: none;
+}
+
+:root.dark-mode .grid-row select:focus {
+  background: #131c2f !important;
+  border-color: #475569 !important;
 }
 
 .stock-entry-modal .btn-row-del {

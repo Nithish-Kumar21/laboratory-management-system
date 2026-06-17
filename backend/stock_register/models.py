@@ -4,6 +4,7 @@ class StockRegister(models.Model):
     invoice_number = models.CharField(max_length=50, unique=True)
     date = models.DateField()
     supplier_name = models.CharField(max_length=100)
+    remarks = models.TextField(blank=True, default='')
 
     class Meta:
         db_table = 'stock_register'

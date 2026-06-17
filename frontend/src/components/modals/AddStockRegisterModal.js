@@ -11,9 +11,10 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess, standalone }) {
     invoice_number: '',
     date: new Date().toISOString().split('T')[0],
     supplier_name: '',
+    remarks: '',
   });
 
-  const [chemicalItems, setChemicalItems] = useState([{ chemical_name: '', quantity: '', rate: '', make: '' }]);
+  const [chemicalItems, setChemicalItems] = useState([{ chemical_name: '', quantity: '', unit: 'ml', rate: '', make: '' }]);
   const [apparatusItems, setApparatusItems] = useState([{ apparatus_name: '', quantity_pieces: '', rate: '', make: '' }]);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
@@ -119,13 +120,13 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess, standalone }) {
   };
 
   const addChemicalRow = () => {
-    setChemicalItems([...chemicalItems, { chemical_name: '', quantity: '', rate: '', make: '' }]);
+    setChemicalItems([...chemicalItems, { chemical_name: '', quantity: '', unit: 'ml', rate: '', make: '' }]);
     scrollToBottom();
   };
 
   const resetForm = () => {
-    setFormData({ invoice_number: '', date: new Date().toISOString().split('T')[0], supplier_name: '' });
-      setChemicalItems([{ chemical_name: '', quantity: '', rate: '', make: '' }]);
+    setFormData({ invoice_number: '', date: new Date().toISOString().split('T')[0], supplier_name: '', remarks: '' });
+    setChemicalItems([{ chemical_name: '', quantity: '', unit: 'ml', rate: '', make: '' }]);
     setApparatusItems([{ apparatus_name: '', quantity_pieces: '', rate: '', make: '' }]);
     setErrors({});
   };
@@ -173,11 +174,11 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess, standalone }) {
 
     if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter'].includes(key)) {
       if (!modalRef.current) return;
-      const inputs = Array.from(modalRef.current.querySelectorAll('input:not([type="hidden"])'));
+      const inputs = Array.from(modalRef.current.querySelectorAll('input:not([type="hidden"]), select'));
       const index = inputs.indexOf(target);
       if (index === -1) return;
 
-      const perRow = 4;
+      const perRow = 5;
       const header = 3;
 
       const focusNext = (nextIdx) => {
@@ -210,7 +211,7 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess, standalone }) {
     // Auto-focus the next field (Quantity)
     setTimeout(() => {
       if (modalRef.current) {
-        const inputs = Array.from(modalRef.current.querySelectorAll('input:not([type="hidden"])'));
+      const inputs = Array.from(modalRef.current.querySelectorAll('input:not([type="hidden"]), select'));
         const currentIndex = inputs.findIndex(inp => inp.value === n); // Approximate, or use better logic
         // Reliable way: find the quantity input for THIS row
         const rowInputs = modalRef.current.querySelectorAll('.grid-row');
@@ -258,9 +259,9 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess, standalone }) {
       } else {
         onClose();
       }
-    setChemicalItems([{ chemical_name: '', quantity: '', rate: '', make: '' }]);
+    setChemicalItems([{ chemical_name: '', quantity: '', unit: 'ml', rate: '', make: '' }]);
       setApparatusItems([{ apparatus_name: '', quantity_pieces: '', rate: '', make: '' }]);
-      setFormData({ invoice_number: '', date: new Date().toISOString().split('T')[0], supplier_name: '' });
+      setFormData({ invoice_number: '', date: new Date().toISOString().split('T')[0], supplier_name: '', remarks: '' });
     } catch (err) {
       setAlertDialog({ open: true, message: 'Error: ' + (err.response?.data?.error || 'Validation failed') });
     } finally {
@@ -312,6 +313,7 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess, standalone }) {
           <div className="grid-matrix-header">
             <span>Material Name</span>
             <span>Qty</span>
+            <span>Unit</span>
             <span>Rate (₹)</span>
             <span>Make / Brand</span>
             <span></span>
@@ -344,6 +346,10 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess, standalone }) {
                 )}
               </div>
               <input type="number" step="1" placeholder="Quantity" value={it.quantity ?? ''} required onChange={e => { const next = [...chemicalItems]; next[i].quantity = e.target.value; setChemicalItems(next); }} />
+              <select value={it.unit} onChange={e => { const next = [...chemicalItems]; next[i].unit = e.target.value; setChemicalItems(next); }}>
+                <option value="ml">mL</option>
+                <option value="g">g</option>
+              </select>
               <input type="number" step="1" placeholder="Price" value={it.rate ?? ''} required onChange={e => { const next = [...chemicalItems]; next[i].rate = e.target.value; setChemicalItems(next); }} />
               <div className="autocomplete-wrapper">
                 <input type="text" placeholder="Make" value={it.make} required
