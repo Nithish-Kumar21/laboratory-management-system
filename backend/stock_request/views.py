@@ -209,6 +209,7 @@ class StockRequestViewSet(viewsets.ModelViewSet):
             IssueChemicals.objects.create(
                 ir=issue_register,
                 chemical_name=item.chemical_name,
+                unit=item.unit,
                 issued_quantity=requested,
                 actual_usage=actual
             )
