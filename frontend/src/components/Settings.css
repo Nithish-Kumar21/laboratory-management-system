@@ -8,86 +8,53 @@
     margin-bottom: 10px;
 }
 
-.settings-content-grid {
-    display: grid;
-    grid-template-columns: 320px 1fr;
-    gap: 30px;
-    align-items: start;
-}
-
-/* Left Menu */
-.settings-menu {
-    padding: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    border-radius: var(--radius-lg);
-}
-
-.menu-item {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 14px 16px;
-    background: transparent;
-    border: none;
-    border-radius: var(--radius-md);
-    cursor: pointer;
-    text-align: left;
-    transition: var(--transition);
-    color: var(--text-muted);
-}
-
-.menu-item:hover {
-    background-color: var(--bg-main);
-    color: var(--text-main);
-}
-
-.menu-item.active {
-    background-color: var(--primary-glow);
-    color: var(--primary);
-}
-
-.menu-item-icon {
-    font-size: 1.2rem;
-    width: 24px;
-    display: flex;
-    justify-content: center;
-}
-
-.menu-item-text {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-}
-
-.menu-label {
-    font-weight: 700;
-    font-size: 0.95rem;
-}
-
-.menu-desc {
-    font-size: 0.75rem;
-    opacity: 0.7;
-}
-
-.menu-arrow {
-    font-size: 0.8rem;
-    opacity: 0.3;
-    transition: transform 0.3s;
-}
-
-.menu-item.active .menu-arrow {
-    opacity: 1;
-    transform: translateX(4px);
-}
-
 /* Right Panel */
 .settings-panel {
-    min-height: 600px;
-    padding: 30px;
-    border-radius: var(--radius-lg);
     position: relative;
+}
+
+/* Tab switcher — matching Inventory tab pattern */
+.settings-tabs {
+    display: flex;
+    width: 100%;
+    border-bottom: 1px solid #E0E0E0;
+    margin-bottom: 24px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+
+.settings-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.settings-tab {
+    padding: 10px 0;
+    border: none;
+    background: transparent;
+    font-size: 14px;
+    font-weight: 500;
+    color: #9AA3AF;
+    cursor: pointer;
+    font-family: Inter, sans-serif;
+    position: relative;
+    transition: color 0.2s;
+    margin-right: 24px;
+    flex: 0 0 auto;
+}
+
+.settings-tab.active {
+    font-weight: 700;
+    color: #1A3C6E;
+}
+
+.settings-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #4A90D9;
 }
 
 .panel-title {
@@ -463,12 +430,6 @@ input[type="range"]::-webkit-slider-thumb {
     background: #10b981;
     color: white;
     box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-}
-
-@media (max-width: 1024px) {
-    .settings-content-grid {
-        grid-template-columns: 1fr;
-    }
 }
 
 @media (max-width: 600px) {

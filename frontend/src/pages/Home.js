@@ -355,7 +355,7 @@ function Home() {
         {/* Reject Reason Modal */}
         {rejectState.show && (
           <div className="modal-overlay" onClick={() => setRejectState({ ...rejectState, show: false })}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px' }}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <h3>Reason for Rejection</h3>
                 <button type="button" className="modal-close" onClick={() => setRejectState({ ...rejectState, show: false })} aria-label="Close">×</button>

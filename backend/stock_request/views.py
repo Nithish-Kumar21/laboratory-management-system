@@ -168,7 +168,7 @@ class StockRequestViewSet(viewsets.ModelViewSet):
         # Update items with actual usage
         for item in obj.chemical_items.all():
             if item.id in reported_items:
-                item.actual_used_quantity = reported_items[item.id]
+                item.actual_used_quantity_ml = reported_items[item.id]
                 item.save()
         
         obj.status = 'reported'
@@ -202,14 +202,13 @@ class StockRequestViewSet(viewsets.ModelViewSet):
 
         # 2. Process Items and Reduce Inventory
         for item in obj.chemical_items.all():
-            actual = item.actual_used_quantity if item.actual_used_quantity is not None else item.quantity
-            requested = item.quantity
+            actual = item.actual_used_quantity_ml if item.actual_used_quantity_ml is not None else item.quantity_ml
+            requested = item.quantity_ml
 
             # Log item to legacy table 'issue_chemicals'
             IssueChemicals.objects.create(
                 ir=issue_register,
                 chemical_name=item.chemical_name,
-                unit=item.unit,
                 issued_quantity=requested,
                 actual_usage=actual
             )
@@ -217,7 +216,7 @@ class StockRequestViewSet(viewsets.ModelViewSet):
             # Reduce Inventory by actual used quantity
             try:
                 stock_item = AvailableChemical.objects.get(chemical_name=item.chemical_name)
-                stock_item.quantity -= actual
+                stock_item.available_quantity_ml -= actual
                 stock_item.save()
             except AvailableChemical.DoesNotExist:
                 pass

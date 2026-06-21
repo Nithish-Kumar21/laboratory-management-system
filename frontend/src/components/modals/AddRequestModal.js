@@ -289,6 +289,14 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
                           updateChemicalItem(i, 'quantity', v === '' ? '' : v);
                         }}
                       />
+                      {item.chemical_name && (
+                        <span className="unit-label">
+                          {(() => {
+                            const c = availableChemicals.find(c => c.chemical_name === item.chemical_name);
+                            return c?.unit || 'ml';
+                          })()}
+                        </span>
+                      )}
                       {errors[`chemical_quantity_${i}`] && <span className="field-error">{errors[`chemical_quantity_${i}`]}</span>}
                     </div>
 

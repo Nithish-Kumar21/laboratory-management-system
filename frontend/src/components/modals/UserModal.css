@@ -7,8 +7,9 @@
     background: rgba(0, 0, 0, 0.8);
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
     z-index: 1000;
+    padding-top: 60px;
     backdrop-filter: blur(8px);
     animation: fadeIn 0.3s ease-out;
 }

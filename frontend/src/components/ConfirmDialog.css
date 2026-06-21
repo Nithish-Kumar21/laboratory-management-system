@@ -3,10 +3,10 @@
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   z-index: 10000;
-  padding: 20px;
+  padding: 60px 20px 20px;
 }
 
 .confirm-dialog-box {

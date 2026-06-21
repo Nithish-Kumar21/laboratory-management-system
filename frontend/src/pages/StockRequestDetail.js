@@ -731,7 +731,7 @@ function StockRequestDetail() {
             {/* Reject Modal */}
             {showRejectModal && (
                 <div className="modal-overlay" onClick={() => setShowRejectModal(false)}>
-                    <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px' }}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
                             <h3>Reason for Rejection</h3>
                             <button type="button" className="modal-close" onClick={() => setShowRejectModal(false)} aria-label="Close">×</button>

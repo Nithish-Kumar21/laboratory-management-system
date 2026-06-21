@@ -21,9 +21,9 @@ try:
 
     # Create Chemicals
     chemicals = [
-        {"chemical_name": "Sulfuric Acid", "quantity": 5000.00, "unit": "ml", "reorder_level": 1000.00},
-        {"chemical_name": "Hydrochloric Acid", "quantity": 3000.00, "unit": "ml", "reorder_level": 500.00},
-        {"chemical_name": "Sodium Hydroxide", "quantity": 2000.00, "unit": "ml", "reorder_level": 200.00},
+        {"chemical_name": "Sulfuric Acid", "available_quantity_ml": 5000.00, "reorder_level": 1000.00},
+        {"chemical_name": "Hydrochloric Acid", "available_quantity_ml": 3000.00, "reorder_level": 500.00},
+        {"chemical_name": "Sodium Hydroxide", "available_quantity_ml": 2000.00, "reorder_level": 200.00},
     ]
 
     for chem_data in chemicals:

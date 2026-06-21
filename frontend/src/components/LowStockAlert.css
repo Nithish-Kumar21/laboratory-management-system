@@ -92,12 +92,12 @@
 }
 
 .low-stock-table th {
-  background: #F8FAFC;
+  background: #1A3C6E;
+  color: #fff;
   padding: 11px 18px;
   text-align: left;
   font-size: 0.7rem;
   font-weight: 700;
-  color: #64748B;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   border-bottom: 1px solid #F1F5F9;
@@ -145,8 +145,8 @@
 }
 
 :root.dark-mode .low-stock-table th {
-  background: #0F172A;
-  color: #94A3B8;
+  background: #1A3C6E;
+  color: #fff;
   border-bottom-color: #334155;
 }
 

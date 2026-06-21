@@ -50,13 +50,6 @@ function Sidebar() {
       </nav>
       <div className="sidebar-bottom">
         <div className="sidebar-bottom-divider" />
-        <Link
-          to="/settings"
-          className={`sidebar-link ${isActive('/settings') ? 'active' : ''}`}
-        >
-          <FaCog className="sidebar-link-icon" />
-          <span className="sidebar-link-label">Settings</span>
-        </Link>
         <button className="sidebar-logout" onClick={logout}>
           <FaSignOutAlt className="sidebar-link-icon" />
           <span className="sidebar-link-label">Logout</span>

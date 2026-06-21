@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FaSun, FaMoon, FaFlask } from 'react-icons/fa';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
@@ -24,6 +25,19 @@ function getRoleLabel(role) {
 function Header() {
   const { themeMode, toggleTheme } = useTheme();
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
     <header className="app-header">
@@ -38,14 +52,36 @@ function Header() {
           <button className="header-theme-btn" onClick={toggleTheme} title="Toggle theme">
             {themeMode === 'dark' ? <FaSun /> : <FaMoon />}
           </button>
-          <div className="header-user-group">
-            <div className="header-user-info">
-              <span className="header-user-name">{user?.full_name || getRoleLabel(user?.role)}</span>
-              <span className="header-user-sub">{getRoleLabel(user?.role)}</span>
-            </div>
-          </div>
-          <div className="header-avatar-circle">
-            {getInitials(user)}
+          <div className="header-user-group" ref={dropdownRef}>
+            <button
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              className="flex items-center gap-3 cursor-pointer bg-transparent border-none"
+            >
+              <div className="header-user-info">
+                <span className="header-user-name">{user?.full_name || getRoleLabel(user?.role)}</span>
+                <span className="header-user-sub">{getRoleLabel(user?.role)}</span>
+              </div>
+              <div className="header-avatar-circle">
+                {getInitials(user)}
+              </div>
+            </button>
+
+            {dropdownOpen && (
+              <div className="absolute top-full right-0 mt-2 w-44 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                <button
+                  onClick={() => { navigate('/profile'); setDropdownOpen(false); }}
+                  className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 transition-colors flex items-center gap-2"
+                >
+                  Profile
+                </button>
+                <button
+                  onClick={() => { navigate('/settings'); setDropdownOpen(false); }}
+                  className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 transition-colors flex items-center gap-2"
+                >
+                  Settings
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

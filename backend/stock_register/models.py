@@ -15,7 +15,6 @@ class StockRegister(models.Model):
 
 
 class ChemicalItem(models.Model):
-    UNIT_CHOICES = [('ml', 'mL'), ('g', 'g')]
     stock_register = models.ForeignKey(
         StockRegister,
         on_delete=models.DO_NOTHING,
@@ -23,8 +22,7 @@ class ChemicalItem(models.Model):
         db_column='stock_register_id'
     )
     chemical_name = models.CharField(max_length=64)
-    quantity = models.DecimalField(max_digits=10, decimal_places=2)
-    unit = models.CharField(max_length=2, choices=UNIT_CHOICES, default='ml')
+    quantity_ml = models.DecimalField(max_digits=10, decimal_places=2)
     rate = models.DecimalField(max_digits=10, decimal_places=2)
     make = models.CharField(max_length=100)
 

@@ -50,13 +50,12 @@ else:
 chem, created = AvailableChemical.objects.get_or_create(
     chemical_name='Sodium Hydroxide',
     defaults={
-        'quantity': Decimal('500.00'),
-        'unit': 'ml',
+        'available_quantity_ml': Decimal('500.00'),
         'reorder_level': Decimal('100.00'),
     }
 )
 if created:
-    print(f"[INVENTORY-CHEM] Created: '{chem.chemical_name}' qty={chem.quantity}{chem.unit}")
+    print(f"[INVENTORY-CHEM] Created: '{chem.chemical_name}' qty={chem.available_quantity_ml}ml")
 else:
     print(f"[INVENTORY-CHEM] Already exists: '{chem.chemical_name}'")
 
@@ -86,7 +85,7 @@ sr, created = StockRegister.objects.get_or_create(
 if created:
     ChemicalItem.objects.create(
         stock_register=sr, chemical_name='Sodium Hydroxide',
-        quantity=Decimal('500.00'), unit='ml', rate=Decimal('1200.00'), make='Merck'
+        quantity_ml=Decimal('500.00'), rate=Decimal('1200.00'), make='Merck'
     )
     ApparatusItem.objects.create(
         stock_register=sr, apparatus_name='Volumetric Flask (250ml)',
@@ -135,7 +134,7 @@ if staff_user and hod_user:
     if created:
         StockRequestChemicalItem.objects.create(
             stock_request=req, chemical_name='Sodium Hydroxide',
-            quantity=Decimal('200.00')
+            quantity_ml=Decimal('200.00')
         )
         print(f"[STOCK REQUEST] Created: '{req.request_id}' (status: {req.status})")
     else:
@@ -156,7 +155,7 @@ ir = IssueRegister.objects.create(
 )
 IssueChemicals.objects.create(
     ir=ir, chemical_name='Hydrochloric Acid',
-    issued_quantity=Decimal('100.00'), unit='ml', actual_usage=Decimal('85.00')
+    issued_quantity=Decimal('100.00'), actual_usage=Decimal('85.00')
 )
 print(f"[ISSUE REGISTER] Created: IR#{ir.ir_id} (staff: {ir.staff_name})")
 

@@ -67,7 +67,8 @@
     text-align: left;
     font-size: 0.95rem;
     font-weight: 700;
-    color: var(--text-main);
+    color: #fff;
+    background: #1A3C6E;
     border-bottom: 2px solid var(--border);
 }
 

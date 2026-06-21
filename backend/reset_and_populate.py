@@ -102,8 +102,7 @@ chemicals_data = [
 for name, qty, reorder in chemicals_data:
     AvailableChemical.objects.create(
         chemical_name=name,
-        quantity=qty,
-        unit='ml',
+        available_quantity_ml=qty,
         reorder_level=reorder
     )
 print(f"  [Chemicals] Added {len(chemicals_data)} entries")
@@ -145,8 +144,8 @@ sr1 = StockRegister.objects.create(
     supplier_name='Sigma Aldrich India',
     remarks='Chemicals for first semester labs'
 )
-ChemicalItem.objects.create(stock_register=sr1, chemical_name='Sulfuric Acid (Conc.)', quantity=Decimal('2000.00'), unit='ml', rate=Decimal('850.00'), make='Merck')
-ChemicalItem.objects.create(stock_register=sr1, chemical_name='Hydrochloric Acid (1N)', quantity=Decimal('3000.00'), unit='ml', rate=Decimal('650.00'), make='Merck')
+ChemicalItem.objects.create(stock_register=sr1, chemical_name='Sulfuric Acid (Conc.)', quantity_ml=Decimal('2000.00'), rate=Decimal('850.00'), make='Merck')
+ChemicalItem.objects.create(stock_register=sr1, chemical_name='Hydrochloric Acid (1N)', quantity_ml=Decimal('3000.00'), rate=Decimal('650.00'), make='Merck')
 print(f"  [SR-001] {sr1.invoice_number} — Sigma Aldrich India (2 chemicals)")
 
 sr2 = StockRegister.objects.create(
@@ -166,9 +165,9 @@ sr3 = StockRegister.objects.create(
     supplier_name='Sisco Research Labs',
     remarks='Organic solvents for advanced labs'
 )
-ChemicalItem.objects.create(stock_register=sr3, chemical_name='Ethanol (Absolute)', quantity=Decimal('5000.00'), unit='ml', rate=Decimal('1200.00'), make='SRL')
-ChemicalItem.objects.create(stock_register=sr3, chemical_name='Acetone (HPLC Grade)', quantity=Decimal('2000.00'), unit='ml', rate=Decimal('950.00'), make='SRL')
-ChemicalItem.objects.create(stock_register=sr3, chemical_name='Methanol (AR Grade)', quantity=Decimal('3000.00'), unit='ml', rate=Decimal('800.00'), make='SRL')
+ChemicalItem.objects.create(stock_register=sr3, chemical_name='Ethanol (Absolute)', quantity_ml=Decimal('5000.00'), rate=Decimal('1200.00'), make='SRL')
+ChemicalItem.objects.create(stock_register=sr3, chemical_name='Acetone (HPLC Grade)', quantity_ml=Decimal('2000.00'), rate=Decimal('950.00'), make='SRL')
+ChemicalItem.objects.create(stock_register=sr3, chemical_name='Methanol (AR Grade)', quantity_ml=Decimal('3000.00'), rate=Decimal('800.00'), make='SRL')
 print(f"  [SR-003] {sr3.invoice_number} — Sisco Research Labs (3 chemicals)")
 
 sr4 = StockRegister.objects.create(
@@ -188,9 +187,9 @@ sr5 = StockRegister.objects.create(
     supplier_name='Thermo Fisher Scientific',
     remarks='Acids and glassware replenishment'
 )
-ChemicalItem.objects.create(stock_register=sr5, chemical_name='Nitric Acid (70%)', quantity=Decimal('1000.00'), unit='ml', rate=Decimal('1100.00'), make='Thermo')
-ChemicalItem.objects.create(stock_register=sr5, chemical_name='Ammonia Solution (30%)', quantity=Decimal('1000.00'), unit='ml', rate=Decimal('750.00'), make='Thermo')
-ChemicalItem.objects.create(stock_register=sr5, chemical_name='Chloroform (AR Grade)', quantity=Decimal('1500.00'), unit='ml', rate=Decimal('1400.00'), make='Thermo')
+ChemicalItem.objects.create(stock_register=sr5, chemical_name='Nitric Acid (70%)', quantity_ml=Decimal('1000.00'), rate=Decimal('1100.00'), make='Thermo')
+ChemicalItem.objects.create(stock_register=sr5, chemical_name='Ammonia Solution (30%)', quantity_ml=Decimal('1000.00'), rate=Decimal('750.00'), make='Thermo')
+ChemicalItem.objects.create(stock_register=sr5, chemical_name='Chloroform (AR Grade)', quantity_ml=Decimal('1500.00'), rate=Decimal('1400.00'), make='Thermo')
 ApparatusItem.objects.create(stock_register=sr5, apparatus_name='Round Bottom Flask 1000ml', quantity_pieces=8, rate=Decimal('520.00'), make='Borosil')
 print(f"  [SR-005] {sr5.invoice_number} — Thermo Fisher (3 chemicals + 1 apparatus)")
 
@@ -210,8 +209,8 @@ req1 = StockRequest.objects.create(
     status='pending',
     reason='Qualitative analysis practical for first-year students requires concentrated acids'
 )
-StockRequestChemicalItem.objects.create(stock_request=req1, chemical_name='Sulfuric Acid (Conc.)', quantity=Decimal('200.00'))
-StockRequestChemicalItem.objects.create(stock_request=req1, chemical_name='Hydrochloric Acid (1N)', quantity=Decimal('300.00'))
+StockRequestChemicalItem.objects.create(stock_request=req1, chemical_name='Sulfuric Acid (Conc.)', quantity_ml=Decimal('200.00'))
+StockRequestChemicalItem.objects.create(stock_request=req1, chemical_name='Hydrochloric Acid (1N)', quantity_ml=Decimal('300.00'))
 print(f"  [REQ-001] {req1.request_id} — Pending — by {staff_kumar.full_name}")
 
 # Request 2 - Pending (by staff_deepa)
@@ -222,8 +221,8 @@ req2 = StockRequest.objects.create(
     status='pending',
     reason='Organic synthesis experiment requires ethanol and acetone'
 )
-StockRequestChemicalItem.objects.create(stock_request=req2, chemical_name='Ethanol (Absolute)', quantity=Decimal('500.00'))
-StockRequestChemicalItem.objects.create(stock_request=req2, chemical_name='Acetone (HPLC Grade)', quantity=Decimal('200.00'))
+StockRequestChemicalItem.objects.create(stock_request=req2, chemical_name='Ethanol (Absolute)', quantity_ml=Decimal('500.00'))
+StockRequestChemicalItem.objects.create(stock_request=req2, chemical_name='Acetone (HPLC Grade)', quantity_ml=Decimal('200.00'))
 print(f"  [REQ-002] {req2.request_id} — Pending — by {staff_deepa.full_name}")
 
 # Request 3 - Accepted (by staff_mani, reviewed by hod_ravi)
@@ -236,8 +235,8 @@ req3 = StockRequest.objects.create(
     reviewed_by=hod_ravi,
     reviewed_at=timezone.now() - timedelta(days=4)
 )
-StockRequestChemicalItem.objects.create(stock_request=req3, chemical_name='Ammonia Solution (30%)', quantity=Decimal('300.00'))
-StockRequestChemicalItem.objects.create(stock_request=req3, chemical_name='Nitric Acid (70%)', quantity=Decimal('200.00'))
+StockRequestChemicalItem.objects.create(stock_request=req3, chemical_name='Ammonia Solution (30%)', quantity_ml=Decimal('300.00'))
+StockRequestChemicalItem.objects.create(stock_request=req3, chemical_name='Nitric Acid (70%)', quantity_ml=Decimal('200.00'))
 print(f"  [REQ-003] {req3.request_id} — Accepted — by {staff_mani.full_name}")
 
 # Request 4 - Accepted (by staff_kumar, reviewed by hod_priya)
@@ -250,8 +249,8 @@ req4 = StockRequest.objects.create(
     reviewed_by=hod_priya,
     reviewed_at=timezone.now() - timedelta(days=6)
 )
-StockRequestChemicalItem.objects.create(stock_request=req4, chemical_name='Hydrochloric Acid (1N)', quantity=Decimal('500.00'))
-StockRequestChemicalItem.objects.create(stock_request=req4, chemical_name='Sodium Hydroxide (Pellets)', quantity=Decimal('300.00'))
+StockRequestChemicalItem.objects.create(stock_request=req4, chemical_name='Hydrochloric Acid (1N)', quantity_ml=Decimal('500.00'))
+StockRequestChemicalItem.objects.create(stock_request=req4, chemical_name='Sodium Hydroxide (Pellets)', quantity_ml=Decimal('300.00'))
 print(f"  [REQ-004] {req4.request_id} — Accepted — by {staff_kumar.full_name}")
 
 # Request 5 - Issued (by staff_deepa, reviewed by hod_priya, issued by sk_venkatesh)
@@ -266,7 +265,7 @@ req5 = StockRequest.objects.create(
     issued_by=sk_venkatesh,
     issued_at=timezone.now() - timedelta(days=8)
 )
-StockRequestChemicalItem.objects.create(stock_request=req5, chemical_name='Potassium Permanganate (0.1N)', quantity=Decimal('400.00'))
+StockRequestChemicalItem.objects.create(stock_request=req5, chemical_name='Potassium Permanganate (0.1N)', quantity_ml=Decimal('400.00'))
 print(f"  [REQ-005] {req5.request_id} — Issued — by {staff_deepa.full_name}")
 
 # Request 6 - Issued (by staff_mani, reviewed by hod_ravi, issued by sk_anitha)
@@ -281,8 +280,8 @@ req6 = StockRequest.objects.create(
     issued_by=sk_anitha,
     issued_at=timezone.now() - timedelta(days=10)
 )
-StockRequestChemicalItem.objects.create(stock_request=req6, chemical_name='Methanol (AR Grade)', quantity=Decimal('300.00'))
-StockRequestChemicalItem.objects.create(stock_request=req6, chemical_name='Chloroform (AR Grade)', quantity=Decimal('200.00'))
+StockRequestChemicalItem.objects.create(stock_request=req6, chemical_name='Methanol (AR Grade)', quantity_ml=Decimal('300.00'))
+StockRequestChemicalItem.objects.create(stock_request=req6, chemical_name='Chloroform (AR Grade)', quantity_ml=Decimal('200.00'))
 print(f"  [REQ-006] {req6.request_id} — Issued — by {staff_mani.full_name}")
 
 # Request 7 - Reported (by staff_deepa, reviewed by hod_priya, issued by sk_venkatesh, reported)
@@ -298,8 +297,8 @@ req7 = StockRequest.objects.create(
     issued_at=timezone.now() - timedelta(days=13),
     reported_at=timezone.now() - timedelta(days=11)
 )
-StockRequestChemicalItem.objects.create(stock_request=req7, chemical_name='Ethanol (Absolute)', quantity=Decimal('400.00'), actual_used_quantity=Decimal('340.00'))
-StockRequestChemicalItem.objects.create(stock_request=req7, chemical_name='Chloroform (AR Grade)', quantity=Decimal('150.00'), actual_used_quantity=Decimal('127.50'))
+StockRequestChemicalItem.objects.create(stock_request=req7, chemical_name='Ethanol (Absolute)', quantity_ml=Decimal('400.00'), actual_used_quantity_ml=Decimal('340.00'))
+StockRequestChemicalItem.objects.create(stock_request=req7, chemical_name='Chloroform (AR Grade)', quantity_ml=Decimal('150.00'), actual_used_quantity_ml=Decimal('127.50'))
 print(f"  [REQ-007] {req7.request_id} — Reported — by {staff_deepa.full_name}")
 
 # Request 8 - Reported (by staff_mani, reviewed by hod_ravi, issued by sk_anitha, reported)
@@ -315,8 +314,8 @@ req8 = StockRequest.objects.create(
     issued_at=timezone.now() - timedelta(days=16),
     reported_at=timezone.now() - timedelta(days=14)
 )
-StockRequestChemicalItem.objects.create(stock_request=req8, chemical_name='Hydrochloric Acid (1N)', quantity=Decimal('250.00'), actual_used_quantity=Decimal('212.50'))
-StockRequestChemicalItem.objects.create(stock_request=req8, chemical_name='Sodium Hydroxide (Pellets)', quantity=Decimal('200.00'), actual_used_quantity=Decimal('170.00'))
+StockRequestChemicalItem.objects.create(stock_request=req8, chemical_name='Hydrochloric Acid (1N)', quantity_ml=Decimal('250.00'), actual_used_quantity_ml=Decimal('212.50'))
+StockRequestChemicalItem.objects.create(stock_request=req8, chemical_name='Sodium Hydroxide (Pellets)', quantity_ml=Decimal('200.00'), actual_used_quantity_ml=Decimal('170.00'))
 print(f"  [REQ-008] {req8.request_id} — Reported — by {staff_mani.full_name}")
 
 # Request 9 - Completed (by staff_kumar, reviewed by hod_priya, issued by sk_venkatesh, completed)
@@ -333,8 +332,8 @@ req9 = StockRequest.objects.create(
     reported_at=timezone.now() - timedelta(days=16),
     completed_at=timezone.now() - timedelta(days=15)
 )
-StockRequestChemicalItem.objects.create(stock_request=req9, chemical_name='Sulfuric Acid (Conc.)', quantity=Decimal('150.00'), actual_used_quantity=Decimal('127.50'))
-StockRequestChemicalItem.objects.create(stock_request=req9, chemical_name='Potassium Permanganate (0.1N)', quantity=Decimal('200.00'), actual_used_quantity=Decimal('170.00'))
+StockRequestChemicalItem.objects.create(stock_request=req9, chemical_name='Sulfuric Acid (Conc.)', quantity_ml=Decimal('150.00'), actual_used_quantity_ml=Decimal('127.50'))
+StockRequestChemicalItem.objects.create(stock_request=req9, chemical_name='Potassium Permanganate (0.1N)', quantity_ml=Decimal('200.00'), actual_used_quantity_ml=Decimal('170.00'))
 print(f"  [REQ-009] {req9.request_id} — Completed — by {staff_kumar.full_name}")
 
 # Request 10 - Completed (by staff_mani, reviewed by hod_ravi, issued by sk_anitha, completed)
@@ -351,8 +350,8 @@ req10 = StockRequest.objects.create(
     reported_at=timezone.now() - timedelta(days=21),
     completed_at=timezone.now() - timedelta(days=20)
 )
-StockRequestChemicalItem.objects.create(stock_request=req10, chemical_name='Acetone (HPLC Grade)', quantity=Decimal('300.00'), actual_used_quantity=Decimal('255.00'))
-StockRequestChemicalItem.objects.create(stock_request=req10, chemical_name='Ethanol (Absolute)', quantity=Decimal('600.00'), actual_used_quantity=Decimal('510.00'))
+StockRequestChemicalItem.objects.create(stock_request=req10, chemical_name='Acetone (HPLC Grade)', quantity_ml=Decimal('300.00'), actual_used_quantity_ml=Decimal('255.00'))
+StockRequestChemicalItem.objects.create(stock_request=req10, chemical_name='Ethanol (Absolute)', quantity_ml=Decimal('600.00'), actual_used_quantity_ml=Decimal('510.00'))
 print(f"  [REQ-010] {req10.request_id} — Completed — by {staff_mani.full_name}")
 
 # ═══════════════════════════════════════════
@@ -369,7 +368,7 @@ de1 = DamagedEntry.objects.create(
     date=today - timedelta(days=60),
     details='Beaker cracked during heating experiment due to thermal stress.'
 )
-DamagedItem.objects.create(damaged_entry=de1, apparatus_name='Beaker 250ml (Borosil)', quantity=3, caused_by='Thermal stress during heating')
+DamagedItem.objects.create(damaged_entry=de1, apparatus_name='Beaker 250ml (Borosil)', quantity_ml=3, caused_by='Thermal stress during heating')
 print(f"  [DE-001] {de1.staff} — {de1.class_name} — Beaker 250ml x3")
 
 de2 = DamagedEntry.objects.create(
@@ -378,7 +377,7 @@ de2 = DamagedEntry.objects.create(
     date=today - timedelta(days=45),
     details='Test tube broken while handling with tongs during lab session.'
 )
-DamagedItem.objects.create(damaged_entry=de2, apparatus_name='Test Tube (15x150mm)', quantity=10, caused_by='Student mishandling with tongs')
+DamagedItem.objects.create(damaged_entry=de2, apparatus_name='Test Tube (15x150mm)', quantity_ml=10, caused_by='Student mishandling with tongs')
 print(f"  [DE-002] {de2.staff} — {de2.class_name} — Test Tube x10")
 
 de3 = DamagedEntry.objects.create(
@@ -387,7 +386,7 @@ de3 = DamagedEntry.objects.create(
     date=today - timedelta(days=30),
     details='Mercury thermometer dropped and broken during distillation setup demonstration.'
 )
-DamagedItem.objects.create(damaged_entry=de3, apparatus_name='Thermometer (-10 to 110C)', quantity=2, caused_by='Dropped during demonstration setup')
+DamagedItem.objects.create(damaged_entry=de3, apparatus_name='Thermometer (-10 to 110C)', quantity_ml=2, caused_by='Dropped during demonstration setup')
 print(f"  [DE-003] {de3.staff} — {de3.class_name} — Thermometer x2")
 
 de4 = DamagedEntry.objects.create(
@@ -396,8 +395,8 @@ de4 = DamagedEntry.objects.create(
     date=today - timedelta(days=15),
     details='Conical flask shattered during titration practical when student applied excessive force.'
 )
-DamagedItem.objects.create(damaged_entry=de4, apparatus_name='Conical Flask 500ml', quantity=2, caused_by='Excessive force during titration')
-DamagedItem.objects.create(damaged_entry=de4, apparatus_name='Beaker 500ml (Borosil)', quantity=1, caused_by='Accidental knock-off')
+DamagedItem.objects.create(damaged_entry=de4, apparatus_name='Conical Flask 500ml', quantity_ml=2, caused_by='Excessive force during titration')
+DamagedItem.objects.create(damaged_entry=de4, apparatus_name='Beaker 500ml (Borosil)', quantity_ml=1, caused_by='Accidental knock-off')
 print(f"  [DE-004] {de4.staff} — {de4.class_name} — Conical Flask 500ml x2, Beaker 500ml x1")
 
 de5 = DamagedEntry.objects.create(
@@ -406,7 +405,7 @@ de5 = DamagedEntry.objects.create(
     date=today - timedelta(days=3),
     details='Stopcock of burette broke due to mishandling by student during titration.'
 )
-DamagedItem.objects.create(damaged_entry=de5, apparatus_name='Burette 50ml (with stopcock)', quantity=1, caused_by='Student mishandling of stopcock')
+DamagedItem.objects.create(damaged_entry=de5, apparatus_name='Burette 50ml (with stopcock)', quantity_ml=1, caused_by='Student mishandling of stopcock')
 print(f"  [DE-005] {de5.staff} — {de5.class_name} — Burette 50ml x1")
 
 # ═══════════════════════════════════════════
@@ -507,8 +506,8 @@ draft1 = StockRequest.objects.create(
     status='draft',
     reason='Draft request for upcoming titration lab - not yet submitted'
 )
-StockRequestChemicalItem.objects.create(stock_request=draft1, chemical_name='Sodium Hydroxide (Pellets)', quantity=Decimal('250.00'))
-StockRequestChemicalItem.objects.create(stock_request=draft1, chemical_name='Hydrochloric Acid (1N)', quantity=Decimal('300.00'))
+StockRequestChemicalItem.objects.create(stock_request=draft1, chemical_name='Sodium Hydroxide (Pellets)', quantity_ml=Decimal('250.00'))
+StockRequestChemicalItem.objects.create(stock_request=draft1, chemical_name='Hydrochloric Acid (1N)', quantity_ml=Decimal('300.00'))
 print(f"  [DRAFT-001] {draft1.request_id} — Draft — by {staff_kumar.full_name}")
 
 # Draft 2 - by staff_deepa
@@ -519,8 +518,8 @@ draft2 = StockRequest.objects.create(
     status='draft',
     reason='Draft for research project chemicals - yet to finalize quantities'
 )
-StockRequestChemicalItem.objects.create(stock_request=draft2, chemical_name='Methanol (AR Grade)', quantity=Decimal('400.00'))
-StockRequestChemicalItem.objects.create(stock_request=draft2, chemical_name='Chloroform (AR Grade)', quantity=Decimal('250.00'))
+StockRequestChemicalItem.objects.create(stock_request=draft2, chemical_name='Methanol (AR Grade)', quantity_ml=Decimal('400.00'))
+StockRequestChemicalItem.objects.create(stock_request=draft2, chemical_name='Chloroform (AR Grade)', quantity_ml=Decimal('250.00'))
 print(f"  [DRAFT-002] {draft2.request_id} — Draft — by {staff_deepa.full_name}")
 
 # Draft 3 - by staff_mani
@@ -531,8 +530,8 @@ draft3 = StockRequest.objects.create(
     status='draft',
     reason='Draft for inorganic analysis - solvents to be confirmed by HOD'
 )
-StockRequestChemicalItem.objects.create(stock_request=draft3, chemical_name='Nitric Acid (70%)', quantity=Decimal('150.00'))
-StockRequestChemicalItem.objects.create(stock_request=draft3, chemical_name='Ammonia Solution (30%)', quantity=Decimal('200.00'))
+StockRequestChemicalItem.objects.create(stock_request=draft3, chemical_name='Nitric Acid (70%)', quantity_ml=Decimal('150.00'))
+StockRequestChemicalItem.objects.create(stock_request=draft3, chemical_name='Ammonia Solution (30%)', quantity_ml=Decimal('200.00'))
 StockRequestApparatusItem.objects.create(stock_request=draft3, apparatus_name='Conical Flask 500ml', quantity_pieces=10)
 print(f"  [DRAFT-003] {draft3.request_id} — Draft — by {staff_mani.full_name}")
 

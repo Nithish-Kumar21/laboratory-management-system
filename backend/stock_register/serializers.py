@@ -7,6 +7,7 @@ from inventory.models import AvailableChemical, AvailableApparatus
 
 # Read-only serializers (existing + NEW 'make' field)
 class ChemicalItemSerializer(serializers.ModelSerializer):
+    quantity = serializers.DecimalField(source='quantity_ml', max_digits=10, decimal_places=2)
     unit = serializers.SerializerMethodField()
 
     class Meta:
@@ -14,7 +15,7 @@ class ChemicalItemSerializer(serializers.ModelSerializer):
         fields = ['id', 'chemical_name', 'make', 'quantity', 'unit', 'rate']
 
     def get_unit(self, obj):
-        return obj.unit
+        return 'ml'
 
 
 
@@ -56,12 +57,12 @@ class StockRegisterDetailSerializer(serializers.ModelSerializer):
 
 # Write serializers
 class ChemicalItemWriteSerializer(serializers.ModelSerializer):
+    quantity = serializers.DecimalField(source='quantity_ml', max_digits=10, decimal_places=2)
+    unit = serializers.CharField(write_only=True, required=False)
+
     class Meta:
         model = ChemicalItem
         fields = ['chemical_name', 'make', 'quantity', 'unit', 'rate']
-        extra_kwargs = {
-            'unit': {'required': False},
-        }
 
     def validate_quantity(self, value):
         if value <= 0:

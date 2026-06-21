@@ -80,13 +80,6 @@ const UserProfile = () => {
     <div className="profile-container">
       <div className="profile-header">
         <h1>My Profile</h1>
-        <button
-          onClick={() => navigate('/change-password')}
-          className="btn-indigo"
-          style={{ padding: '10px 24px' }}
-        >
-          Change Password
-        </button>
       </div>
 
       {error && (
@@ -96,47 +89,45 @@ const UserProfile = () => {
         <div style={{ color: '#10b981', marginBottom: '20px', fontWeight: 'bold' }}>{success}</div>
       )}
 
-      {/* Account Information Card */}
-      <div className="profile-card">
-        <div className="profile-card-header">
-          <h2>Account Information</h2>
-        </div>
-        <div className="profile-card-body">
-          <div className="info-grid">
-            <div className="info-item">
-              <label>Employee ID:</label>
-              <span>{user?.employee_id || '-'}</span>
-            </div>
-            <div className="info-item">
-              <label>Role:</label>
-              <span
-                className="badge-profile"
-                style={getRoleStyles(user?.role)}
-              >
-                {getRoleDisplay(user?.role)}
-              </span>
-            </div>
-            <div className="info-item">
-              <label>Status:</label>
-              <span
-                className="badge-profile"
-                style={{ backgroundColor: '#f0fdf4', color: '#16a34a' }}
-              >
-                {user?.is_active ? 'Active' : 'Inactive'}
-              </span>
+      <div className="space-y-8">
+        {/* Account Information Card */}
+        <div className="profile-card">
+          <div className="profile-card-header px-5 py-4 md:px-6 md:py-5 border-b border-[var(--border)]">
+            <h2>Account Information</h2>
+          </div>
+          <div className="profile-card-body p-5 md:p-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-12">
+              <div className="info-item">
+                <label>Employee ID:</label>
+                <span>{user?.employee_id || '-'}</span>
+              </div>
+              <div className="info-item">
+                <label>Role:</label>
+                <span className="badge-profile bg-[#EAF2FB] text-[#1A3C6E]">
+                  {getRoleDisplay(user?.role)}
+                </span>
+              </div>
+              <div className="info-item">
+                <label>Status:</label>
+                <span
+                  className="badge-profile"
+                  style={{ backgroundColor: '#f0fdf4', color: '#16a34a' }}
+                >
+                  {user?.is_active ? 'Active' : 'Inactive'}
+                </span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Update Profile Card */}
-      <div className="profile-card">
-        <div className="profile-card-header">
-          <h2>Update Profile</h2>
-        </div>
-        <div className="profile-card-body">
+        {/* Update Profile Card */}
+        <div className="profile-card">
+          <div className="profile-card-header px-5 py-4 md:px-6 md:py-5 border-b border-[var(--border)]">
+            <h2>Update Profile</h2>
+          </div>
+          <div className="profile-card-body p-5 md:p-6">
           <form onSubmit={handleSubmit}>
-            <div className="form-grid">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
               <div className="form-group">
                 <label>Full Name</label>
                 <input
@@ -144,7 +135,7 @@ const UserProfile = () => {
                   name="full_name"
                   value={formData.full_name}
                   onChange={handleChange}
-                  className="input-profile"
+                  className="input-profile min-h-[44px]"
                   placeholder="Enter full name"
                 />
               </div>
@@ -155,40 +146,41 @@ const UserProfile = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className="input-profile"
+                  className="input-profile min-h-[44px]"
                   placeholder="Enter email"
                 />
               </div>
-              <div className="form-group" style={{ gridColumn: 'span 1' }}>
+              <div className="form-group">
                 <label>Phone</label>
                 <input
                   type="tel"
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  className="input-profile"
+                  className="input-profile min-h-[44px]"
                   placeholder="Enter phone number"
                 />
               </div>
             </div>
 
-            <div className="profile-actions">
+            <div className="profile-actions flex-col md:flex-row w-full gap-3">
               <button
                 type="submit"
                 disabled={loading}
-                className="btn-indigo"
+                className="btn-indigo w-full md:w-auto"
               >
                 {loading ? 'Updating...' : 'Update Profile'}
               </button>
               <button
                 type="button"
                 onClick={() => navigate('/')}
-                className="btn-hollow"
+                className="btn-hollow w-full md:w-auto"
               >
                 Cancel
               </button>
             </div>
           </form>
+          </div>
         </div>
       </div>
     </div>

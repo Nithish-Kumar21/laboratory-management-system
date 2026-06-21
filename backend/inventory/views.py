@@ -18,7 +18,7 @@ class AvailableChemicalViewSet(viewsets.ModelViewSet):
     """
     API endpoint for viewing and updating available chemicals.
     """
-    queryset = AvailableChemical.objects.filter(quantity__gte=0)
+    queryset = AvailableChemical.objects.filter(available_quantity_ml__gte=0)
     serializer_class = AvailableChemicalSerializer
     permission_classes = [InventoryPermission]
     http_method_names = ['get', 'patch', 'head', 'options']
@@ -29,8 +29,8 @@ class AvailableChemicalViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def names(self, request):
         """Get list of chemical names and available quantity"""
-        data = AvailableChemical.objects.values('chemical_name', 'quantity', 'unit').order_by('chemical_name')
-        result = [{'name': item['chemical_name'], 'available_quantity': float(item['quantity']), 'unit': item['unit']} for item in data]
+        data = AvailableChemical.objects.values('chemical_name', 'available_quantity_ml').order_by('chemical_name')
+        result = [{'name': item['chemical_name'], 'available_quantity': float(item['available_quantity_ml']), 'unit': 'ml'} for item in data]
         return Response(result)
 
 class AvailableApparatusViewSet(viewsets.ModelViewSet):

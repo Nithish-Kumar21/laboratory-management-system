@@ -1,13 +1,67 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import {
+  TbFlask, TbSettings, TbBrandLinkedin, TbBrandX,
+  TbBrandYoutube, TbBrandInstagram, TbWorld, TbMail
+} from 'react-icons/tb';
 import { useAuth } from '../context/AuthContext';
-import './Login.css';
+
+// TODO: Swap placeholder assets with real files at:
+//   src/assets/college-logo.png
+//   src/assets/college-building.jpg
+// Currently using public/gnc_logo.png and public/gnc_bg.jpg as fallbacks.
+
+const socialLinks = [
+  { icon: TbBrandLinkedin, label: 'LinkedIn' },
+  { icon: TbBrandX, label: 'Twitter / X' },
+  { icon: TbBrandYoutube, label: 'YouTube' },
+  { icon: TbBrandInstagram, label: 'Instagram' },
+  { icon: TbWorld, label: 'Website' },
+  { icon: TbWorld, label: 'Website' },
+];
+
+const mobileSocialIcons = [
+  { icon: TbBrandLinkedin, label: 'LinkedIn' },
+  { icon: TbBrandX, label: 'Twitter / X' },
+  { icon: TbBrandYoutube, label: 'YouTube' },
+  { icon: TbBrandInstagram, label: 'Instagram' },
+  { icon: TbWorld, label: 'Website' },
+  { icon: TbMail, label: 'Email' },
+];
+
+const FlaskWatermark = () => (
+  <svg viewBox="0 0 100 140" className="w-40 h-56" fill="none" stroke="white" strokeWidth="1.2" opacity="0.12">
+    <path d="M40 15 L40 55 L10 110 Q5 122 15 128 L85 128 Q95 122 90 110 L60 55 L60 15" />
+    <line x1="32" y1="8" x2="68" y2="8" />
+    <line x1="36" y1="15" x2="64" y2="15" />
+    <line x1="40" y1="22" x2="60" y2="22" />
+    <ellipse cx="50" cy="125" rx="40" ry="6" />
+    <circle cx="30" cy="95" r="4" />
+    <circle cx="50" cy="85" r="6" />
+    <circle cx="40" cy="100" r="3" />
+    <circle cx="60" cy="92" r="5" />
+    <circle cx="70" cy="100" r="3" />
+  </svg>
+);
+
+const SocialIconRow = ({ icons, size = 20, containerClass = '' }) => (
+  <div className={`flex items-center justify-center gap-3 md:gap-4 ${containerClass}`}>
+    {icons.map(({ icon: Icon, label }) => (
+      <button
+        key={label}
+        type="button"
+        aria-label={label}
+        className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-white flex items-center justify-center hover:bg-gray-100 transition-colors shadow-sm"
+      >
+        <Icon className="text-[#1A3C6E]" size={size} />
+      </button>
+    ))}
+  </div>
+);
 
 const Login = () => {
-  const [username, setUsername] = useState('');
+  const [employeeId, setEmployeeId] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -25,11 +79,8 @@ const Login = () => {
     e.preventDefault();
     setError('');
     setLoading(true);
-
     try {
-      const userData = await login(username, password);
-
-      // Check if password change is required
+      const userData = await login(employeeId, password);
       if (userData.password_must_change) {
         navigate('/change-password', { state: { forced: true } });
       } else {
@@ -37,92 +88,173 @@ const Login = () => {
         navigate(from, { replace: true });
       }
     } catch (err) {
-      setError(err.response?.data?.error || 'Login failed. Please try again.');
+      setError(err.response?.data?.error || 'Invalid Employee ID or password');
     } finally {
       setLoading(false);
     }
   };
 
+  const formContent = (
+    <form onSubmit={handleSubmit} className="w-full space-y-4">
+      {error && (
+        <div className="bg-red-500/20 border border-red-400/50 text-red-200 px-4 py-3 rounded-lg text-sm text-center">
+          {error}
+        </div>
+      )}
+      <input
+        type="text"
+        value={employeeId}
+        onChange={(e) => setEmployeeId(e.target.value)}
+        required
+        disabled={loading}
+        placeholder="Employee ID"
+        aria-label="Employee ID"
+        className="w-full h-11 bg-[#EDEFF2] rounded-lg px-4 text-sm text-gray-800 placeholder-gray-400 outline-none focus:ring-2 focus:ring-[#4A90D9] disabled:opacity-60 disabled:cursor-not-allowed"
+      />
+      <input
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        required
+        disabled={loading}
+        placeholder="Password"
+        aria-label="Password"
+        className="w-full h-11 bg-[#EDEFF2] rounded-lg px-4 text-sm text-gray-800 placeholder-gray-400 outline-none focus:ring-2 focus:ring-[#4A90D9] disabled:opacity-60 disabled:cursor-not-allowed"
+      />
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full h-11 bg-[#4A90D9] text-white font-bold text-sm rounded-lg hover:bg-[#3A7BC8] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+      >
+        {loading ? 'Logging in...' : 'Log In'}
+      </button>
+    </form>
+  );
+
   return (
-    <div className="login-page-wrapper">
-      {/* Green Header */}
-      <header className="login-header">
-        <div className="header-left">
-          <img src="/gnc_logo.png" alt="GNC Logo" className="header-logo" />
-          <div className="header-text">
-            <div className="college-name">Guru Nanak College (Autonomous)</div>
-            <div className="accreditation">Accredited at A++ Grade by NAAC</div>
-            <div className="header-location">Chennai - 600 042.</div>
+    <>
+      {/* ─── MOBILE LAYOUT (<768px) ─── */}
+      <div className="md:hidden min-h-screen bg-[#1A3C6E] flex flex-col">
+        <div className="flex justify-end p-4">
+          <TbSettings className="text-white/80" size={22} />
+        </div>
+
+        <div className="flex-1 flex flex-col items-center px-6 pb-0">
+          <div className="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center mb-4 overflow-hidden">
+            <img
+              src="/gnc_logo.png"
+              alt="College Logo"
+              className="w-16 h-16 rounded-full object-contain"
+              onError={(e) => { e.target.style.display = 'none'; }}
+            />
+          </div>
+
+          <h1 className="text-white text-xl font-bold text-center leading-tight">
+            GURU NANAK COLLEGE<br />
+            <span className="text-base font-medium opacity-80">(AUTONOMOUS)</span>
+          </h1>
+
+          <div className="mt-2 text-center text-xs text-[#C9D6E8] space-y-0.5 leading-relaxed">
+            <p>Accredited at &apos;A++&apos; Grade by NAAC,</p>
+            <p>Affiliated to University of Madras, Approved by AICTE</p>
+            <p>An ISO 9001:2015 Certified Institution</p>
+            <p>Guru Nanak Salai, Velachery, Chennai 600 042</p>
+          </div>
+
+          <div className="w-full max-w-sm mt-6">
+            {formContent}
+          </div>
+
+          <div className="mt-6 mb-4">
+            <SocialIconRow icons={mobileSocialIcons} size={16} />
           </div>
         </div>
-        <div className="header-center">
-          <h1 className="main-title">Laboratory Management System</h1>
-          <h2 className="dept-title">PG and Research Programme of Chemistry (GAS)</h2>
+
+        <div className="relative h-[35vh] min-h-[220px] w-full mt-auto">
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: 'url("/gnc_bg.jpg")' }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#1A3C6E] via-[#1A3C6E]/60 to-transparent" />
+          <div className="absolute bottom-4 inset-x-0 text-center px-4">
+            <p className="text-white/60 text-[11px]">
+              Copyright &copy; Guru Nanak College (AUTONOMOUS)
+            </p>
+          </div>
         </div>
-        <div className="header-right"></div>
-      </header>
+      </div>
 
-      {/* Main Content with Background */}
-      <main className="login-main-content">
-        <div className="login-container">
-          <div className="glass-card">
-            <h2 className="login-card-title">Login</h2>
+      {/* ─── DESKTOP LAYOUT (>=768px) ─── */}
+      <div className="hidden md:flex h-screen w-screen overflow-hidden">
+        {/* ── Left Column (30%) ── */}
+        <div className="w-[30%] bg-[#1A3C6E] relative flex flex-col justify-between px-8 py-10">
+          <div className="flex items-start gap-5">
+            <div className="w-[70px] h-[70px] bg-white rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
+              <TbFlask className="text-[#1A3C6E]" size={34} />
+            </div>
+            <div className="font-bold text-white uppercase text-lg leading-tight tracking-wide pt-1">
+              LABORATORY<br />MANAGEMENT<br />SYSTEM
+            </div>
+          </div>
 
-            {error && <div className="login-error-msg">{error}</div>}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <FlaskWatermark />
+          </div>
 
-            <form onSubmit={handleSubmit} className="login-form">
-              <div className="login-form-group">
-                <label className="login-label">Employee ID</label>
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required
-                  className="login-input"
-                  disabled={loading}
-                  autoFocus
-                  placeholder="Enter employee ID (e.g. admin)"
-                />
-              </div>
+          <div className="relative z-10">
+            <SocialIconRow icons={socialLinks} size={18} />
+          </div>
 
-              <div className="login-form-group">
-                <label className="login-label">Password</label>
-                <div className="login-password-wrapper">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="login-input"
-                    disabled={loading}
-                    placeholder="Enter password"
-                  />
-                  <button
-                    type="button"
-                    className="login-password-toggle"
-                    onClick={() => setShowPassword(!showPassword)}
-                    tabIndex={-1}
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  >
-                    {showPassword ? <FaEyeSlash /> : <FaEye />}
-                  </button>
-                </div>
-              </div>
+          <div className="absolute right-0 top-8 bottom-8 w-px bg-white/15" />
+        </div>
 
-              <button type="submit" className="login-submit-btn" disabled={loading}>
-                {loading ? 'Logging in...' : 'Login'}
-              </button>
-            </form>
+        {/* ── Right Column (70%) ── */}
+        <div className="w-[70%] relative h-screen overflow-hidden bg-[#1A3C6E]">
+          {/* Pink diagonal stripe (behind photo, shifted left so ~8px is visible) */}
+          <div
+            className="absolute inset-0 bg-[#F4C9D6] z-[1]"
+            style={{ clipPath: 'polygon(calc(78% - 8px) 0, 100% 0, 100% 100%, calc(42% - 8px) 100%)' }}
+          />
 
-            <div className="login-links-container">
-              <a href="/forgot-password" hidden className="login-link-item">
-                Forgot Password?
-              </a>
+          {/* Photo — clipped to the right side, diagonal from 78% top to 42% bottom */}
+          <div
+            className="absolute inset-0 bg-cover bg-center z-[2]"
+            style={{
+              backgroundImage: 'url("/gnc_bg.jpg")',
+              clipPath: 'polygon(78% 0, 100% 0, 100% 100%, 42% 100%)'
+            }}
+          />
+
+          {/* Content — constrained to the left portion of the navy area */}
+          <div className="relative z-[3] flex flex-col items-center pt-10 h-full overflow-y-auto w-[55%] ml-[8%] pr-12">
+            <div className="w-20 h-20 rounded-full bg-white/15 flex items-center justify-center overflow-hidden ring-2 ring-white/20">
+              <img
+                src="/gnc_logo.png"
+                alt="College Logo"
+                className="w-[72px] h-[72px] rounded-full object-contain"
+                onError={(e) => { e.target.style.display = 'none'; }}
+              />
+            </div>
+
+            <h1 className="text-white text-[22px] font-bold text-center leading-tight mt-4">
+              GURU NANAK COLLEGE<br />
+              <span className="text-lg font-medium opacity-75">(AUTONOMOUS)</span>
+            </h1>
+
+            <div className="mt-3 text-center text-sm text-[#C9D6E8] space-y-0.5 leading-relaxed">
+              <p>Accredited at &apos;A++&apos; Grade by NAAC,</p>
+              <p>Affiliated to University of Madras, Approved by AICTE</p>
+              <p>An ISO 9001:2015 Certified Institution</p>
+              <p>Guru Nanak Salai, Velachery, Chennai 600 042</p>
+            </div>
+
+            <div className="w-full max-w-sm mt-7">
+              {formContent}
             </div>
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </>
   );
 };
 

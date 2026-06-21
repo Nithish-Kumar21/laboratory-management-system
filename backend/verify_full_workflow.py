@@ -69,13 +69,12 @@ def run_verification():
     chem_name = 'Test Chemical HCL'
     chem, created = AvailableChemical.objects.get_or_create(
         chemical_name=chem_name,
-        defaults={'quantity': 1000.00, 'unit': 'ml'}
+        defaults={'available_quantity_ml': 1000.00}
     )
     # Reset quantity for consistent test
-    chem.quantity = 1000.00
-    chem.unit = 'ml'
+    chem.available_quantity_ml = 1000.00
     chem.save()
-    print(f"    Inventory: {chem.chemical_name} = {chem.quantity} {chem.unit}")
+    print(f"    Inventory: {chem.chemical_name} = {chem.available_quantity_ml} ml")
 
     # Clients
     client_staff = Client()
