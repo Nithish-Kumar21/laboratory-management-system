@@ -45,15 +45,18 @@ class StockRegisterViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def chemical_names(self, request):
-        """Get list of unique chemical names for autocomplete"""
-        names = ChemicalItem.objects.values_list('chemical_name', flat=True).distinct().order_by('chemical_name')
-        return Response(list(names))
+        """Get list of unique chemical names and available quantity for autocomplete"""
+        data = AvailableChemical.objects.values('chemical_name', 'quantity').order_by('chemical_name')
+        # Map to consistent keys
+        result = [{'name': item['chemical_name'], 'available_quantity': float(item['quantity']), 'unit': 'ml'} for item in data]
+        return Response(result)
     
     @action(detail=False, methods=['get'])
     def apparatus_names(self, request):
-        """Get list of unique apparatus names for autocomplete"""
-        names = ApparatusItem.objects.values_list('apparatus_name', flat=True).distinct().order_by('apparatus_name')
-        return Response(list(names))
+        """Get list of unique apparatus names and available quantity for autocomplete"""
+        data = AvailableApparatus.objects.values('apparatus_name', 'available_quantity_pieces').order_by('apparatus_name')
+        result = [{'name': item['apparatus_name'], 'available_quantity': item['available_quantity_pieces']} for item in data]
+        return Response(result)
     
     @action(detail=False, methods=['get'])
     def supplier_names(self, request):
@@ -84,6 +87,7 @@ class StockRegisterViewSet(viewsets.ModelViewSet):
             make=''
         ).values_list('make', flat=True).distinct().order_by('make')
         return Response(list(makes))
+
     @transaction.atomic
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -92,7 +96,7 @@ class StockRegisterViewSet(viewsets.ModelViewSet):
         for chem in instance.chemical_items.all():
             try:
                 available = AvailableChemical.objects.get(chemical_name=chem.chemical_name)
-                available.available_quantity_ml -= chem.quantity_ml
+                available.quantity -= chem.quantity
                 available.save()
             except AvailableChemical.DoesNotExist:
                 pass

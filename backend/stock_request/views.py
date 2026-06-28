@@ -1,6 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from django.db import transaction
 from django.utils import timezone
 from .models import StockRequest, StockRequestChemicalItem, IssueRegister, IssueChemicals
 from .serializers import (
@@ -107,8 +108,8 @@ class StockRequestViewSet(viewsets.ModelViewSet):
                     return qs.filter(issued_by=self.request.user).exclude(status='draft')
                 
                 if status_filter in ('accepted', None):
-                    # Default: All approved requests waiting to be issued
-                    return qs.filter(status='accepted')
+                    # Default: All approved requests waiting to be issued or completed
+                    return qs.filter(status__in=['accepted', 'reported'])
                 
                 # If they explicitly filter by history (issued/reported/completed), show only theirs
                 if status_filter in ('issued', 'reported', 'completed'):
@@ -123,6 +124,7 @@ class StockRequestViewSet(viewsets.ModelViewSet):
         return qs.filter(status=status_filter)
 
     @action(detail=True, methods=['post'])
+    @transaction.atomic
     def mark_as_issued(self, request, pk=None):
         if request.user.role not in ['store_keeper', 'admin']:
             return Response(
@@ -135,22 +137,29 @@ class StockRequestViewSet(viewsets.ModelViewSet):
                 {'error': f'Only approved requests can be marked as issued. Current status: {obj.status}'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+        for item in obj.chemical_items.all():
+            try:
+                chem = AvailableChemical.objects.select_for_update().get(
+                    chemical_name__iexact=item.chemical_name
+                )
+                if chem.quantity < item.quantity:
+                    return Response(
+                        {'error': f'Insufficient stock for {item.chemical_name}. Available: {chem.quantity}, Requested: {item.quantity}'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                chem.quantity -= item.quantity
+                chem.save()
+            except AvailableChemical.DoesNotExist:
+                return Response(
+                    {'error': f'Chemical {item.chemical_name} not found in inventory'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
         obj.status = 'issued'
         obj.issued_at = timezone.now()
         obj.issued_by = request.user
         obj.save()
-
-        # DECREASE INVENTORY
-        # For each chemical item, reduce the available quantity
-        for item in obj.chemical_items.all():
-            try:
-                available_stock = AvailableChemical.objects.get(chemical_name=item.chemical_name)
-                available_stock.available_quantity_ml -= item.quantity_ml
-                available_stock.save()
-            except AvailableChemical.DoesNotExist:
-                # If chemical not found in inventory, log warning or ignore 
-                # (Ideally, request creation should validate existence, but for now we proceed)
-                pass
 
         return Response(StockRequestDetailSerializer(obj).data)
 
@@ -170,7 +179,7 @@ class StockRequestViewSet(viewsets.ModelViewSet):
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        reported_items = {item['id']: item['actual_used_quantity_ml'] for item in serializer.validated_data['items']}
+        reported_items = {item['id']: item['actual_used_quantity'] for item in serializer.validated_data['items']}
         
         # Verify all items in the request are being reported
         request_items = {item.id for item in obj.chemical_items.all()}
@@ -180,7 +189,7 @@ class StockRequestViewSet(viewsets.ModelViewSet):
         # Update items with actual usage
         for item in obj.chemical_items.all():
             if item.id in reported_items:
-                item.actual_used_quantity_ml = reported_items[item.id]
+                item.actual_used_quantity = reported_items[item.id]
                 item.save()
         
         obj.status = 'reported'
@@ -212,33 +221,24 @@ class StockRequestViewSet(viewsets.ModelViewSet):
             status='completed'
         )
 
-        # 2. Process Items and Adjust Inventory
+        # 2. Process Items and Apply Delta to Inventory
         for item in obj.chemical_items.all():
-            if item.actual_used_quantity_ml is None:
-                actual = item.quantity_ml
-            else:
-                actual = item.actual_used_quantity_ml
-            
-            requested = item.quantity_ml
-            returned = max(0, requested - actual)
-            additional = max(0, actual - requested)
+            actual = item.actual_used_quantity if item.actual_used_quantity is not None else item.quantity
+            requested = item.quantity
 
             # Log item to legacy table 'issue_chemicals'
-            # Note: 'returned' and 'additional' are GENERATED ALWAYS columns in the DB.
-            IssueChemicals.objects.create(
+            ic = IssueChemicals.objects.create(
                 ir=issue_register,
                 chemical_name=item.chemical_name,
                 issued_quantity=requested,
                 actual_usage=actual
             )
 
-            # Adjust Inventory
+            # Apply delta: add returned, deduct additional
             try:
                 stock_item = AvailableChemical.objects.get(chemical_name=item.chemical_name)
-                if returned > 0:
-                    stock_item.available_quantity_ml += returned
-                if additional > 0:
-                    stock_item.available_quantity_ml -= additional
+                stock_item.quantity += ic.returned
+                stock_item.quantity -= ic.additional
                 stock_item.save()
             except AvailableChemical.DoesNotExist:
                 pass

@@ -13,9 +13,6 @@ const ALL_CLASS_OPTIONS = [
 ];
 
 function getClassOptionsByDepartment(department) {
-  if (!department) return ALL_CLASS_OPTIONS;
-  if (department.includes('B.Sc')) return ALL_CLASS_OPTIONS.filter(c => c.includes('B.Sc'));
-  if (department.includes('M.Sc')) return ALL_CLASS_OPTIONS.filter(c => c.includes('M.Sc'));
   return ALL_CLASS_OPTIONS;
 }
 
@@ -28,10 +25,11 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
     class_name: defaultClass,
     date: new Date().toISOString().split('T')[0]
   });
-  const [chemicalItems, setChemicalItems] = useState([{ chemical_name: '', quantity_ml: '' }]);
+  const [chemicalItems, setChemicalItems] = useState([{ chemical_name: '', quantity: '' }]);
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [availableChemicals, setAvailableChemicals] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState({});
 
   useEffect(() => {
     if (isOpen) {
@@ -47,7 +45,7 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
         if (editData.chemical_items && editData.chemical_items.length > 0) {
           setChemicalItems(editData.chemical_items.map(item => ({
             chemical_name: item.chemical_name,
-            quantity_ml: item.quantity_ml
+            quantity: item.quantity
           })));
         }
       } else {
@@ -57,7 +55,7 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
           class_name: opts.length ? opts[0] : 'I B.Sc Chemistry',
           date: new Date().toISOString().split('T')[0]
         });
-        setChemicalItems([{ chemical_name: '', quantity_ml: '' }]);
+        setChemicalItems([{ chemical_name: '', quantity: '' }]);
       }
 
       api
@@ -68,12 +66,12 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
         })
         .catch((err) => console.error('Error fetching chemicals:', err));
     }
-  }, [isOpen, editData]);
+  }, [isOpen, editData, user?.department]);
 
   if (!isOpen) return null;
 
   const addChemicalRow = () => {
-    setChemicalItems([...chemicalItems, { chemical_name: '', quantity_ml: '' }]);
+    setChemicalItems([...chemicalItems, { chemical_name: '', quantity: '' }]);
   };
 
   const removeChemicalRow = (i) => {
@@ -92,20 +90,20 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
     const newErrors = {};
     const today = new Date().toISOString().split('T')[0];
     if (formData.date < today) {
-      newErrors.date = 'Date cannot be in the past. Use today or a future date.';
+      newErrors.date = 'Date cannot be in the past.';
     }
     if (chemicalItems.length === 0) {
       newErrors.items = 'At least one chemical item must be added';
     }
     chemicalItems.forEach((item, i) => {
-      if (!item.chemical_name?.trim()) newErrors[`chemical_name_${i}`] = 'Chemical selection is required';
-      const q = parseFloat(item.quantity_ml);
-      if (!item.quantity_ml || isNaN(q) || q <= 0)
-        newErrors[`chemical_quantity_${i}`] = 'Quantity must be greater than 0';
+      if (!item.chemical_name?.trim()) newErrors[`chemical_name_${i}`] = 'Required';
+      const q = parseFloat(item.quantity);
+      if (!item.quantity || isNaN(q) || q <= 0)
+        newErrors[`chemical_quantity_${i}`] = 'Invalid';
 
       const selectedChem = availableChemicals.find(c => c.chemical_name === item.chemical_name);
-      if (selectedChem && q > parseFloat(selectedChem.available_quantity_ml)) {
-        newErrors[`chemical_quantity_${i}`] = `Max available: ${selectedChem.available_quantity_ml}ml`;
+      if (selectedChem && q > parseFloat(selectedChem.quantity)) {
+        newErrors[`chemical_quantity_${i}`] = `Requested quantity exceeds available stock (Available: ${selectedChem.quantity})`;
       }
     });
     setErrors(newErrors);
@@ -124,7 +122,7 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
       status: (directSubmit && !hasActiveRequest) ? 'pending' : 'draft',
       chemical_items: chemicalItems.map((item) => ({
         chemical_name: item.chemical_name.trim(),
-        quantity_ml: parseFloat(item.quantity_ml),
+        quantity: parseFloat(item.quantity),
       })),
     };
 
@@ -135,31 +133,27 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
         await api.post('stock_request/', payload);
       }
       onSuccess();
-      const opts = getClassOptionsByDepartment(user?.department);
-      setFormData({
-        reason: '',
-        class_name: opts.length ? opts[0] : 'I B.Sc Chemistry',
-        date: new Date().toISOString().split('T')[0]
-      });
-      setChemicalItems([{ chemical_name: '', quantity_ml: '' }]);
-      setErrors({});
       onClose();
     } catch (error) {
       const errData = error.response?.data;
-      let msg = directSubmit ? 'Failed to submit request. ' : 'Failed to save draft. ';
-      if (Array.isArray(errData?.non_field_errors)) {
-        msg += errData.non_field_errors[0];
-      } else if (errData?.reason) {
-        msg += Array.isArray(errData.reason) ? errData.reason[0] : errData.reason;
-      } else if (errData?.detail) {
-        msg += String(errData.detail);
-      } else if (typeof errData === 'object') {
-        const firstErr = Object.values(errData)[0];
-        msg += Array.isArray(firstErr) ? firstErr[0] : String(firstErr);
-      } else {
-        msg += error.message || 'Unknown error';
+      let errMsg = 'Transaction failed';
+      if (errData) {
+        if (typeof errData === 'string') {
+          errMsg = errData;
+        } else if (errData.detail) {
+          errMsg = errData.detail;
+        } else if (errData.error) {
+          errMsg = Array.isArray(errData.error) ? errData.error[0] : errData.error;
+        } else {
+          const firstKey = Object.keys(errData)[0];
+          if (firstKey && Array.isArray(errData[firstKey])) {
+            errMsg = errData[firstKey][0];
+          } else if (firstKey && typeof errData[firstKey] === 'string') {
+            errMsg = errData[firstKey];
+          }
+        }
       }
-      setErrors({ submit: msg });
+      setErrors({ submit: errMsg });
     } finally {
       setSubmitting(false);
     }
@@ -171,28 +165,28 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
         <div className="modal-header">
           <div className="header-title-box">
             <FaFlask className="header-icon" />
-            <h2>{editData ? 'Edit Chemical Request' : 'New Chemical Request'}</h2>
+            <h2>{editData ? 'Edit Request' : 'New Request'}</h2>
           </div>
           <button type="button" className="modal-close" onClick={onClose}>
             <FaTimes />
           </button>
         </div>
 
-        <form className="request-form">
+        <form className="request-form" onSubmit={(e) => e.preventDefault()}>
           <div className="modal-body">
             <div className="info-grid">
               <div className="info-item">
-                <label><FaIdCard /> Request ID</label>
-                <div className="readonly-field">{editData?.request_id || 'Auto-generated'}</div>
+                <label><FaIdCard /> ID</label>
+                <div className="readonly-field">{editData?.request_id || 'AUTO'}</div>
               </div>
               <div className="info-item">
-                <label><FaUser /> Staff Name</label>
-                <div className="readonly-field">{user?.full_name || 'Loading...'}</div>
+                <label><FaUser /> Staff</label>
+                <div className="readonly-field">{user?.full_name || '...'}</div>
               </div>
             </div>
 
             <div className="form-row">
-              <div className="form-group flex-2">
+              <div className="form-group">
                 <label><FaGraduationCap /> Class</label>
                 <select
                   value={formData.class_name}
@@ -204,95 +198,143 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
                   ))}
                 </select>
               </div>
-              <div className="form-group flex-1">
+              <div className="form-group">
                 <label><FaCalendarAlt /> Date</label>
                 <input
                   type="date"
-                  min={new Date().toISOString().split('T')[0]}
                   value={formData.date}
                   onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  className={`modern-input ${errors.date ? 'error' : ''}`}
+                  className={`modern-input ${errors.date ? 'input-error' : ''}`}
                 />
-                {errors.date && <span className="error-text">{errors.date}</span>}
+                {errors.date && <span className="field-error">{errors.date}</span>}
               </div>
             </div>
 
-            <div className="items-section-header">
-              <h3>Chemical Requirements</h3>
-              <button type="button" className="add-chem-btn" onClick={addChemicalRow}>
-                <FaPlus /> Add Line
-              </button>
-            </div>
+            <div className="items-section chemical-requirements-section">
+              <div className="items-section-header">
+                <h3><FaFlask /> Chemical Requirements</h3>
+                <button type="button" className="btn-add-line" onClick={addChemicalRow}>
+                  <FaPlus /> Add Line
+                </button>
+              </div>
 
-            <div className="chemical-items-container">
-              {chemicalItems.map((item, i) => (
-                <div key={i} className="chemical-request-row">
-                  <div className="chem-select-col">
-                    <select
-                      value={item.chemical_name}
-                      onChange={(e) => updateChemicalItem(i, 'chemical_name', e.target.value)}
-                      className={errors[`chemical_name_${i}`] ? 'error' : ''}
-                    >
-                      <option value="">Select Chemical</option>
-                      {availableChemicals.map((chem) => (
-                        <option key={chem.id} value={chem.chemical_name}>
-                          {chem.chemical_name} • {chem.available_quantity_ml}ml available
-                        </option>
-                      ))}
-                    </select>
-                    {errors[`chemical_name_${i}`] && (
-                      <span className="error-text">{errors[`chemical_name_${i}`]}</span>
-                    )}
-                  </div>
-                  <div className="chem-qty-col">
-                    <div className="qty-input-wrapper">
+              <div className="chemical-requirements-table">
+                <div className="grid-matrix-header">
+                  <span>Chemical</span>
+                  <span>QTY</span>
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+
+                {chemicalItems.map((item, i) => (
+                  <div key={i} className="grid-row chemical-row animate-fade">
+                    <div className="autocomplete-wrapper">
+                      <input
+                        type="text"
+                        className={`grid-input ${errors[`chemical_name_${i}`] ? 'input-error' : ''}`}
+                        placeholder="Select chemicals"
+                        value={item.chemical_name}
+                        onChange={(e) => {
+                          updateChemicalItem(i, 'chemical_name', e.target.value);
+                          if (e.target.value.trim()) {
+                            setShowSuggestions({ [i]: true });
+                          }
+                        }}
+                        onFocus={() => {
+                          if (item.chemical_name && item.chemical_name.trim()) {
+                            setShowSuggestions({ [i]: true });
+                          }
+                        }}
+                        onBlur={() => setTimeout(() => setShowSuggestions({}), 200)}
+                      />
+                      {errors[`chemical_name_${i}`] && <span className="field-error">Required</span>}
+                      {showSuggestions[i] && item.chemical_name && (
+                        <ul className="suggestions-dropdown list-style-none">
+                          {availableChemicals
+                            .filter(c =>
+                              (c.chemical_name || '').toLowerCase().startsWith((item.chemical_name || '').toLowerCase())
+                            )
+                            .map((c, idx) => (
+                              <li
+                                key={idx}
+                                className="suggestion-item"
+                                onMouseDown={() => {
+                                  updateChemicalItem(i, 'chemical_name', c.chemical_name);
+                                  setShowSuggestions({});
+                                }}
+                              >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                                  <span>{c.chemical_name}</span>
+                                  <span style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 'bold' }}>
+                                    Stock: {c.quantity} {c.unit || 'ml'}
+                                  </span>
+                                </div>
+                              </li>
+                            ))}
+                        </ul>
+                      )}
+                    </div>
+
+                    <div className="qty-ml-wrapper">
                       <input
                         type="number"
-                        step="0.01"
-                        placeholder="0.00"
-                        value={item.quantity_ml}
-                        onChange={(e) => updateChemicalItem(i, 'quantity_ml', e.target.value)}
-                        className={errors[`chemical_quantity_${i}`] ? 'error' : ''}
+                        step="1"
+                        min="0"
+                        className={`grid-input grid-input-qty ${errors[`chemical_quantity_${i}`] ? 'input-error' : ''}`}
+                        placeholder="0"
+                        value={item.quantity === '' || item.quantity == null ? '' : item.quantity}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          updateChemicalItem(i, 'quantity', v === '' ? '' : v);
+                        }}
                       />
-                      <span className="unit-tag">ML</span>
+                      {item.chemical_name && (
+                        <span className="unit-label">
+                          {(() => {
+                            const c = availableChemicals.find(c => c.chemical_name === item.chemical_name);
+                            return c?.unit || 'ml';
+                          })()}
+                        </span>
+                      )}
+                      {errors[`chemical_quantity_${i}`] && <span className="field-error">{errors[`chemical_quantity_${i}`]}</span>}
                     </div>
-                    {errors[`chemical_quantity_${i}`] && (
-                      <span className="error-text">{errors[`chemical_quantity_${i}`]}</span>
-                    )}
+
+                    <button
+                      type="button"
+                      className="btn-row-del"
+                      onClick={() => removeChemicalRow(i)}
+                      disabled={chemicalItems.length === 1}
+                      title="Remove line"
+                    >
+                      <FaTrash />
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    className="remove-chem-btn"
-                    onClick={() => removeChemicalRow(i)}
-                    disabled={chemicalItems.length === 1}
-                  >
-                    <FaTrash />
-                  </button>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
 
-            <div className="form-group margin-top-lg">
-              <label>Purpose / Remarks (optional)</label>
+            <div className="form-group" style={{ marginTop: '30px' }}>
+              <label>Purpose / Remarks (Optional)</label>
               <textarea
                 value={formData.reason}
                 onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-                placeholder="Briefly describe what these chemicals will be used for..."
+                placeholder="Details..."
                 rows={3}
                 className="modern-textarea"
               />
             </div>
 
             {hasActiveRequest && !editData && (
-              <div className="info-banner warning-banner margin-top-md">
-                <FaExclamationTriangle /> You have an active pending request. This will be saved as a draft and can be submitted after your current request is reviewed.
+              <div className="info-banner warning-banner">
+                <FaExclamationTriangle /> Active request pending. This will be saved as draft.
               </div>
             )}
             {errors.submit && <div className="error-banner">{errors.submit}</div>}
           </div>
 
           <div className="modal-footer">
-            <button type="button" className="btn-secondary" onClick={onClose} disabled={submitting}>
+            <button type="button" className="btn-secondary" onClick={onClose}>
               Cancel
             </button>
             <div className="footer-actions">
@@ -301,22 +343,17 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
                   type="button"
                   className="btn-draft"
                   onClick={(e) => handleAction(e, false)}
-                  disabled={submitting}
                 >
-                  Save as Draft
+                  Draft
                 </button>
               )}
               <button
                 type="submit"
-                className={`btn-primary-action ${(hasActiveRequest && !editData) ? 'disabled' : ''}`}
-                disabled={submitting || (hasActiveRequest && !editData)}
+                className="btn-primary-action"
                 onClick={(e) => handleAction(e, true)}
+                disabled={submitting}
               >
-                {submitting
-                  ? 'Processing...'
-                  : editData
-                    ? 'Update Request'
-                    : 'Submit for Approval'}
+                {submitting ? '...' : editData ? 'Update' : 'Submit'}
               </button>
             </div>
           </div>

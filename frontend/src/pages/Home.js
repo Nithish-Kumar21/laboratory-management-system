@@ -6,7 +6,11 @@ import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import AddRequestModal from '../components/modals/AddRequestModal';
 import './Home.css';
+import { getStatus } from '../utils/inventory';
 import './VintageClock.css';
+import '../components/modals/AddDamagedEntryModal.css';
+import '../pages/StockRequestDetail.css';
+import '../components/modals/AddRequestModal.css';
 
 function Home() {
   const { isStaff, isHOD, isAdmin } = useAuth();
@@ -26,6 +30,8 @@ function Home() {
   const [pendingRequests, setPendingRequests] = useState([]);
   const [requestsLoading, setRequestsLoading] = useState(false);
   const [hasPendingRequest, setHasPendingRequest] = useState(false);
+  const [rejectState, setRejectState] = useState({ show: false, id: null, reason: '' });
+  const [actionError, setActionError] = useState('');
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -64,19 +70,28 @@ function Home() {
     if (isStaff || isAdmin) return;
     try {
       const [chemRes, appRes] = await Promise.all([
-        api.get('/low_stock_chemicals/').catch(() => ({ data: [] })),
-        api.get('/low_stock_apparatus/').catch(() => ({ data: [] })),
+        api.get('/available_chemicals/').catch(() => ({ data: [] })),
+        api.get('/available_apparatus/').catch(() => ({ data: [] })),
       ]);
 
       const chemData = Array.isArray(chemRes.data) ? chemRes.data : chemRes.data.results || [];
       const appData = Array.isArray(appRes.data) ? appRes.data : appRes.data.results || [];
 
-      const combined = [
-        ...chemData.map(item => ({ ...item, type: 'Chemical', icon: FaFlask })),
-        ...appData.map(item => ({ ...item, type: 'Apparatus', icon: FaBoxes }))
-      ].slice(0, 5);
+      const lowChem = chemData.filter(c => {
+        const qty = parseFloat(c.quantity);
+        const reorder = parseFloat(c.reorder_level || 0);
+        const status = getStatus(qty, reorder);
+        return status === 'critical' || status === 'low-stock';
+      }).map(item => ({ ...item, type: 'Chemical', icon: FaFlask, quantity: item.quantity }));
 
-      setLowStockItems(combined);
+      const lowApp = appData.filter(a => {
+        const qty = parseFloat(a.available_quantity_pieces);
+        const reorder = parseFloat(a.reorder_level || 0);
+        const status = getStatus(qty, reorder);
+        return status === 'critical' || status === 'low-stock';
+      }).map(item => ({ ...item, type: 'Apparatus', icon: FaBoxes, quantity_pieces: item.available_quantity_pieces }));
+
+      setLowStockItems([...lowChem, ...lowApp].slice(0, 5));
     } catch (err) {
       console.error('Error fetching low stock:', err);
     }
@@ -92,8 +107,8 @@ function Home() {
         if (isHOD) {
           setPendingRequests(data);
         } else if (isStaff) {
-          const pending = data.some(r => r.status === 'pending');
-          setHasPendingRequest(pending);
+          const hasActive = data.some(r => !['draft', 'completed', 'rejected'].includes(r.status));
+          setHasPendingRequest(hasActive);
         }
       })
       .catch((err) => console.error('Error fetching requests:', err))
@@ -115,23 +130,33 @@ function Home() {
   }, [isHOD, isStaff, isAdmin]);
 
   const handleAccept = (id) => {
+    setActionError('');
     api
       .post(`/stock_request/${id}/accept/`)
       .then(() => {
         fetchRequests();
         window.dispatchEvent(new CustomEvent('inventory-updated'));
       })
-      .catch((err) => console.error('Error accepting:', err));
+      .catch((err) => setActionError(err.response?.data?.error || 'Failed to accept'));
   };
 
-  const handleReject = (id) => {
+  const handleRejectWithReason = () => {
+    const reason = rejectState.reason.trim();
+    if (!reason) return;
+    setActionError('');
     api
-      .post(`/stock_request/${id}/reject/`)
+      .post(`/stock_request/${rejectState.id}/reject/`, { rejection_reason: reason })
       .then(() => {
+        setRejectState({ show: false, id: null, reason: '' });
         fetchRequests();
         window.dispatchEvent(new CustomEvent('inventory-updated'));
       })
-      .catch((err) => console.error('Error rejecting:', err));
+      .catch((err) => setActionError(err.response?.data?.error || 'Failed to reject'));
+  };
+
+  const openRejectDialog = (id) => {
+    setActionError('');
+    setRejectState({ show: true, id, reason: '' });
   };
 
   const handleRequestSuccess = () => {
@@ -241,8 +266,8 @@ function Home() {
                     <span className="stock-item-type">{item.type}</span>
                   </div>
                   <div className="stock-item-quantity">
-                    <span className="quantity-value">{item.quantity_ml || item.quantity_pieces}</span>
-                    <span className="quantity-unit">{item.quantity_ml ? 'ML' : 'PCS'}</span>
+                    <span className="quantity-value">{item.quantity || item.quantity_pieces}</span>
+                    <span className="quantity-unit">{item.quantity ? (item.unit || 'ml').toUpperCase() : 'PCS'}</span>
                   </div>
                 </div>
               ))}
@@ -292,6 +317,7 @@ function Home() {
               <h3>📋 Pending Chemical Approvals</h3>
               <Link to="/requests?status=pending" className="view-all-link">Manage All</Link>
             </div>
+            {actionError && <div className="error-banner">{actionError}</div>}
             {requestsLoading ? (
               <p>Loading...</p>
             ) : pendingRequests.length === 0 ? (
@@ -312,7 +338,7 @@ function Home() {
                       </div>
                       <div className="request-mini-actions">
                         <button className="btn-icon accept" title="Accept" onClick={(e) => { e.stopPropagation(); handleAccept(req.id); }}><FaCheck /></button>
-                        <button className="btn-icon reject" title="Reject" onClick={(e) => { e.stopPropagation(); handleReject(req.id); }}><FaTimes /></button>
+                        <button className="btn-icon reject" title="Reject" onClick={(e) => { e.stopPropagation(); openRejectDialog(req.id); }}><FaTimes /></button>
                       </div>
                     </div>
                     <div className="request-summary">
@@ -323,6 +349,42 @@ function Home() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Reject Reason Modal */}
+        {rejectState.show && (
+          <div className="modal-overlay" onClick={() => setRejectState({ ...rejectState, show: false })}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h3>Reason for Rejection</h3>
+                <button type="button" className="modal-close" onClick={() => setRejectState({ ...rejectState, show: false })} aria-label="Close">×</button>
+              </div>
+              <div className="modal-body">
+                <p className="section-helper-text">Please provide a reason before rejecting this request.</p>
+                <textarea
+                  value={rejectState.reason}
+                  onChange={(e) => setRejectState({ ...rejectState, reason: e.target.value })}
+                  placeholder="Enter reason for rejection..."
+                  rows={4}
+                  className="modern-textarea"
+                  style={{ width: '100%', marginTop: '8px' }}
+                />
+              </div>
+              <div className="modal-footer" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                <button type="button" className="btn-secondary" onClick={() => setRejectState({ show: false, id: null, reason: '' })}>
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn-reject"
+                  onClick={handleRejectWithReason}
+                  disabled={!rejectState.reason.trim()}
+                >
+                  Reject Request
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

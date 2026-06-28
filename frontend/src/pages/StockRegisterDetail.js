@@ -1,10 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { FaArrowLeft, FaTrash, FaFlask, FaBoxes, FaExclamationTriangle } from 'react-icons/fa';
+import { FaArrowLeft, FaFlask, FaBoxes, FaPrint } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import ConfirmDialog from '../components/ConfirmDialog';
 import './StockRegisterDetail.css';
+
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+}
 
 function StockRegisterDetail() {
   const { id } = useParams();
@@ -35,104 +41,105 @@ function StockRegisterDetail() {
     setDialog({ open: true, message: 'Delete this entry? Inventory will be reverted.', showCancel: true, onConfirm: runDelete });
   };
 
-  if (loading) return <div className="loading-spinner"></div>;
+  if (loading) return <div className="loading-spinner" />;
   if (error) return <div className="error-message">{error}</div>;
   if (!stockRegister) return null;
 
+  const chemItems = stockRegister.chemical_items || [];
+  const appItems = stockRegister.apparatus_items || [];
+
   return (
-    <div className="stock-detail-page animate-up">
-      <div className="detail-header">
-        <button className="back-button" onClick={() => navigate('/stock-register')}>
-          <FaArrowLeft />
-        </button>
-        <div className="header-title-box">
-          <h2>Stock Entry Details</h2>
-          <p>REF: {stockRegister.invoice_number}</p>
+    <div className="staff-detail-wrapper">
+      <div className="staff-detail-page animate-up">
+        <div className="staff-detail-inner">
+
+          <div className="sd-back-row" onClick={() => navigate('/stock-register')}>
+            <FaArrowLeft />
+            <span>Stock Entry Details</span>
+          </div>
+
+          <div className="sd-card">
+            <div className="sd-card-header">
+              <span className="sd-req-id">REF: {stockRegister.invoice_number}</span>
+              <div className="sd-header-right">
+                <button className="sd-action-icon-btn" onClick={() => window.print()} title="Print">
+                  <FaPrint />
+                </button>
+              </div>
+            </div>
+            <hr className="sd-divider" />
+            <div className="sd-meta-grid">
+              <div className="sd-meta-item">
+                <div className="sd-meta-label">Invoice Number</div>
+                <div className="sd-meta-value">{stockRegister.invoice_number}</div>
+              </div>
+              <div className="sd-meta-item">
+                <div className="sd-meta-label">Date of Entry</div>
+                <div className="sd-meta-value">{formatDate(stockRegister.date)}</div>
+              </div>
+              <div className="sd-meta-item">
+                <div className="sd-meta-label">Supplier Name</div>
+                <div className="sd-meta-value">{stockRegister.supplier_name}</div>
+              </div>
+            </div>
+          </div>
+
+          {chemItems.length > 0 && (
+            <div className="sd-card">
+              <div className="sd-card-title">
+                <FaFlask /> Chemical Acquisitions
+              </div>
+              <hr className="sd-divider" />
+              <div className="sd-chem-list">
+                {chemItems.map(item => (
+                  <div key={item.id} className="sd-chem-row multi-col">
+                    <span className="sd-chem-name">{item.chemical_name}</span>
+                    <span className="sd-chem-qty">{item.quantity}<span className="sd-chem-unit"> {item.unit || 'ml'}</span></span>
+                    <span className="sd-chem-rate">₹{parseFloat(item.rate).toFixed(2)}</span>
+                    <span className="sd-chem-make">{item.make || '-'}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {appItems.length > 0 && (
+            <div className="sd-card">
+              <div className="sd-card-title">
+                <FaBoxes /> Apparatus Acquisitions
+              </div>
+              <hr className="sd-divider" />
+              <div className="sd-chem-list">
+                {appItems.map(item => (
+                  <div key={item.id} className="sd-chem-row multi-col">
+                    <span className="sd-chem-name">{item.apparatus_name}</span>
+                    <span className="sd-chem-qty">{item.quantity_pieces}<span className="sd-chem-unit"> pcs</span></span>
+                    <span className="sd-chem-rate">₹{parseFloat(item.rate).toFixed(2)}</span>
+                    <span className="sd-chem-make">{item.make || '-'}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {stockRegister.remarks && (
+            <div className="sd-card">
+              <div className="sd-card-title">Remarks / Description</div>
+              <hr className="sd-divider" />
+              <p className="sd-remarks-text">{stockRegister.remarks}</p>
+            </div>
+          )}
+
+          {isStoreKeeper && (
+            <div className="sd-actions">
+              <button className="sd-btn sd-btn-danger" onClick={handleDelete} disabled={deleting}>
+                {deleting ? 'Removing...' : 'Permanently Delete Entry'}
+              </button>
+            </div>
+          )}
+
         </div>
       </div>
-
-      <div className="detail-info-grid">
-        <div className="info-card card">
-          <label>Invoice Number</label>
-          <span>{stockRegister.invoice_number}</span>
-        </div>
-        <div className="info-card card">
-          <label>Date of Entry</label>
-          <span>{stockRegister.date}</span>
-        </div>
-        <div className="info-card card">
-          <label>Supplier / Vendor</label>
-          <span>{stockRegister.supplier_name || 'Generic Vendor'}</span>
-        </div>
-      </div>
-
-      {stockRegister.chemical_items?.length > 0 && (
-        <div className="items-section animate-fade">
-          <h3><FaFlask /> Chemical Acquisitions</h3>
-          <div className="card no-padding">
-            <table className="detail-table">
-              <thead>
-                <tr>
-                  <th>Chemical Name</th>
-                  <th>Quantity</th>
-                  <th>Rate</th>
-                  <th>Make</th>
-                </tr>
-              </thead>
-              <tbody>
-                {stockRegister.chemical_items.map(it => (
-                  <tr key={it.id}>
-                    <td className="item-name">{it.chemical_name}</td>
-                    <td><span className="qty-badge">{it.quantity_ml} ml</span></td>
-                    <td>₹{it.rate}</td>
-                    <td>{it.make}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {stockRegister.apparatus_items?.length > 0 && (
-        <div className="items-section animate-fade" style={{ animationDelay: '0.1s' }}>
-          <h3><FaBoxes /> Apparatus Acquisitions</h3>
-          <div className="card no-padding">
-            <table className="detail-table">
-              <thead>
-                <tr>
-                  <th>Apparatus Name</th>
-                  <th>Quantity</th>
-                  <th>Rate</th>
-                  <th>Make</th>
-                </tr>
-              </thead>
-              <tbody>
-                {stockRegister.apparatus_items.map(it => (
-                  <tr key={it.id}>
-                    <td className="item-name">{it.apparatus_name}</td>
-                    <td><span className="qty-badge">{it.quantity_pieces} pcs</span></td>
-                    <td>₹{it.rate}</td>
-                    <td>{it.make}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {isStoreKeeper && (
-        <div className="delete-action-box">
-          <div className="delete-text">
-            <h4><FaExclamationTriangle /> Danger Zone</h4>
-            <p>Deleting this record will irreversibly undo inventory adjustments.</p>
-          </div>
-          <button className="btn-delete-danger" onClick={handleDelete} disabled={deleting}>
-            <FaTrash /> {deleting ? 'Removing...' : 'Permanently Delete Entry'}
-          </button>
-        </div>
-      )}
 
       <ConfirmDialog
         open={dialog.open}

@@ -1,11 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaSearch, FaFileInvoice, FaCalendarAlt, FaChevronRight, FaClipboardList, FaUser, FaGraduationCap, FaFilter, FaSort } from 'react-icons/fa';
+import { FaSearch, FaArrowUp, FaFilter, FaSortUp, FaSortDown } from 'react-icons/fa';
 import api from '../utils/api';
-import './StockRegister.css'; // Reuse the grid and card styles
-import './IssueRegister.css'; // Issue-specific styles (request badge etc.)
+import './IssueRegister.css';
+
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
 
 function IssueRegister() {
+  const navigate = useNavigate();
   const [issueRegisters, setIssueRegisters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -16,25 +22,19 @@ function IssueRegister() {
     dateFrom: '',
     dateTo: '',
     staffName: '',
-    classField: '',
-    status: '',
     chemicalName: ''
   });
-  const navigate = useNavigate();
 
   const fetchRegisters = async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      
-      // Add sorting
       const orderPrefix = sortOrder === 'desc' ? '-' : '';
       params.append('ordering', `${orderPrefix}${sortBy}`);
-      
       const res = await api.get(`/issue_register/?${params.toString()}`);
       setIssueRegisters(Array.isArray(res.data) ? res.data : res.data.results || []);
     } catch (err) {
-      console.error('Error fetching issue register:', err);
+      console.error('Error fetching issue registers:', err);
     } finally {
       setLoading(false);
     }
@@ -42,6 +42,8 @@ function IssueRegister() {
 
   useEffect(() => {
     fetchRegisters();
+    window.addEventListener('inventory-updated', fetchRegisters);
+    return () => window.removeEventListener('inventory-updated', fetchRegisters);
   }, [sortBy, sortOrder]);
 
   const handleFilterChange = (key, value) => {
@@ -49,237 +51,189 @@ function IssueRegister() {
   };
 
   const clearFilters = () => {
-    setFilters({
-      dateFrom: '',
-      dateTo: '',
-      staffName: '',
-      classField: '',
-      status: '',
-      chemicalName: ''
-    });
+    setFilters({ dateFrom: '', dateTo: '', staffName: '', chemicalName: '' });
   };
 
   const applyFilters = (registers) => {
     return registers.filter(register => {
-      // Date range filter
       if (filters.dateFrom && register.date < filters.dateFrom) return false;
       if (filters.dateTo && register.date > filters.dateTo) return false;
-      
-      // Staff name filter
-      if (filters.staffName && !register.staff_name?.toLowerCase().includes(filters.staffName.toLowerCase())) {
-        return false;
-      }
-      
-      // Class filter
-      if (filters.classField && !register.class_field?.toLowerCase().includes(filters.classField.toLowerCase())) {
-        return false;
-      }
-      
-      // Status filter
-      if (filters.status && !register.status?.toLowerCase().includes(filters.status.toLowerCase())) {
-        return false;
-      }
-      
-      // Chemical name filter (check nested chemicals)
+      if (filters.staffName && !register.staff_name?.toLowerCase().includes(filters.staffName.toLowerCase())) return false;
       if (filters.chemicalName) {
-        const hasChemical = register.chemicals?.some(chemical => 
-          chemical.chemical_name.toLowerCase().includes(filters.chemicalName.toLowerCase())
+        const has = register.chemicals?.some(c =>
+          c.chemical_name.toLowerCase().includes(filters.chemicalName.toLowerCase())
         );
-        if (!hasChemical) return false;
+        if (!has) return false;
       }
-      
       return true;
     });
   };
 
+  const formatted = (reg) => {
+    const ref = `ISS-${String(reg.ir_id).padStart(3, '0')}`;
+    const items = reg.chemicals?.length || 0;
+    return { ref, items };
+  };
+
   const filtered = applyFilters(issueRegisters).filter(r =>
-    r.staff_name?.toLowerCase().includes(search.toLowerCase()) ||
-    r.class_field?.toLowerCase().includes(search.toLowerCase()) ||
-    String(r.ir_id || '').includes(search) ||
-    (r.request_code || '').toLowerCase().includes(search.toLowerCase())
+    String(r.ir_id).includes(search) ||
+    r.staff_name?.toLowerCase().includes(search.toLowerCase())
   );
 
+  const handleCardClick = (id) => {
+    navigate(`/issue-register/${id}`);
+  };
+
   return (
-    <div className="stock-register-page dept-issue animate-up">
-      <div className="page-header">
-        <div className="dept-title-container">
-          <div className="dept-icon-box" style={{ color: 'var(--dept-issue)' }}>
-            <FaClipboardList />
-          </div>
-          <div>
-            <h1 className="page-title">Issue Register</h1>
-            <p className="page-subtitle">Historical log of all chemical issues and actual usage.</p>
-          </div>
-        </div>
+    <div className="ir-page animate-up">
+      {/* Title Row */}
+      <div className="ir-title-row">
+        <h1 className="ir-title">Issue Register</h1>
       </div>
 
-      <div className="search-bar-container card">
-        <FaSearch className="search-icon" />
-        <input
-          type="text"
-          placeholder="Search by ID, Staff, or Class..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="search-input"
-        />
-        <div className="search-controls">
-          <button 
-            className="btn-filter"
+      {/* Search + Filter Row */}
+      <div className="ir-search-row">
+        <div className="ir-search-left">
+          <FaSearch className="ir-search-icon" />
+          <input
+            type="text"
+            className="ir-search-input"
+            placeholder="Search issue entries..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <div className="ir-search-divider" />
+        <div className="ir-search-right">
+          <button
+            className={`ir-filter-btn ${showFilters ? 'active' : ''}`}
             onClick={() => setShowFilters(!showFilters)}
-            title="Toggle Filters"
           >
             <FaFilter /> Filters
           </button>
-          <div className="sort-controls">
-            <label>Sort by:</label>
-            <select 
-              value={sortBy} 
+          <div className="ir-search-divider" />
+          <div className="ir-sort-group">
+            <span className="ir-sort-label">Sort by:</span>
+            <select
+              className="ir-sort-select"
+              value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="sort-select"
             >
               <option value="date">Date</option>
               <option value="ir_id">Issue ID</option>
-              <option value="staff_name">Staff Name</option>
             </select>
-            <button 
-              className="btn-sort-order"
+            <button
+              className="ir-sort-order-btn"
               onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-              title={`Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`}
             >
-              <FaSort />
+              {sortOrder === 'asc' ? <FaSortUp /> : <FaSortDown />}
             </button>
           </div>
         </div>
       </div>
 
+      {/* Filters Panel */}
       {showFilters && (
-        <div className="filters-panel card animate-fade">
-          <h3><FaFilter /> Filters</h3>
-          <div className="filters-grid">
-            <div className="filter-group">
+        <div className="ir-filters-panel animate-fade">
+          <div className="ir-filters-grid">
+            <div className="ir-filter-group">
               <label>Date From:</label>
-              <input
-                type="date"
-                value={filters.dateFrom}
-                onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
-                className="filter-input"
-              />
+              <input type="date" value={filters.dateFrom} onChange={(e) => handleFilterChange('dateFrom', e.target.value)} />
             </div>
-            <div className="filter-group">
+            <div className="ir-filter-group">
               <label>Date To:</label>
-              <input
-                type="date"
-                value={filters.dateTo}
-                onChange={(e) => handleFilterChange('dateTo', e.target.value)}
-                className="filter-input"
-              />
+              <input type="date" value={filters.dateTo} onChange={(e) => handleFilterChange('dateTo', e.target.value)} />
             </div>
-            <div className="filter-group">
+            <div className="ir-filter-group">
               <label>Staff Name:</label>
-              <input
-                type="text"
-                placeholder="Staff name..."
-                value={filters.staffName}
-                onChange={(e) => handleFilterChange('staffName', e.target.value)}
-                className="filter-input"
-              />
+              <input type="text" placeholder="Staff name..." value={filters.staffName} onChange={(e) => handleFilterChange('staffName', e.target.value)} />
             </div>
-            <div className="filter-group">
-              <label>Class:</label>
-              <input
-                type="text"
-                placeholder="Class name..."
-                value={filters.classField}
-                onChange={(e) => handleFilterChange('classField', e.target.value)}
-                className="filter-input"
-              />
-            </div>
-            <div className="filter-group">
-              <label>Status:</label>
-              <input
-                type="text"
-                placeholder="Status..."
-                value={filters.status}
-                onChange={(e) => handleFilterChange('status', e.target.value)}
-                className="filter-input"
-              />
-            </div>
-            <div className="filter-group">
+            <div className="ir-filter-group">
               <label>Chemical Name:</label>
-              <input
-                type="text"
-                placeholder="Chemical name..."
-                value={filters.chemicalName}
-                onChange={(e) => handleFilterChange('chemicalName', e.target.value)}
-                className="filter-input"
-              />
+              <input type="text" placeholder="Chemical name..." value={filters.chemicalName} onChange={(e) => handleFilterChange('chemicalName', e.target.value)} />
             </div>
           </div>
-          <div className="filter-actions">
-            <button className="btn-secondary" onClick={clearFilters}>
-              Clear Filters
-            </button>
+          <div className="ir-filter-actions">
+            <button className="ir-filter-clear" onClick={clearFilters}>Clear Filters</button>
           </div>
         </div>
       )}
 
-      <div className="stock-list-grid">
-        {loading ? (
-          <div className="loading-spinner"></div>
-        ) : filtered.length > 0 ? (
-          filtered.map((register) => (
-            <div
-              key={register.ir_id}
-              className="stock-card card animate-fade"
-              onClick={() => navigate(`/issue-register/${register.ir_id}`)}
-              style={{ cursor: 'pointer' }}
-            >
-              <div className="stock-card-icon">
-                <FaFileInvoice />
-              </div>
-              <div className="stock-card-content">
-                <div className="stock-card-main-info">
-                  <h3>
-                    IR-#{register.ir_id}
-                    {register.request_code && (
-                      <span
-                        className="ir-request-badge"
-                        title={`Originated from Request ${register.request_code}`}
-                      >
-                        {register.request_code}
-                      </span>
-                    )}
-                  </h3>
-                  <p className="supplier"><FaUser /> {register.staff_name}</p>
-                  <p className="class-info" style={{ fontSize: '0.85rem', color: '#666' }}>
-                    <FaGraduationCap /> {register.class_field}
-                  </p>
-                </div>
-                <div className="stock-card-details">
-                  <span className="date">
-                    <FaCalendarAlt /> {register.date}
-                  </span>
-                  <span className="items-count">
-                    {register.chemicals?.length || 0} Chemicals
-                  </span>
-                </div>
-              </div>
-              <div className="stock-card-actions">
-                <button
-                  className="btn-view"
-                  onClick={() => navigate(`/issue-register/${register.ir_id}`)}
+      {/* Content */}
+      {loading ? (
+        <div className="ir-loading"><div className="loading-spinner" /></div>
+      ) : filtered.length > 0 ? (
+        <>
+          {/* Desktop Cards */}
+          <div className="ir-card-list-desktop">
+            {filtered.map((register) => {
+              const { ref, items } = formatted(register);
+              return (
+                <div
+                  key={register.ir_id}
+                  className="ir-card"
+                  onClick={() => handleCardClick(register.ir_id)}
                 >
-                  View Details <FaChevronRight />
-                </button>
-              </div>
-            </div>
-          ))
-        ) : (
-          <div className="empty-state">
-            <p>No matching issue register entries found.</p>
+                  <div className="ir-card-icon-box">
+                    <FaArrowUp />
+                  </div>
+                  <div className="ir-card-info">
+                    <div className="ir-card-ref">{ref}</div>
+                    <div className="ir-card-sub">Issued By: Storekeeper</div>
+                  </div>
+                  <div className="ir-card-date">
+                    📅 {formatDate(register.date)}
+                  </div>
+                  <div className="ir-card-to">
+                    Issued To: {register.staff_name}
+                  </div>
+                  <div className="ir-card-count">
+                    {items} Item{items !== 1 ? 's' : ''}
+                  </div>
+                  <button
+                    className="ir-card-btn"
+                    onClick={(e) => { e.stopPropagation(); handleCardClick(register.ir_id); }}
+                  >
+                    View Details ›
+                  </button>
+                </div>
+              );
+            })}
           </div>
-        )}
-      </div>
+
+          {/* Mobile Cards */}
+          <div className="ir-card-list-mobile">
+            {filtered.map((register) => {
+              const { ref, items } = formatted(register);
+              return (
+                <div
+                  key={register.ir_id}
+                  className="ir-card-mobile"
+                  onClick={() => handleCardClick(register.ir_id)}
+                >
+                  <div className="ir-mobile-icon-box">
+                    <FaArrowUp />
+                  </div>
+                  <div className="ir-mobile-ref">{ref}</div>
+                  <span className="ir-mobile-view" onClick={(e) => { e.stopPropagation(); handleCardClick(register.ir_id); }}>
+                    View ›
+                  </span>
+                  <div className="ir-mobile-by">Issued By: Storekeeper</div>
+                  <div className="ir-mobile-meta">
+                    📅 {formatDate(register.date)} · Issued To: {register.staff_name} · {items} Item{items !== 1 ? 's' : ''}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      ) : (
+        <div className="ir-empty">
+          <FaArrowUp className="ir-empty-icon" />
+          <div className="ir-empty-title">No issue records yet</div>
+          <div className="ir-empty-sub">Issued chemicals will appear here automatically</div>
+        </div>
+      )}
     </div>
   );
 }

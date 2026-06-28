@@ -1,257 +1,482 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-    FaPlus,
-    FaSearch,
-    FaFilter,
-    FaCheckCircle,
-    FaTimesCircle,
-    FaClock,
-    FaCalendarAlt,
-    FaUser,
-    FaGraduationCap,
-    FaIdCard,
-    FaFileInvoice,
-    FaChevronRight,
-    FaClipboardList,
-    FaExclamationTriangle,
-} from 'react-icons/fa';
+import { FaSearch, FaFilter, FaSortUp, FaSortDown, FaClipboardList } from 'react-icons/fa';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
-import AddRequestModal from '../components/modals/AddRequestModal';
 import './StockRequest.css';
-import '../styles/App.css';
+
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function fmtDate(dateStr) {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr);
+  const day = String(d.getDate()).padStart(2, '0');
+  const mon = String(d.getMonth() + 1).padStart(2, '0');
+  const yr = d.getFullYear();
+  return `${day}-${mon}-${yr}`;
+}
+
+function getInitials(name) {
+  if (!name) return '?';
+  return name.split(' ').map(n => n[0]).filter(Boolean).join('').toUpperCase().substring(0, 2);
+}
 
 const StockRequest = ({ draftsOnly = false }) => {
-    const { isStaff, isHOD, isStoreKeeper } = useAuth();
-    const navigate = useNavigate();
+  const { isStaff, isHOD, isStoreKeeper } = useAuth();
+  const navigate = useNavigate();
 
-    const [requests, setRequests] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [showModal, setShowModal] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] = useState(
-        draftsOnly ? 'draft' : (isHOD ? 'pending' : (isStoreKeeper ? 'accepted' : 'all'))
-    );
-    const [hasActiveRequest, setHasActiveRequest] = useState(false);
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState(null);
+  const [search, setSearch] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [sortBy, setSortBy] = useState('date');
+  const [sortOrder, setSortOrder] = useState('desc');
+  const [filters, setFilters] = useState({ dateFrom: '', dateTo: '', staff: '' });
 
-    useEffect(() => {
-        fetchRequests();
-    }, [statusFilter, draftsOnly]);
+  const showToast = useCallback((message) => {
+    setToast(message);
+    setTimeout(() => setToast(null), 3000);
+  }, []);
 
-    const fetchRequests = async () => {
-        try {
-            setLoading(true);
-            let url = 'stock_request/';
-            const params = new URLSearchParams();
+  const fetchRequests = useCallback(async () => {
+    setLoading(true);
+    try {
+      let url = 'stock_request/';
+      const params = new URLSearchParams();
 
-            if (draftsOnly) {
-                params.append('status', 'draft');
-            } else {
-                params.append('status', statusFilter);
-            }
+      if (draftsOnly) {
+        params.append('status', 'draft');
+      } else if (isHOD) {
+        params.append('status', 'pending');
+      }
 
-            const queryString = params.toString();
-            const response = await api.get(url + (queryString ? `?${queryString}` : ''));
+      const queryStr = params.toString();
+      const res = await api.get(url + (queryStr ? `?${queryStr}` : ''));
+      let data = Array.isArray(res.data) ? res.data : res.data.results || [];
 
-            let data = [];
-            if (Array.isArray(response.data)) {
-                data = response.data;
-            } else if (response.data.results && Array.isArray(response.data.results)) {
-                data = response.data.results;
-            }
+      // Always filter out drafts from non-drafts views
+      if (!draftsOnly) {
+        data = data.filter(r => r.status !== 'draft');
+      }
 
-            // Calculate if any request is "active" (not completed and not rejected)
-            // Note: We use the full list for this check, but fetchRequests might be filtered.
-            // However, the backend for staff already returns all their requests.
-            // If the current view is status-filtered, we might miss the active one if it's not in the filter.
-            // So we should ideally fetch ALL once or check the data if statusFilter is 'all'.
-            // Actually, let's just use the current data if statusFilter is 'all', 
-            // but for reliability, if we are staff, we should check specifically.
-            if (isStaff) {
-                const active = data.some(r => r.status !== 'completed' && r.status !== 'rejected' && r.status !== 'draft');
-                // If the view is filtered, we might not see the active one.
-                // But the user usually stays on "All Status".
-                // To be safe, we can do a quick check if statusFilter is NOT 'all'
-                if (statusFilter !== 'all' && !active) {
-                    const allRes = await api.get('stock_request/');
-                    const allData = Array.isArray(allRes.data) ? allRes.data : allRes.data.results || [];
-                    setHasActiveRequest(allData.some(r => r.status !== 'completed' && r.status !== 'rejected' && r.status !== 'draft'));
-                } else {
-                    setHasActiveRequest(active);
-                }
-            }
+      setRequests(data);
+    } catch (err) {
+      console.error('Error fetching requests:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [isStaff, isHOD, isStoreKeeper, draftsOnly]);
 
-            // Strict Enforcement: If not in draftsOnly mode, ALWAYS filter out drafts
-            if (!draftsOnly) {
-                data = data.filter(r => r.status !== 'draft');
-            } else {
-                // If in draftsOnly mode, ONLY allow drafts
-                data = data.filter(r => r.status === 'draft');
-            }
+  useEffect(() => {
+    fetchRequests();
+  }, [fetchRequests]);
 
-            setRequests(data);
-        } catch (err) {
-            console.error('Error fetching requests:', err);
-        } finally {
-            setLoading(false);
-        }
-    };
+  const handleFilterChange = (key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
 
-    const handleRequestSuccess = () => {
-        fetchRequests();
-        setShowModal(false);
-    };
+  const clearFilters = () => {
+    setFilters({ dateFrom: '', dateTo: '', staff: '' });
+  };
 
-    const getStatusBadge = (status) => {
-        switch (status) {
-            case 'accepted':
-                return <span className="status-badge-modern status-success"><FaCheckCircle /> Approved</span>;
-            case 'issued':
-                return <span className="status-badge-modern status-issued"><FaCheckCircle /> Issued</span>;
-            case 'reported':
-                return <span className="status-badge-modern status-reported"><FaClipboardList /> Reported</span>;
-            case 'completed':
-                return <span className="status-badge-modern status-completed"><FaCheckCircle /> Completed</span>;
-            case 'rejected':
-                return <span className="status-badge-modern status-danger"><FaTimesCircle /> Rejected</span>;
-            default:
-                return <span className="status-badge-modern status-requested"><FaClock /> Requested</span>;
-        }
-    };
-
-    const filteredRequests = requests.filter(req => {
-        const searchLower = searchTerm.toLowerCase();
-        return (
-            req.reason?.toLowerCase().includes(searchLower) ||
-            req.requested_by_name?.toLowerCase().includes(searchLower) ||
-            req.request_id?.toLowerCase().includes(searchLower) ||
-            req.class_name?.toLowerCase().includes(searchLower)
-        );
+  const applyFilters = (items) => {
+    return items.filter(item => {
+      if (filters.dateFrom && item.date < filters.dateFrom) return false;
+      if (filters.dateTo && item.date > filters.dateTo) return false;
+      if (filters.staff && !item.requested_by_name?.toLowerCase().includes(filters.staff.toLowerCase())) return false;
+      return true;
     });
+  };
+
+  const filtered = applyFilters(requests).filter(r =>
+    r.requested_by_name?.toLowerCase().includes(search.toLowerCase()) ||
+    r.reason?.toLowerCase().includes(search.toLowerCase()) ||
+    r.class_name?.toLowerCase().includes(search.toLowerCase()) ||
+    r.chemical_items?.some(c => c.chemical_name?.toLowerCase().includes(search.toLowerCase()))
+  );
+
+  // ===== RENDER =====
+  if (loading && requests.length === 0) {
+    return (
+      <div className="cr-page animate-up">
+        <div className="cr-loading"><div className="loading-spinner" /></div>
+      </div>
+    );
+  }
+
+  // ===== STAFF VIEW =====
+  if (isStaff && !draftsOnly) {
+    const activeReq = requests.find(r => !['draft', 'completed', 'rejected'].includes(r.status));
 
     return (
-        <div className="stock-register-page chemical-requests animate-up">
-            <div className="page-header">
-                <div className="dept-title-container">
-                    <div className="dept-icon-box" style={{ color: 'var(--dept-stock)' }}>
-                        <FaFileInvoice />
-                    </div>
-                    <div>
-                        <h1 className="page-title">{draftsOnly ? 'My Drafts' : 'Chemical Requests'}</h1>
-                        <p className="page-subtitle">
-                            {draftsOnly
-                                ? 'Manage your saved chemical request drafts.'
-                                : 'Unified log of all laboratory chemical requisitions.'}
-                        </p>
-                    </div>
-                </div>
-                {isStaff && !draftsOnly && (
-                    <div className="header-actions">
-                        {hasActiveRequest && (
-                            <span className="active-request-warning">
-                                <FaExclamationTriangle /> You have an active request. New forms must be saved as drafts.
-                            </span>
-                        )}
-                        <button
-                            className="btn-primary"
-                            onClick={() => setShowModal(true)}
-                        >
-                            <FaPlus /> New Request
-                        </button>
-                    </div>
-                )}
-            </div>
-
-            <div className="search-bar-container card">
-                <FaSearch className="search-icon" />
-                <input
-                    type="text"
-                    placeholder="Search by ID, Reason, or Staff..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="search-input"
-                />
-                {!draftsOnly && (
-                    <select
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                        className="status-filter-select"
-                    >
-                        <option value="all">All Status</option>
-                        <option value="pending">Requested</option>
-                        <option value="accepted">Approved</option>
-                        <option value="issued">Issued</option>
-                        <option value="reported">Reported</option>
-                        <option value="completed">Completed</option>
-                        <option value="rejected">Rejected</option>
-                    </select>
-                )}
-            </div>
-
-            <div className="stock-list-grid">
-                {loading ? (
-                    <div className="loading-spinner"></div>
-                ) : filteredRequests.length > 0 ? (
-                    filteredRequests.map((req) => (
-                        <div
-                            key={req.id}
-                            className="stock-card card animate-fade"
-                            onClick={() => navigate(`/requests/${req.id}`)}
-                            style={{ cursor: 'pointer' }}
-                        >
-                            <div className="stock-card-icon">
-                                <FaFileInvoice />
-                            </div>
-                            <div className="stock-card-content">
-                                <div className="stock-card-main-info">
-                                    <div className="id-status-row">
-                                        <h3>{req.request_id}</h3>
-                                        <span className={`status-badge-compact ${req.status}`}>
-                                            {req.status === 'pending' ? 'Requested' :
-                                                req.status === 'accepted' ? 'Approved' :
-                                                    req.status === 'issued' ? 'Issued' :
-                                                        req.status === 'reported' ? 'Reported' :
-                                                            req.status === 'completed' ? 'Completed' :
-                                                                req.status === 'draft' ? 'Drafted' : 'Rejected'}
-                                        </span>
-                                    </div>
-                                    <p className="supplier">{req.requested_by_name} • {req.class_name}</p>
-                                </div>
-                                <div className="stock-card-details">
-                                    <span className="date">
-                                        <FaCalendarAlt /> {req.date ? new Date(req.date).toLocaleDateString() : new Date(req.created_at).toLocaleDateString()}
-                                    </span>
-                                    <span className="items-count">
-                                        {req.chemical_items?.length || 0} Items
-                                    </span>
-                                </div>
-                            </div>
-                            <div className="stock-card-actions">
-                                <button
-                                    className="btn-view"
-                                    onClick={() => navigate(`/requests/${req.id}`)}
-                                >
-                                    View Details <FaChevronRight />
-                                </button>
-                            </div>
-                        </div>
-                    ))
-                ) : (
-                    <div className="empty-state">
-                        <p>No {draftsOnly ? 'drafts' : 'requests'} found.</p>
-                    </div>
-                )}
-            </div>
-
-            <AddRequestModal
-                isOpen={showModal}
-                onClose={() => setShowModal(false)}
-                onSuccess={handleRequestSuccess}
-                hasActiveRequest={hasActiveRequest}
-            />
+      <div className="cr-page animate-up">
+        <div className="sr-title-row">
+          <h1 className="sr-title">Chemical Request</h1>
         </div>
+
+        {activeReq && (
+          <>
+            <p className="cr-section-label">Active chemical request</p>
+            {/* Desktop */}
+            <div className="sr-card-list-desktop">
+              <div className="sr-card sr-card-pending" onClick={() => navigate(`/requests/${activeReq.id}`)}>
+                <div className="sr-card-icon-box">
+                  <FaClipboardList />
+                </div>
+                <div className="sr-card-info">
+                  <div className="sr-card-ref">{activeReq.request_id}</div>
+                  <div className="sr-card-supplier">{activeReq.class_name || '—'}</div>
+                </div>
+                <div className="sr-card-date">📅 {formatDate(activeReq.date)}</div>
+                <button className="sr-card-btn" onClick={(e) => { e.stopPropagation(); navigate(`/requests/${activeReq.id}`); }}>
+                  View Details ›
+                </button>
+              </div>
+            </div>
+
+            {/* Mobile */}
+            <div className="sr-card-list-mobile">
+              <div className="sr-card-mobile sr-card-mobile-pending" onClick={() => navigate(`/requests/${activeReq.id}`)}>
+                <div className="sr-mobile-icon-box"><FaClipboardList /></div>
+                <div className="sr-mobile-ref">{activeReq.request_id}</div>
+                <span className="sr-mobile-view" onClick={(e) => { e.stopPropagation(); navigate(`/requests/${activeReq.id}`); }}>View ›</span>
+                <div className="sr-mobile-supplier">{activeReq.class_name || '—'}</div>
+                <div className="sr-mobile-meta">📅 {formatDate(activeReq.date)}</div>
+              </div>
+            </div>
+          </>
+        )}
+
+        {toast && <div className="cr-toast cr-toast-visible">{toast}</div>}
+      </div>
     );
+  }
+
+  // ===== DRAFTS VIEW =====
+  if (draftsOnly) {
+    const draftCount = requests.filter(r => r.status === 'draft').length;
+
+    return (
+      <div className="cr-page animate-up">
+        <div className="sr-title-row">
+          <h1 className="sr-title">Draft</h1>
+          <div className="sr-title-right">
+            <span className="cr-count-badge cr-count-blue">{draftCount} Drafts</span>
+          </div>
+        </div>
+
+        <div className="sr-search-row">
+          <div className="sr-search-left">
+            <FaSearch className="sr-search-icon" />
+            <input type="text" className="sr-search-input" placeholder="Search drafts..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          </div>
+          <div className="sr-search-divider" />
+          <div className="sr-search-right">
+            <button className={`sr-filter-btn ${showFilters ? 'active' : ''}`} onClick={() => setShowFilters(!showFilters)}>
+              <FaFilter /> Filters
+            </button>
+            <div className="sr-search-divider" />
+            <div className="sr-sort-group">
+              <span className="sr-sort-label">Sort by:</span>
+              <select className="sr-sort-select" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+                <option value="date">Date</option>
+              </select>
+              <button className="sr-sort-order-btn" onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}>
+                {sortOrder === 'asc' ? <FaSortUp /> : <FaSortDown />}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {showFilters && (
+          <div className="sr-filters-panel animate-fade">
+            <div className="sr-filters-grid">
+              <div className="sr-filter-group">
+                <label>Date From:</label>
+                <input type="date" value={filters.dateFrom} onChange={(e) => handleFilterChange('dateFrom', e.target.value)} />
+              </div>
+              <div className="sr-filter-group">
+                <label>Date To:</label>
+                <input type="date" value={filters.dateTo} onChange={(e) => handleFilterChange('dateTo', e.target.value)} />
+              </div>
+              <div className="sr-filter-group">
+                <label>Search:</label>
+                <input type="text" placeholder="Chemical name..." value={filters.staff} onChange={(e) => handleFilterChange('staff', e.target.value)} />
+              </div>
+            </div>
+            <div className="sr-filter-actions">
+              <button className="sr-filter-clear" onClick={clearFilters}>Clear Filters</button>
+            </div>
+          </div>
+        )}
+
+        {loading ? (
+          <div className="sr-loading"><div className="loading-spinner" /></div>
+        ) : filtered.length > 0 ? (
+          <>
+            <div className="sr-card-list-desktop">
+              {filtered.map(req => (
+                <div key={req.id} className="sr-card sr-card-draft" onClick={() => navigate(`/requests/${req.id}`)}>
+                  <div className="sr-card-icon-box">
+                    <FaClipboardList />
+                  </div>
+                  <div className="sr-card-info">
+                    <div className="sr-card-ref">{req.request_id}</div>
+                    <div className="sr-card-supplier">{req.class_name || '—'}</div>
+                  </div>
+                  <div className="sr-card-date">📅 {formatDate(req.date)}</div>
+                  <button className="sr-card-btn" onClick={(e) => { e.stopPropagation(); navigate(`/requests/${req.id}`); }}>
+                    View Details ›
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <div className="sr-card-list-mobile">
+              {filtered.map(req => (
+                <div key={req.id} className="sr-card-mobile sr-card-mobile-draft" onClick={() => navigate(`/requests/${req.id}`)}>
+                  <div className="sr-mobile-icon-box"><FaClipboardList /></div>
+                  <div className="sr-mobile-ref">{req.request_id}</div>
+                  <span className="sr-mobile-view" onClick={(e) => { e.stopPropagation(); navigate(`/requests/${req.id}`); }}>View ›</span>
+                  <div className="sr-mobile-supplier">{req.class_name || '—'}</div>
+                  <div className="sr-mobile-meta">📅 {formatDate(req.date)}</div>
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="sr-empty">
+            <FaClipboardList className="sr-empty-icon" />
+            <div className="sr-empty-title">No drafts</div>
+            <div className="sr-empty-sub">Your saved drafts will appear here</div>
+          </div>
+        )}
+
+        {toast && <div className="cr-toast cr-toast-visible">{toast}</div>}
+      </div>
+    );
+  }
+
+  // ===== HOD VIEW =====
+  if (isHOD) {
+    const pendingCount = requests.filter(r => r.status === 'pending').length;
+
+    return (
+      <div className="cr-page animate-up">
+        <div className="sr-title-row">
+          <h1 className="sr-title">Chemical Request</h1>
+          <div className="sr-title-right">
+            <span className="cr-count-badge cr-count-blue">{pendingCount} Pending</span>
+          </div>
+        </div>
+
+        <div className="sr-search-row">
+          <div className="sr-search-left">
+            <FaSearch className="sr-search-icon" />
+            <input type="text" className="sr-search-input" placeholder="Search requests..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          </div>
+          <div className="sr-search-divider" />
+          <div className="sr-search-right">
+            <button className={`sr-filter-btn ${showFilters ? 'active' : ''}`} onClick={() => setShowFilters(!showFilters)}>
+              <FaFilter /> Filters
+            </button>
+            <div className="sr-search-divider" />
+            <div className="sr-sort-group">
+              <span className="sr-sort-label">Sort by:</span>
+              <select className="sr-sort-select" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+                <option value="date">Date</option>
+              </select>
+              <button className="sr-sort-order-btn" onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}>
+                {sortOrder === 'asc' ? <FaSortUp /> : <FaSortDown />}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {showFilters && (
+          <div className="sr-filters-panel animate-fade">
+            <div className="sr-filters-grid">
+              <div className="sr-filter-group">
+                <label>Date From:</label>
+                <input type="date" value={filters.dateFrom} onChange={(e) => handleFilterChange('dateFrom', e.target.value)} />
+              </div>
+              <div className="sr-filter-group">
+                <label>Date To:</label>
+                <input type="date" value={filters.dateTo} onChange={(e) => handleFilterChange('dateTo', e.target.value)} />
+              </div>
+              <div className="sr-filter-group">
+                <label>Staff:</label>
+                <input type="text" placeholder="Staff name..." value={filters.staff} onChange={(e) => handleFilterChange('staff', e.target.value)} />
+              </div>
+            </div>
+            <div className="sr-filter-actions">
+              <button className="sr-filter-clear" onClick={clearFilters}>Clear Filters</button>
+            </div>
+          </div>
+        )}
+
+        {loading ? (
+          <div className="sr-loading"><div className="loading-spinner" /></div>
+        ) : filtered.length > 0 ? (
+          <>
+            <div className="sr-card-list-desktop">
+              {filtered.map(req => (
+                <div key={req.id} className="sr-card" onClick={() => navigate(`/requests/${req.id}`)}>
+                  <div className="sr-card-icon-box">
+                    <FaClipboardList />
+                  </div>
+                  <div className="sr-card-info">
+                    <div className="sr-card-ref">{req.request_id}</div>
+                    <div className="sr-card-supplier">{req.requested_by_name}</div>
+                    <div className="sr-card-class">{req.class_name || '—'}</div>
+                  </div>
+                  <div className="sr-card-date">📅 {formatDate(req.date)}</div>
+                  <button className="sr-card-btn" onClick={(e) => { e.stopPropagation(); navigate(`/requests/${req.id}`); }}>
+                    View Details ›
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <div className="sr-card-list-mobile">
+              {filtered.map(req => (
+                <div key={req.id} className="sr-card-mobile" onClick={() => navigate(`/requests/${req.id}`)}>
+                  <div className="sr-mobile-icon-box"><FaClipboardList /></div>
+                  <div className="sr-mobile-ref">{req.request_id}</div>
+                  <span className="sr-mobile-view" onClick={(e) => { e.stopPropagation(); navigate(`/requests/${req.id}`); }}>View ›</span>
+                  <div className="sr-mobile-supplier">{req.requested_by_name}</div>
+                  <div className="sr-mobile-meta">{req.class_name || '—'} · 📅 {formatDate(req.date)}</div>
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="sr-empty">
+            <FaClipboardList className="sr-empty-icon" />
+            <div className="sr-empty-title">All caught up!</div>
+            <div className="sr-empty-sub">No pending requests at the moment</div>
+          </div>
+        )}
+
+        {toast && <div className="cr-toast cr-toast-visible">{toast}</div>}
+      </div>
+    );
+  }
+
+  // ===== STOREKEEPER VIEW =====
+  if (isStoreKeeper) {
+    const approvedCount = requests.filter(r => r.status === 'accepted').length;
+    const reportedCount = requests.filter(r => r.status === 'reported').length;
+
+    return (
+      <div className="cr-page animate-up">
+        <div className="sr-title-row">
+          <h1 className="sr-title">Chemical Request</h1>
+          <div className="sr-title-right">
+            <span className="cr-count-badge cr-count-green">{approvedCount} To Issue</span>
+            {reportedCount > 0 && <span className="cr-count-badge cr-count-blue">{reportedCount} To Complete</span>}
+          </div>
+        </div>
+
+        <div className="sr-search-row">
+          <div className="sr-search-left">
+            <FaSearch className="sr-search-icon" />
+            <input type="text" className="sr-search-input" placeholder="Search requests..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          </div>
+          <div className="sr-search-divider" />
+          <div className="sr-search-right">
+            <button className={`sr-filter-btn ${showFilters ? 'active' : ''}`} onClick={() => setShowFilters(!showFilters)}>
+              <FaFilter /> Filters
+            </button>
+            <div className="sr-search-divider" />
+            <div className="sr-sort-group">
+              <span className="sr-sort-label">Sort by:</span>
+              <select className="sr-sort-select" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+                <option value="date">Date</option>
+              </select>
+              <button className="sr-sort-order-btn" onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}>
+                {sortOrder === 'asc' ? <FaSortUp /> : <FaSortDown />}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {showFilters && (
+          <div className="sr-filters-panel animate-fade">
+            <div className="sr-filters-grid">
+              <div className="sr-filter-group">
+                <label>Date From:</label>
+                <input type="date" value={filters.dateFrom} onChange={(e) => handleFilterChange('dateFrom', e.target.value)} />
+              </div>
+              <div className="sr-filter-group">
+                <label>Date To:</label>
+                <input type="date" value={filters.dateTo} onChange={(e) => handleFilterChange('dateTo', e.target.value)} />
+              </div>
+              <div className="sr-filter-group">
+                <label>Staff:</label>
+                <input type="text" placeholder="Staff name..." value={filters.staff} onChange={(e) => handleFilterChange('staff', e.target.value)} />
+              </div>
+            </div>
+            <div className="sr-filter-actions">
+              <button className="sr-filter-clear" onClick={clearFilters}>Clear Filters</button>
+            </div>
+          </div>
+        )}
+
+        {loading ? (
+          <div className="sr-loading"><div className="loading-spinner" /></div>
+        ) : filtered.length > 0 ? (
+          <>
+            <div className="sr-card-list-desktop">
+              {filtered.map(req => (
+                <div key={req.id} className="sr-card" onClick={() => navigate(`/requests/${req.id}`)}>
+                  <div className="sr-card-icon-box">
+                    <FaClipboardList />
+                  </div>
+                  <div className="sr-card-info">
+                    <div className="sr-card-ref">{req.request_id}</div>
+                    <div className="sr-card-supplier">{req.requested_by_name}</div>
+                    <div className="sr-card-class">{req.class_name || '—'}</div>
+                  </div>
+                  <div className="sr-card-date">📅 {formatDate(req.date)}</div>
+                  <button className="sr-card-btn" onClick={(e) => { e.stopPropagation(); navigate(`/requests/${req.id}`); }}>
+                    View Details ›
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <div className="sr-card-list-mobile">
+              {filtered.map(req => (
+                <div key={req.id} className="sr-card-mobile" onClick={() => navigate(`/requests/${req.id}`)}>
+                  <div className="sr-mobile-icon-box"><FaClipboardList /></div>
+                  <div className="sr-mobile-ref">{req.request_id}</div>
+                  <span className="sr-mobile-view" onClick={(e) => { e.stopPropagation(); navigate(`/requests/${req.id}`); }}>View ›</span>
+                  <div className="sr-mobile-supplier">{req.requested_by_name}</div>
+                  <div className="sr-mobile-meta">{req.class_name || '—'} · 📅 {formatDate(req.date)}</div>
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="sr-empty">
+            <FaClipboardList className="sr-empty-icon" />
+            <div className="sr-empty-title">No pending actions</div>
+            <div className="sr-empty-sub">Approved and reported requests will appear here</div>
+          </div>
+        )}
+
+        {toast && <div className="cr-toast cr-toast-visible">{toast}</div>}
+      </div>
+    );
+  }
+
+  return null;
 };
 
 export default StockRequest;

@@ -6,7 +6,7 @@
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding-top: 0;
+  padding-top: 60px;
   z-index: 2000;
 }
 
@@ -74,6 +74,18 @@
   gap: 15px;
 }
 
+.stock-register-header-text {
+  color: #1e293b !important;
+  font-weight: 900 !important;
+  font-size: 1.8rem !important;
+  letter-spacing: -0.5px;
+}
+
+.stock-entry-modal .modal-header h2 svg {
+  color: #4f46e5;
+  margin-right: 5px;
+}
+
 .modal-close {
   background: var(--bg-surface);
   border: 1.5px solid var(--border);
@@ -109,13 +121,13 @@
 }
 
 .modal-body::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: var(--bg-main);
 }
 
 .modal-body::-webkit-scrollbar-thumb {
-  background: #94a3b8;
+  background: var(--text-muted);
   border-radius: 10px;
-  border: 3px solid #f1f5f9;
+  border: 3px solid var(--bg-main);
 }
 
 .modal-body::-webkit-scrollbar-thumb:hover {
@@ -157,7 +169,7 @@
 .form-group input:focus {
   outline: none;
   border-color: var(--primary);
-  background: white;
+  background: var(--bg-surface);
   box-shadow: 0 0 0 5px var(--primary-glow);
 }
 
@@ -176,20 +188,26 @@
 
 .section-header h3 {
   font-size: 1.4rem;
-  font-weight: 900;
+  font-weight: 800;
   color: var(--text-main);
+  /* Theme-aware */
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
+.modal-body .items-section:first-of-type .section-header h3 {
+  color: #4361ee;
+  /* Subtle blue tint for chemicals if we want to be fancy, or keep it themed */
+}
+
 .btn-add-line {
-  background: var(--primary);
+  background: #3b51bf;
   color: white;
   border: none;
-  padding: 12px 28px;
-  border-radius: 14px;
-  font-size: 0.9rem;
+  padding: 10px 24px;
+  border-radius: 16px;
+  font-size: 0.85rem;
   font-weight: 800;
   display: flex;
   align-items: center;
@@ -199,9 +217,9 @@
 }
 
 .btn-add-line:hover {
-  background: var(--primary-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 10px 20px var(--primary-glow);
+  background: #2d3e9e;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(59, 81, 191, 0.2);
 }
 
 /* Autocomplete Suggestions */
@@ -211,16 +229,18 @@
 }
 
 .suggestions-dropdown {
-  position: fixed;
-  background: white;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background: var(--bg-surface);
   border: 1.5px solid var(--border);
   border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  z-index: 99999;
-  max-height: 200px;
+  box-shadow: var(--shadow);
+  z-index: 1000;
+  max-height: 250px;
   overflow-y: auto;
   min-width: 250px;
-  transform: translateZ(0);
 }
 
 .suggestion-item {
@@ -234,7 +254,8 @@
 
 .suggestion-item:hover,
 .suggestion-item.active {
-  background: var(--primary-glow);
+  background: rgba(255, 77, 77, 0.1);
+  /* Subtle red glow matching submit button fallback */
   color: var(--primary);
 }
 
@@ -242,22 +263,46 @@
   border-bottom: 1px solid var(--border);
 }
 
+/* Lock headers to columns: 2.5fr (Name) 1fr (Qty) 0.7fr (Unit) 1fr (Rate) 1.5fr (Make) 50px (Delete) */
+.stock-entry-modal .grid-matrix-header,
+.stock-entry-modal .grid-row {
+  display: grid !important;
+  grid-template-columns: 2.5fr 1fr 0.7fr 1fr 1.5fr 50px !important;
+  gap: 15px;
+  padding: 16px 20px;
+  width: 100%;
+  box-sizing: border-box;
+  align-items: center;
+  position: relative;
+  border-radius: 16px;
+  border: 1.5px solid var(--border);
+  background: var(--bg-surface);
+  margin-bottom: 12px;
+  transition: all 0.3s ease;
+}
+
+.stock-entry-modal .grid-matrix-header {
+  padding: 0 20px 15px 20px;
+  border: none;
+  border-bottom: 2px solid var(--border);
+  background: transparent;
+  border-radius: 0;
+  margin-bottom: 20px;
+}
+
 @media (max-width: 1200px) {
 
-  .grid-matrix-header,
-  .grid-row {
-    grid-template-columns: 2fr 1fr 1fr 1fr 44px;
+  .stock-entry-modal .grid-matrix-header,
+  .stock-entry-modal .grid-row {
+    grid-template-columns: 2.5fr 1fr 0.7fr 1fr 1fr 44px !important;
+    gap: 10px;
   }
 }
 
-/* FIX: Grid Row Alignment & Visibility */
-.grid-matrix-header {
-  display: grid;
-  grid-template-columns: 2.5fr 1fr 1fr 1.5fr 60px;
-  gap: 20px;
-  padding: 0 24px 15px 24px;
-  border-bottom: 2px solid var(--border);
-  margin-bottom: 20px;
+/* Ensure number steppers (up/down arrows) are visible */
+.grid-row input[type="number"]::-webkit-outer-spin-button,
+.grid-row input[type="number"]::-webkit-inner-spin-button {
+  opacity: 1;
 }
 
 .grid-matrix-header span {
@@ -265,47 +310,142 @@
   font-weight: 900;
   color: var(--text-muted);
   text-transform: uppercase;
+  letter-spacing: 1.2px;
+  text-align: left;
+  white-space: nowrap;
 }
 
-.grid-row {
-  display: grid;
-  grid-template-columns: 2.5fr 1fr 1fr 1.5fr 60px;
-  gap: 20px;
-  align-items: center;
-  margin-bottom: 15px;
-  padding: 10px 24px;
-  background: var(--bg-main);
-  border-radius: 20px;
-  border: 1.5px solid var(--border);
+/* Center QTY, Unit, and Rate headers in their columns */
+.grid-matrix-header span:nth-child(2),
+.grid-matrix-header span:nth-child(3),
+.grid-matrix-header span:nth-child(4) {
+  text-align: center;
 }
 
-.grid-row input {
+/* Additional row-specific overrides */
+:root.dark-mode .stock-entry-modal .grid-row {
+  background: #1a2235 !important;
+  color: #ffffff !important;
+  border: 1.5px solid #2d3748;
+}
+
+.stock-entry-modal .grid-row:focus-within {
+  z-index: 100;
+  border-color: #cbd5e1;
+}
+
+.stock-entry-modal .grid-row input {
   width: 100%;
   padding: 14px 18px;
-  background: var(--bg-surface);
-  border: 1.5px solid var(--border);
-  border-radius: 14px;
-  color: var(--text-main);
+  min-height: 44px;
+  background: #f8f9fa !important;
+  color: #000000 !important;
+  border: 1.5px solid #cbd5e1 !important;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  box-sizing: border-box;
 }
 
-.btn-row-del {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
-  background: #fff1f2;
-  border: 1px solid #fee2e2;
-  color: #ef4444;
+:root.dark-mode .stock-entry-modal .grid-row input {
+  background: #0f172a !important;
+  color: #ffffff !important;
+  border: 1.5px solid #334155 !important;
+}
+
+.grid-row .autocomplete-wrapper {
   display: flex;
+  align-items: stretch;
+}
+
+.grid-row .autocomplete-wrapper input {
+  flex: 1;
+  min-height: 44px;
+}
+
+.stock-entry-modal .grid-row input:focus {
+  border-color: #94a3b8 !important;
+  background: #ffffff !important;
+  outline: none;
+}
+
+:root.dark-mode .stock-entry-modal .grid-row input:focus {
+  background: #131c2f !important;
+  border-color: #475569 !important;
+}
+
+/* Adjust numeric inputs padding */
+.grid-row input[type="number"] {
+  text-align: center;
+}
+
+.grid-row select {
+  width: 100%;
+  padding: 14px 10px;
+  min-height: 44px;
+  background: #f8f9fa !important;
+  color: #000000 !important;
+  border: 1.5px solid #cbd5e1 !important;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  box-sizing: border-box;
+  text-align: center;
+  cursor: pointer;
+  appearance: auto;
+}
+
+:root.dark-mode .grid-row select {
+  background: #0f172a !important;
+  color: #ffffff !important;
+  border: 1.5px solid #334155 !important;
+}
+
+.grid-row select:focus {
+  border-color: #94a3b8 !important;
+  background: #ffffff !important;
+  outline: none;
+}
+
+:root.dark-mode .grid-row select:focus {
+  background: #131c2f !important;
+  border-color: #475569 !important;
+}
+
+.stock-entry-modal .btn-row-del {
+  width: 50px !important;
+  height: 50px !important;
+  border-radius: 16px !important;
+  background: #ffffff !important;
+  border: 1.5px solid #e2e8f0 !important;
+  color: #ef4444 !important;
+  display: flex !important;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  transition: all 0.2s;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+:root.dark-mode .stock-entry-modal .btn-row-del {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+}
+
+.stock-entry-modal .btn-row-del:hover {
+  transform: scale(1.05);
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 /* Footer MUST be pinned to bottom */
 .modal-footer {
-  padding: 30px 50px;
+  padding: 24px 50px;
   background: var(--bg-main);
-  border-top: 1.5px solid var(--border);
+  border-top: 1px solid var(--border);
   display: flex;
   justify-content: flex-end;
   gap: 20px;
@@ -313,22 +453,22 @@
 }
 
 .btn-cancel {
-  padding: 14px 36px;
-  background: var(--bg-surface);
-  border: 1.5px solid var(--border);
-  color: var(--text-main);
-  border-radius: 16px;
-  font-weight: 800;
+  padding: 12px 30px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 14px;
+  font-weight: 600;
   cursor: pointer;
 }
 
 .btn-submit {
-  padding: 14px 50px;
-  background: var(--primary);
+  padding: 12px 40px;
+  background: #ff4d4d;
   color: white;
   border: none;
-  border-radius: 16px;
-  font-weight: 900;
+  border-radius: 14px;
+  font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 10px 25px var(--primary-glow);
+  box-shadow: 0 4px 15px rgba(255, 77, 77, 0.2);
 }

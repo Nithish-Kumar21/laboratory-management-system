@@ -1,8 +1,9 @@
 :root {
   /* Layout Dimensions */
-  --sidebar-width: 280px;
-  --sidebar-mini-width: 80px;
-  --topbar-height: 70px;
+  --sidebar-width: 220px;
+  --topbar-height: 64px;
+  --header-height: 64px;
+  --bottomnav-height: 60px;
   --transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
   --radius-sm: 10px;
   --radius-md: 16px;
@@ -22,18 +23,17 @@
   --dept-users: #2563eb;
   /* Royal Blue */
 
-  /* Surface Colors - Professional Theme */
-  --bg-main: #f8fafc;
+  /* Surface Colors - High Contrast Theme */
+  --bg-main: #ffffff;
   --bg-surface: #ffffff;
   --bg-sidebar: #1e293b;
-  /* Professional Slate */
   --primary: var(--dept-dashboard);
   --primary-hover: #4338ca;
   --primary-glow: rgba(99, 102, 241, 0.15);
 
-  --text-main: #0f172a;
-  --text-muted: #64748b;
-  --text-on-dark: #f8fafc;
+  --text-main: #000000;
+  --text-muted: #475569;
+  --text-on-dark: #ffffff;
 
   --border: #e2e8f0;
   --border-light: rgba(0, 0, 0, 0.05);
@@ -41,14 +41,15 @@
 }
 
 :root.dark-mode {
-  --bg-main: #0b1120;
-  --bg-surface: #131c2f;
-  --bg-sidebar: #0b1120;
-
+  --bg-main: #0f172a;
+  /* Slate 900 - Bluish shade */
+  --bg-surface: #1e293b;
+  /* Slate 800 */
+  --bg-sidebar: #1a2235;
+  /* Matching bluish-black from mockup */
   --text-main: #f1f5f9;
   --text-muted: #94a3b8;
-
-  --border: #1e293b;
+  --border: #334155;
   --shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
 }
 
@@ -167,23 +168,45 @@ body {
 }
 
 .main-content-area {
-  margin-top: var(--topbar-height);
+  margin-top: 64px;
   flex: 1;
   display: flex;
-  transition: padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-direction: column;
+  min-height: calc(100vh - var(--header-height));
+  background: #F4F6F9;
+  padding-bottom: 60px;
 }
 
-.app-layout.sidebar-open .main-content-area {
-  padding-left: var(--sidebar-width);
+:root.dark-mode .main-content-area {
+  background: #0f172a;
 }
 
-.app-layout.sidebar-closed .main-content-area {
-  padding-left: var(--sidebar-mini-width);
+@media (min-width: 769px) {
+  .main-content-area {
+    margin-top: 64px;
+    padding-left: var(--sidebar-width);
+    padding-bottom: 0;
+  }
 }
 
-@media (max-width: 768px) {
-  .app-layout.sidebar-closed .main-content-area {
-    padding-left: 0;
+.staff-main-content {
+  margin-top: 64px;
+  flex: 1;
+  min-height: calc(100vh - 64px);
+  background: #F0F2F5;
+  padding: 16px;
+  padding-bottom: 76px;
+}
+
+:root.dark-mode .staff-main-content {
+  background: #0f172a;
+}
+
+@media (min-width: 1024px) {
+  .staff-main-content {
+    margin-left: 220px;
+    padding: 24px;
+    padding-bottom: 24px;
   }
 }
 
@@ -193,6 +216,8 @@ body {
   max-width: 1600px;
   margin: 0 auto;
   width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Animations */
@@ -226,6 +251,12 @@ body {
   animation: fadeIn 0.4s ease forwards;
 }
 
+.page-placeholder {
+  padding: 16px;
+  font-size: 16px;
+  color: #6b7280;
+}
+
 /* Premium Table Styles */
 .premium-table {
   width: 100%;
@@ -239,7 +270,8 @@ body {
   text-align: left;
   font-size: 0.75rem;
   font-weight: 800;
-  color: var(--text-muted);
+  color: #fff;
+  background: #1A3C6E;
   text-transform: uppercase;
   letter-spacing: 1.5px;
 }
@@ -811,4 +843,50 @@ body {
   font-size: 4rem;
   margin-bottom: 20px;
   opacity: 0.5;
+}
+
+/* ===== FAB BUTTON ===== */
+.cr-fab {
+  position: fixed;
+  bottom: 90px;
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #1A3C6E;
+  color: #fff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(26, 60, 110, 0.4);
+  transition: background 0.2s, transform 0.2s;
+  z-index: 100;
+}
+
+.cr-fab:hover {
+  background: #14305a;
+  transform: scale(1.08);
+}
+
+.cr-fab:active {
+  transform: scale(0.95);
+}
+
+@media (min-width: 769px) {
+  .cr-fab {
+    bottom: 32px;
+    right: 32px;
+  }
+}
+
+:root.dark-mode .cr-fab {
+  background: #4A90D9;
+  box-shadow: 0 4px 16px rgba(74, 144, 217, 0.4);
+}
+
+:root.dark-mode .cr-fab:hover {
+  background: #357ABD;
 }

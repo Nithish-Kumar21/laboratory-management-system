@@ -1,65 +1,106 @@
 import React, { useEffect, useState } from 'react';
-import { FaFlask, FaExclamationCircle, FaCheckCircle, FaHistory } from 'react-icons/fa';
 import api from '../../utils/api';
+import { getStatus } from '../../utils/inventory';
 
-function ChemicalTable({ showReorderLevel = true }) {
+function getStatusColor(status) {
+  if (status === 'critical') return { border: '#C62828', bg: '#FFEBEE', text: '#C62828', label: 'Critical' };
+  if (status === 'low-stock') return { border: '#E65100', bg: '#FFF3E0', text: '#E65100', label: 'Low Stock' };
+  return { border: '#2E7D32', bg: '#E8F5E9', text: '#2E7D32', label: 'Healthy' };
+}
+
+function ChemicalTable({ showExtra = true, searchTerm = '', showOnlyLowStock = false }) {
   const [chemicals, setChemicals] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api
-      .get('available_chemicals/')
-      .then((response) => {
+    api.get('available_chemicals/')
+      .then((res) => {
         setChemicals(
-          Array.isArray(response.data) ? response.data : response.data.results || []
+          Array.isArray(res.data) ? res.data : res.data.results || []
         );
       })
-      .catch((error) => console.error(error))
+      .catch((err) => console.error(err))
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="loading-spinner"></div>;
+  if (loading) return <div className="inv-loading"><div className="loading-spinner" /></div>;
+
+  const filtered = chemicals.filter((item) => {
+    const term = searchTerm.toLowerCase();
+    if (term && !item.chemical_name.toLowerCase().includes(term)) return false;
+    if (showOnlyLowStock) {
+      const qty = parseFloat(item.quantity);
+      const reorder = parseFloat(item.reorder_level || 0);
+      const status = getStatus(qty, reorder);
+      return status === 'critical' || status === 'low-stock';
+    }
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    return <div className="inv-empty">No chemicals found.</div>;
+  }
 
   return (
-    <div className="table-container animate-fade">
-      <table className="premium-table">
-        <thead>
-          <tr>
-            <th>Chemical Name</th>
-            <th>Available Stock</th>
-            {showReorderLevel && <th>Reorder Point</th>}
-            <th>Last Logged</th>
-          </tr>
-        </thead>
-        <tbody>
-          {chemicals.map((item) => {
-            const isLow = showReorderLevel && item.available_quantity_ml <= item.reorder_level;
-            return (
-              <tr key={item.id} className={isLow ? 'row-warning' : ''}>
-                <td>
-                  <div className="item-name-cell">
-                    <FaFlask className="item-icon" style={{ color: isLow ? '#f59e0b' : '#6366f1' }} />
-                    {item.chemical_name}
-                  </div>
-                </td>
-                <td>
-                  <span className={`stock-value ${isLow ? 'low' : ''}`}>
-                    {item.available_quantity_ml} <span className="unit">ml</span>
+    <>
+      <div className="inv-table-wrapper">
+        <table className="inv-table">
+          <thead>
+            <tr>
+              <th className="col-index">#</th>
+              <th className="col-name">Name</th>
+              <th className="col-qty">Quantity</th>
+              {showExtra && <th className="col-rl">Reorder Level</th>}
+              {showExtra && <th className="col-status">Status</th>}
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((item, idx) => {
+              const qty = parseFloat(item.quantity);
+              const reorder = parseFloat(item.reorder_level || 0);
+              const status = showExtra ? getStatus(qty, reorder) : null;
+              const colors = status ? getStatusColor(status) : null;
+              return (
+                <tr key={item.id} className={showExtra && status ? `row-${status}` : ''}>
+                  <td className="col-index">{idx + 1}</td>
+                  <td className="col-name"><span className="item-name">{item.chemical_name}</span></td>
+                  <td className="col-qty">{qty} <span className="unit-text">{item.unit || 'ml'}</span></td>
+                  {showExtra && <td className="col-rl">{reorder} <span className="unit-text">{item.unit || 'ml'}</span></td>}
+                  {showExtra && (
+                    <td className="col-status">
+                      <span className={`status-badge ${status}`}>{colors.label}</span>
+                    </td>
+                  )}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="inv-card-grid">
+        {filtered.map((item) => {
+          const qty = parseFloat(item.quantity);
+          const reorder = parseFloat(item.reorder_level || 0);
+          const status = showExtra ? getStatus(qty, reorder) : null;
+          return (
+            <div key={item.id} className={`inv-card${showExtra && status ? ` card-${status}` : ''}`}>
+              <div className="inv-card-name">{item.chemical_name}</div>
+              <div className="inv-card-row">
+                <span className="inv-card-label">
+                  Qty: <span className="inv-card-value">{qty} <span className="unit-text">{item.unit || 'ml'}</span></span>
+                </span>
+                {showExtra && (
+                  <span className="inv-card-label">
+                    RL: <span className="inv-card-value">{reorder} <span className="unit-text">{item.unit || 'ml'}</span></span>
                   </span>
-                </td>
-                {showReorderLevel && <td>{item.reorder_level} ml</td>}
-                <td>
-                  <div className="date-cell">
-                    <FaHistory className="date-icon" />
-                    {item.last_updated}
-                  </div>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </>
   );
 }
 

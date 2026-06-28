@@ -1,373 +1,541 @@
+/* Robust Modal Layout */
 .add-request-overlay {
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(8px);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(5px);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  z-index: 1000;
+  z-index: 9999;
+  padding-top: 60px;
 }
 
 .add-request-modal {
-  background: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-  width: 90%;
-  max-width: 650px;
+  background: var(--bg-surface);
+  color: var(--text-main);
+  width: 95%;
+  max-width: 700px;
+  height: auto;
   max-height: 90vh;
-  overflow-y: auto;
+  /* Allow it to take up to 90% of screen height */
+  border-radius: 30px;
+  border: 1.5px solid var(--border);
   display: flex;
   flex-direction: column;
-  animation: modalSlideUp 0.3s ease-out;
+  overflow: hidden;
+  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5);
+  animation: modalFadePop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-@keyframes modalSlideUp {
+@keyframes modalFadePop {
   from {
-    transform: translateY(30px);
     opacity: 0;
+    transform: scale(0.95) translateY(20px);
   }
 
   to {
-    transform: translateY(0);
     opacity: 1;
+    transform: scale(1) translateY(0);
   }
 }
 
+.request-form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  /* Critical for flex overflow */
+  overflow: hidden;
+}
+
 .modal-header {
-  padding: 24px;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 24px 40px;
+  background: var(--bg-main);
+  border-bottom: 1.5px solid var(--border);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .header-title-box {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 15px;
 }
 
 .header-icon {
-  font-size: 1.5rem;
-  color: #3f51b5;
+  font-size: 1.6rem;
+  color: #3b51bf;
 }
 
 .modal-header h2 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-main);
   margin: 0;
-  font-size: 1.4rem;
-  color: #1a1a1a;
-  font-weight: 700;
 }
 
 .modal-close {
-  background: none;
-  border: none;
-  font-size: 1.2rem;
-  color: #999;
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border);
+  color: var(--text-muted);
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  transition: color 0.2s;
-}
-
-.modal-close:hover {
-  color: #333;
 }
 
 .modal-body {
-  padding: 24px;
+  padding: 40px;
+  overflow-y: auto !important;
+  flex: 1;
+  min-height: 0;
+  background: var(--bg-surface);
+}
+
+/* Custom Scrollbar */
+.modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 10px;
 }
 
 .info-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  margin-bottom: 24px;
-  background: #f8f9ff;
-  padding: 16px;
-  border-radius: 12px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 25px;
+  background: var(--bg-main);
+  padding: 20px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  margin-bottom: 30px;
 }
 
 .info-item label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.8rem;
-  color: #666;
-  margin-bottom: 4px;
-  font-weight: 500;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  display: block;
+  margin-bottom: 5px;
 }
 
 .readonly-field {
-  font-weight: 600;
-  color: #3f51b5;
-  font-size: 1rem;
+  font-weight: 700;
+  color: #3b51bf;
+  font-size: 1.05rem;
 }
 
 .form-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
   gap: 20px;
-  margin-bottom: 24px;
-}
-
-.flex-2 {
-  flex: 2;
-}
-
-.flex-1 {
-  flex: 1;
+  margin-bottom: 30px;
 }
 
 .form-group label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #444;
-  margin-bottom: 8px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  display: block;
+  margin-bottom: 10px;
 }
 
 .modern-select,
 .modern-input,
 .modern-textarea {
   width: 100%;
-  padding: 12px;
-  border: 1px solid #e0e0e0;
-  border-radius: 10px;
-  font-size: 0.95rem;
-  background: #fff;
-  transition: all 0.3s;
+  padding: 16px 20px;
+  background: var(--bg-main);
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  color: var(--text-main);
+  font-size: 1rem;
 }
 
-.modern-select:focus,
-.modern-input:focus,
-.modern-textarea:focus {
-  outline: none;
-  border-color: #3f51b5;
-  box-shadow: 0 0 0 4px rgba(63, 81, 181, 0.1);
+.items-section {
+  width: 100%;
+  margin-top: 40px;
 }
 
 .items-section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: 32px 0 16px 0;
-  padding-bottom: 8px;
-  border-bottom: 2px solid #f0f0f0;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  width: 100%;
 }
 
 .items-section-header h3 {
-  font-size: 1.1rem;
-  color: #1a1a1a;
-  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  opacity: 0.8;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.add-chem-btn {
-  background: #3f51b5;
+/* Chemical Requirements: match Stock Entry layout */
+.chemical-requirements-section .items-section-header h3 {
+  color: var(--text-main);
+}
+
+.chemical-requirements-section .btn-add-line {
+  background: #ef4444;
   color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.add-chem-btn:hover {
-  background: #303f9f;
-}
-
-.chemical-items-container {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.chemical-request-row {
-  display: grid;
-  grid-template-columns: 2fr 1fr 40px;
-  gap: 12px;
-  align-items: start;
-  animation: rowFadeIn 0.3s ease-out;
-}
-
-@keyframes rowFadeIn {
-  from {
-    opacity: 0;
-    transform: translateX(-10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.chem-select-col select,
-.chem-qty-col input {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  transition: all 0.3s;
-}
-
-.chem-select-col select:focus,
-.chem-qty-col input:focus {
-  outline: none;
-  border-color: #3f51b5;
-  box-shadow: 0 0 0 4px rgba(63, 81, 181, 0.1);
-}
-
-.qty-input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.unit-tag {
-  position: absolute;
-  right: 12px;
-  font-size: 0.75rem;
+  padding: 10px 24px;
+  border-radius: 12px;
   font-weight: 700;
-  color: #999;
-  pointer-events: none;
+  gap: 8px;
 }
 
-.qty-input-wrapper input {
-  padding-right: 40px;
+.chemical-requirements-section .btn-add-line:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
 }
 
-.remove-chem-btn {
-  background: #fff1f1;
-  color: #e53935;
+.chemical-requirements-table {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.chemical-requirements-section .grid-matrix-header {
+  display: grid !important;
+  grid-template-columns: 2.5fr 1fr 60px !important;
+  gap: 20px;
+  padding: 0 24px 15px 24px;
   border: none;
-  width: 38px;
-  height: 38px;
-  border-radius: 8px;
-  display: flex;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 20px;
+}
+
+.chemical-requirements-section .grid-matrix-header span {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.chemical-requirements-section .grid-row.chemical-row {
+  display: grid !important;
+  grid-template-columns: 2.5fr 1fr 60px !important;
+  gap: 20px;
+  align-items: center;
+  margin-bottom: 14px;
+  padding: 16px 24px;
+  border-radius: 20px;
+  background: #ffffff !important;
+  color: #000000 !important;
+  border: 1.5px solid #e2e8f0;
+  position: relative;
+  transition: all 0.3s ease;
+  overflow: visible !important;
+}
+
+.chemical-requirements-section .grid-row.chemical-row:focus-within {
+  z-index: 100;
+  border-color: #cbd5e1;
+}
+
+.chemical-requirements-section .autocomplete-wrapper {
+  overflow: visible !important;
+}
+
+:root.dark-mode .chemical-requirements-section .grid-row.chemical-row {
+  background: #1a2235 !important;
+  /* Bluish dark from image */
+  color: #ffffff !important;
+  border: 1.5px solid #2d3748;
+}
+
+.chemical-requirements-section .grid-input {
+  width: 100% !important;
+  min-height: 48px !important;
+  padding: 12px 18px !important;
+  background: #f8f9fa !important;
+  color: #000000 !important;
+  border: 1.5px solid #cbd5e1 !important;
+  border-radius: 12px !important;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+:root.dark-mode .chemical-requirements-section .grid-input {
+  background: #0f172a !important;
+  color: #ffffff !important;
+  border: 1.5px solid #334155 !important;
+}
+
+.chemical-requirements-section .grid-input:focus {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border-color: #94a3b8 !important;
+  outline: none;
+}
+
+:root.dark-mode .chemical-requirements-section .grid-input:focus {
+  background: #0f172a !important;
+  color: #ffffff !important;
+  border-color: #475569 !important;
+}
+
+.chemical-requirements-section .btn-row-del {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 12px !important;
+  background: #f1f5f9 !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #ef4444 !important;
+  display: flex !important;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s;
+  justify-self: center;
 }
 
-.remove-chem-btn:hover:not(:disabled) {
-  background: #e53935;
+:root.dark-mode .chemical-requirements-section .btn-row-del {
+  background: #334155 !important;
+  border-color: #475569 !important;
+}
+
+.chemical-requirements-section .btn-row-del:hover {
+  transform: scale(1.05);
+  /* Just a slight scale, no color change */
+}
+
+:root.dark-mode .chemical-requirements-section .btn-row-del:hover {
+  transform: scale(1.05);
+}
+
+/* Generic Fallbacks */
+.btn-add-line {
+  background: #ef4444;
   color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 12px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
 }
 
-.remove-chem-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
+.grid-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  width: 100%;
 }
 
-.error-text {
-  color: #e53935;
-  font-size: 0.75rem;
-  margin-top: 4px;
-  display: block;
-  font-weight: 500;
-}
+@media (max-width: 500px) {
+  .chemical-requirements-table {
+    padding: 0 20px;
+  }
 
-.margin-top-lg {
-  margin-top: 24px;
-}
+  .chemical-requirements-section .grid-matrix-header,
+  .chemical-requirements-section .grid-row.chemical-row {
+    grid-template-columns: 1fr 1fr 44px;
+    gap: 10px;
+  }
 
-.error-banner {
-  background: #fff1f1;
-  color: #e53935;
-  padding: 12px;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  margin-top: 16px;
-  border-left: 4px solid #e53935;
+  .chemical-requirements-section .grid-row.chemical-row .autocomplete-wrapper {
+    grid-column: 1 / -1;
+  }
+
+  .chemical-requirements-section .grid-row.chemical-row .btn-row-del {
+    grid-column: span 1;
+    justify-self: start;
+  }
+
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding: 20px !important;
+  }
 }
 
 .modal-footer {
-  padding: 24px;
-  border-top: 1px solid #f0f0f0;
+  padding: 24px 40px;
+  background: var(--bg-main);
+  border-top: 1.5px solid var(--border);
   display: flex;
-  justify-content: flex-end;
-  gap: 12px;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
 }
 
 .footer-actions {
   display: flex;
-  gap: 12px;
+  gap: 15px;
+}
+
+.btn-secondary {
+  padding: 12px 24px;
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  color: var(--text-main);
 }
 
 .btn-draft {
-  background: #f0f4ff;
-  color: #3f51b5;
-  border: 1px solid #d0d9ff;
   padding: 12px 24px;
-  border-radius: 10px;
-  font-weight: 600;
+  background: transparent;
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  color: var(--text-muted);
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-draft:hover:not(:disabled) {
-  background: #e0e8ff;
-  border-color: #3f51b5;
-}
-
-.btn-draft:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 .btn-primary-action {
-  background: #3f51b5;
+  padding: 12px 30px;
+  background: #3b51bf;
   color: white;
   border: none;
-  padding: 12px 32px;
-  border-radius: 10px;
-  font-weight: 600;
+  border-radius: 14px;
+  font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(63, 81, 181, 0.3);
+}
+
+.autocomplete-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.suggestions-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  z-index: 1000;
+  max-height: 250px;
+  overflow-y: auto;
+  min-width: 250px;
+}
+
+.list-style-none {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.suggestion-item {
+  padding: 12px 18px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-main);
   transition: all 0.2s;
 }
 
-.btn-primary-action:hover:not(:disabled) {
-  background: #303f9f;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(63, 81, 181, 0.4);
+.suggestion-item:not(:last-child) {
+  border-bottom: 1px solid var(--border);
 }
 
-.btn-primary-action:disabled {
-  background: #94a3b8;
-  opacity: 0.7;
-  cursor: not-allowed;
-  box-shadow: none;
+.suggestion-item:hover {
+  background: var(--bg-main);
+  color: var(--primary);
+}
+
+.error-banner {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  padding: 15px;
+  border-radius: 12px;
+  margin-top: 15px;
 }
 
 .info-banner {
-  padding: 12px 16px;
-  border-radius: 8px;
+  padding: 15px;
+  border-radius: 12px;
+  margin-top: 15px;
   display: flex;
-  align-items: center;
-  gap: 12px;
+  gap: 10px;
   font-size: 0.9rem;
-  line-height: 1.4;
-  margin-top: 20px;
 }
 
 .warning-banner {
-  background: rgba(243, 156, 18, 0.1);
-  border-left: 4px solid #f39c12;
-  color: #e67e22;
+  background: rgba(245, 158, 11, 0.1);
+  color: #d97706;
 }
 
-.warning-banner svg {
-  font-size: 1.2rem;
+.field-error {
+  display: block;
+  color: #ef4444;
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-top: 6px;
+  text-align: left;
+}
+
+.input-error {
+  border-color: #ef4444 !important;
+}
+
+.qty-ml-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.qty-ml-wrapper .grid-input-qty {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+}
+
+.unit-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  white-space: nowrap;
   flex-shrink: 0;
 }
 
-.margin-top-md {
-  margin-top: 16px;
+:root.dark-mode .unit-label {
+  color: #94a3b8;
+}
+
+.qty-ml-wrapper .field-error {
+  position: absolute;
+  bottom: -20px;
+  left: 0;
+  white-space: nowrap;
+}
+
+.autocomplete-wrapper .field-error {
+  position: absolute;
+  bottom: -20px;
+  left: 0;
 }

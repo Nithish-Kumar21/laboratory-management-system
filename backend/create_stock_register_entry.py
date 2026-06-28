@@ -34,7 +34,8 @@ def create_entry():
     ChemicalItem.objects.create(
         stock_register=stock_entry,
         chemical_name="Hydrochloric Acid",
-        quantity_ml=Decimal("500.00"),
+        quantity=Decimal("500.00"),
+        unit='ml',
         rate=Decimal("800.00"),
         make="Merck",
     )

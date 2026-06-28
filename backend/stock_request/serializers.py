@@ -1,22 +1,30 @@
 from rest_framework import serializers
 from django.utils import timezone
 from .models import StockRequest, StockRequestChemicalItem, StockRequestApparatusItem, IssueRegister, IssueChemicals
+from inventory.models import AvailableChemical
 
 
 class ChemicalItemWriteSerializer(serializers.Serializer):
     chemical_name = serializers.CharField(max_length=64)
-    quantity_ml = serializers.DecimalField(max_digits=10, decimal_places=2)
+    quantity = serializers.DecimalField(max_digits=10, decimal_places=2)
 
-    def validate_quantity_ml(self, value):
+    def validate_quantity(self, value):
         if value <= 0:
             raise serializers.ValidationError("Quantity must be greater than 0")
         return value
 
 
 class ChemicalItemSerializer(serializers.ModelSerializer):
+    quantity = serializers.DecimalField(max_digits=10, decimal_places=2)
+    unit = serializers.SerializerMethodField()
+    actual_used_quantity = serializers.DecimalField(max_digits=10, decimal_places=2, allow_null=True)
+
     class Meta:
         model = StockRequestChemicalItem
-        fields = ['id', 'chemical_name', 'quantity_ml', 'actual_used_quantity_ml']
+        fields = ['id', 'chemical_name', 'quantity', 'unit', 'actual_used_quantity']
+
+    def get_unit(self, obj):
+        return 'ml'
 
 
 class StockRequestCreateSerializer(serializers.ModelSerializer):
@@ -53,6 +61,19 @@ class StockRequestCreateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     {"class_name": "Class must belong to your department (M.Sc Chemistry)."}
                 )
+        for item in chemicals:
+            chem_name = item.get('chemical_name')
+            qty = item.get('quantity')
+            if chem_name and qty:
+                try:
+                    chem = AvailableChemical.objects.get(chemical_name=chem_name)
+                    if qty > chem.quantity:
+                        raise serializers.ValidationError(
+                            f"Requested quantity for '{chem_name}' exceeds available stock (Available: {chem.quantity})"
+                        )
+                except AvailableChemical.DoesNotExist:
+                    pass
+
         status = data.get('status', 'pending')
         if status == 'pending' and user.role == 'staff':
             active_statuses = ['pending', 'accepted', 'issued', 'reported']
@@ -145,9 +166,9 @@ class StockRequestDetailSerializer(serializers.ModelSerializer):
 class UsageReportItemSerializer(serializers.Serializer):
     """Serializer for each item's actual usage report."""
     id = serializers.IntegerField()
-    actual_used_quantity_ml = serializers.DecimalField(max_digits=10, decimal_places=2)
+    actual_used_quantity = serializers.DecimalField(max_digits=10, decimal_places=2)
 
-    def validate_actual_used_quantity_ml(self, value):
+    def validate_actual_used_quantity(self, value):
         if value < 0:
             raise serializers.ValidationError("Actual used quantity cannot be negative")
         return value
@@ -166,10 +187,14 @@ class UsageReportSerializer(serializers.Serializer):
 class IssueChemicalsSerializer(serializers.ModelSerializer):
     returned = serializers.ReadOnlyField()
     additional = serializers.ReadOnlyField()
+    unit = serializers.SerializerMethodField()
 
     class Meta:
         model = IssueChemicals
-        fields = ['id', 'chemical_name', 'issued_quantity', 'actual_usage', 'returned', 'additional']
+        fields = ['id', 'chemical_name', 'issued_quantity', 'unit', 'actual_usage', 'returned', 'additional']
+
+    def get_unit(self, obj):
+        return 'ml'
 
 
 class IssueRegisterSerializer(serializers.ModelSerializer):

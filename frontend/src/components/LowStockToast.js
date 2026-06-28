@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { FaBell, FaTimes } from 'react-icons/fa';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
+import { getStatus } from '../utils/inventory';
 import './LowStockToast.css';
 
 function LowStockToast() {
@@ -25,18 +26,28 @@ function LowStockToast() {
     const checkLowStock = useCallback(async () => {
         try {
             const [chemRes, appRes] = await Promise.all([
-                api.get('/low_stock_chemicals/'),
-                api.get('/low_stock_apparatus/')
+                api.get('/available_chemicals/').catch(() => ({ data: [] })),
+                api.get('/available_apparatus/').catch(() => ({ data: [] }))
             ]);
 
             const chemData = Array.isArray(chemRes.data) ? chemRes.data : chemRes.data.results || [];
             const appData = Array.isArray(appRes.data) ? appRes.data : appRes.data.results || [];
-            const total = chemData.length + appData.length;
+
+            const lowChem = chemData.filter(c => {
+                const qty = parseFloat(c.quantity);
+                const reorder = parseFloat(c.reorder_level || 0);
+                return getStatus(qty, reorder) !== 'healthy';
+            });
+            const lowApp = appData.filter(a => {
+                const qty = parseFloat(a.available_quantity_pieces);
+                const reorder = parseFloat(a.reorder_level || 0);
+                return getStatus(qty, reorder) !== 'healthy';
+            });
+            const total = lowChem.length + lowApp.length;
 
             if (total > 0 && total !== lowStockCountRef.current) {
                 setLowStockCount(total);
                 setShow(true);
-                // Auto hide after 5 seconds
                 if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
                 hideTimerRef.current = setTimeout(() => setShow(false), 5000);
             } else if (total === 0) {

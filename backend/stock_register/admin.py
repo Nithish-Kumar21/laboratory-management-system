@@ -4,7 +4,7 @@ from .models import StockRegister, ChemicalItem, ApparatusItem
 class ChemicalItemInline(admin.TabularInline):
     model = ChemicalItem
     extra = 0
-    fields = ('chemical_name', 'make', 'quantity_ml', 'rate')  # Added make
+    fields = ('chemical_name', 'make', 'quantity', 'unit', 'rate')
 
 class ApparatusItemInline(admin.TabularInline):
     model = ApparatusItem

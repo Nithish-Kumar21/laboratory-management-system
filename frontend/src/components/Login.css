@@ -8,7 +8,7 @@
     overflow-x: hidden;
     overflow-y: auto;
     font-family: 'Outfit', 'Inter', "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-    background: #f4f7f6;
+    background: var(--bg-main, #f4f7f6);
 }
 
 .login-header {

@@ -5,6 +5,7 @@ import api from '../utils/api';
 import CreateUserModal from './CreateUserModal';
 import EditUserModal from './EditUserModal';
 import ConfirmDialog from './ConfirmDialog';
+import './UserManagement.css';
 
 const UserManagement = () => {
   const { isAdmin } = useAuth();
@@ -30,7 +31,9 @@ const UserManagement = () => {
     setError('');
     try {
       const response = await api.get('/users/');
-      setUsers(Array.isArray(response.data) ? response.data : response.data.results || []);
+      const allUsers = Array.isArray(response.data) ? response.data : response.data.results || [];
+      // Filter out admin users from the list as requested
+      setUsers(allUsers.filter(user => user.role !== 'admin'));
     } catch (err) {
       setError('Failed to load users');
       console.error(err);
@@ -59,112 +62,92 @@ const UserManagement = () => {
     }
   };
 
-  const getRoleBadgeColor = (role) => {
+  const getRoleStyles = (role) => {
     switch (role) {
       case 'admin':
-        return { bg: '#e3f2fd', color: '#1976d2' };
+        return { backgroundColor: '#eff6ff', color: '#1e40af' };
       case 'hod':
-        return { bg: '#fff3e0', color: '#f57c00' };
+        return { backgroundColor: '#fff7ed', color: '#9a3412' };
       case 'store_keeper':
-        return { bg: '#e8f5e9', color: '#388e3c' };
+        return { backgroundColor: '#f0fdf4', color: '#166534' };
       case 'staff':
-        return { bg: '#f3e5f5', color: '#7b1fa2' };
+        return { backgroundColor: '#fdf4ff', color: '#86198f' };
       default:
-        return { bg: '#f3e5f5', color: '#7b1fa2' };
+        return { backgroundColor: '#f8fafc', color: '#475569' };
     }
   };
 
   const getRoleDisplay = (role) => {
     switch (role) {
-      case 'admin':
-        return 'Administrator';
-      case 'hod':
-        return 'Head of Department';
-      case 'store_keeper':
-        return 'Store Keeper';
-      case 'staff':
-        return 'Staff';
-      default:
-        return role;
+      case 'admin': return 'Administrator';
+      case 'hod': return 'Head of Department';
+      case 'store_keeper': return 'Store Keeper';
+      case 'staff': return 'Staff';
+      default: return role;
     }
   };
 
   if (loading) {
-    return <div style={styles.loading}>Loading users...</div>;
+    return (
+      <div className="user-mgmt-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div style={{ color: '#38bdf8', fontSize: '1.2rem' }}>Loading users...</div>
+      </div>
+    );
   }
 
   if (error) {
-    return <div style={styles.error}>{error}</div>;
+    return (
+      <div className="user-mgmt-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div style={{ color: '#ef4444', fontSize: '1.2rem' }}>{error}</div>
+      </div>
+    );
   }
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <h1 style={styles.title}>User Management</h1>
-        <button onClick={() => setShowCreateModal(true)} style={styles.createButton}>
+    <div className="user-mgmt-container">
+      <div className="user-mgmt-header">
+        <h1>User Management</h1>
+        <button className="btn-create-user" onClick={() => setShowCreateModal(true)}>
           + Create User
         </button>
       </div>
 
-      <div style={styles.tableContainer}>
-        <table style={styles.table}>
+      <div className="user-table-card">
+        <table className="user-table">
           <thead>
             <tr>
-              <th style={styles.th}>Employee ID</th>
-              <th style={styles.th}>Name</th>
-              <th style={styles.th}>Email</th>
-              <th style={styles.th}>Role</th>
-              <th style={styles.th}>Status</th>
-              <th style={styles.th}>Actions</th>
+              <th>Employee ID</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {users.map((user) => {
-              const roleColor = getRoleBadgeColor(user.role);
-              return (
-                <tr key={user.id} style={styles.tr}>
-                  <td style={styles.td}>{user.employee_id || '-'}</td>
-                  <td style={styles.td}>{user.full_name || '-'}</td>
-                  <td style={styles.td}>{user.email || '-'}</td>
-                  <td style={styles.td}>
-                    <span
-                      style={{
-                        ...styles.roleBadge,
-                        backgroundColor: roleColor.bg,
-                        color: roleColor.color,
-                      }}
-                    >
-                      {getRoleDisplay(user.role)}
-                    </span>
-                  </td>
-                  <td style={styles.td}>
-                    <span
-                      style={{
-                        ...styles.statusBadge,
-                        backgroundColor: user.is_active ? '#e8f5e9' : '#ffebee',
-                        color: user.is_active ? '#2e7d32' : '#c62828',
-                      }}
-                    >
-                      {user.is_active ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td style={styles.td}>
-                    <button
-                      onClick={() => handleEdit(user)}
-                      style={styles.editButton}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDeleteClick(user.id)}
-                      style={styles.deleteButton}
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
+            {users.map((user) => (
+              <tr key={user.id}>
+                <td>{user.employee_id || '-'}</td>
+                <td>{user.full_name || '-'}</td>
+                <td>{user.email || '-'}</td>
+                <td>
+                  <span className="role-badge" style={getRoleStyles(user.role)}>
+                    {getRoleDisplay(user.role)}
+                  </span>
+                </td>
+                <td>
+                  <span className={`status-badge ${user.is_active ? 'active' : 'inactive'}`}>
+                    {user.is_active ? 'Active' : 'Inactive'}
+                  </span>
+                </td>
+                <td>
+                  <div className="action-btns">
+                    <button className="btn-edit" onClick={() => handleEdit(user)}>Edit</button>
+                    <button className="btn-delete" onClick={() => handleDeleteClick(user.id)}>Delete</button>
+                  </div>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
@@ -202,106 +185,6 @@ const UserManagement = () => {
       />
     </div>
   );
-};
-
-const styles = {
-  container: {
-    padding: '24px',
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '24px',
-  },
-  title: {
-    fontSize: '28px',
-    fontWeight: '600',
-    color: '#2c3e50',
-    margin: 0,
-  },
-  createButton: {
-    padding: '12px 24px',
-    backgroundColor: '#6366f1',
-    color: 'white',
-    border: 'none',
-    borderRadius: '6px',
-    fontSize: '14px',
-    fontWeight: '500',
-    cursor: 'pointer',
-  },
-  loading: {
-    padding: '40px',
-    textAlign: 'center',
-    fontSize: '16px',
-    color: '#666',
-  },
-  error: {
-    padding: '40px',
-    textAlign: 'center',
-    fontSize: '16px',
-    color: '#c33',
-  },
-  tableContainer: {
-    backgroundColor: 'white',
-    borderRadius: '8px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-    overflow: 'hidden',
-  },
-  table: {
-    width: '100%',
-    borderCollapse: 'collapse',
-  },
-  th: {
-    padding: '16px',
-    textAlign: 'left',
-    backgroundColor: '#f8f9fa',
-    color: '#2c3e50',
-    fontWeight: '600',
-    fontSize: '14px',
-    borderBottom: '2px solid #e0e0e0',
-  },
-  tr: {
-    borderBottom: '1px solid #e0e0e0',
-  },
-  td: {
-    padding: '16px',
-    fontSize: '14px',
-    color: '#2c3e50',
-  },
-  roleBadge: {
-    padding: '4px 12px',
-    borderRadius: '12px',
-    fontSize: '12px',
-    fontWeight: '500',
-    display: 'inline-block',
-  },
-  statusBadge: {
-    padding: '4px 12px',
-    borderRadius: '12px',
-    fontSize: '12px',
-    fontWeight: '500',
-    display: 'inline-block',
-  },
-  editButton: {
-    padding: '6px 16px',
-    backgroundColor: '#fff',
-    color: '#6366f1',
-    border: '1px solid #6366f1',
-    borderRadius: '4px',
-    fontSize: '13px',
-    cursor: 'pointer',
-    marginRight: '8px',
-  },
-  deleteButton: {
-    padding: '6px 16px',
-    backgroundColor: '#fff',
-    color: '#dc2626',
-    border: '1px solid #dc2626',
-    borderRadius: '4px',
-    fontSize: '13px',
-    cursor: 'pointer',
-  },
 };
 
 export default UserManagement;

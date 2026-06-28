@@ -31,7 +31,7 @@ def test_stock_request_flow():
         request_data = {
             'reason': 'Urgent requirement for practicals',
             'chemical_items': [
-                {'chemical_name': 'Hydrochloric Acid', 'quantity_ml': 500}
+                {'chemical_name': 'Hydrochloric Acid', 'quantity': 500}
             ],
             'apparatus_items': [
                 {'apparatus_name': 'Test Tubes', 'quantity_pieces': 50}

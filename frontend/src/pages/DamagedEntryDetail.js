@@ -1,15 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { FaArrowLeft, FaTrash, FaExclamationTriangle, FaTools, FaCalendarAlt, FaUserTie, FaGraduationCap } from 'react-icons/fa';
+import { FaArrowLeft, FaExclamationTriangle, FaTools, FaPrint } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import ConfirmDialog from '../components/ConfirmDialog';
 import './DamagedEntryDetail.css';
 
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
 function DamagedEntryDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [damagedEntry, setDamagedEntry] = useState(null);
+  const [entry, setEntry] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { isStaff, isStoreKeeper } = useAuth();
@@ -19,13 +25,9 @@ function DamagedEntryDetail() {
   useEffect(() => {
     if (isStaff) { navigate('/'); return; }
     api.get(`/damaged_entry/${id}/`)
-      .then(res => { setDamagedEntry(res.data); setLoading(false); })
+      .then(res => { setEntry(res.data); setLoading(false); })
       .catch(err => { setError(err.response?.data?.error || 'Load failed'); setLoading(false); });
   }, [id, isStaff, navigate]);
-
-  const handleDelete = () => {
-    setDialog({ open: true, message: 'Delete this entry? Inventory will be reverted.', showCancel: true, onConfirm: runDelete });
-  };
 
   const runDelete = () => {
     setDeleting(true);
@@ -35,78 +37,88 @@ function DamagedEntryDetail() {
       .finally(() => setDeleting(false));
   };
 
-  if (loading) return <div className="loading-spinner"></div>;
+  const handleDelete = () => {
+    setDialog({ open: true, message: 'Delete this damaged entry? Inventory will be reverted.', showCancel: true, onConfirm: runDelete });
+  };
+
+  if (loading) return <div className="loading-spinner" />;
   if (error) return <div className="error-message">{error}</div>;
-  if (!damagedEntry) return null;
+  if (!entry) return null;
+
+  const damagedItems = entry.damaged_items || [];
 
   return (
-    <div className="damaged-detail-page animate-up">
-      <div className="detail-header">
-        <button className="back-button" onClick={() => navigate('/damaged-entry')}>
-          <FaArrowLeft />
-        </button>
-        <div className="header-title-box">
-          <h2>Incident Report Details</h2>
-          <p>ENTRY ID: #{damagedEntry.id}</p>
-        </div>
-      </div>
+    <div className="staff-detail-wrapper">
+      <div className="staff-detail-page animate-up">
+        <div className="staff-detail-inner">
 
-      <div className="detail-info-grid">
-        <div className="info-card card">
-          <label><FaUserTie /> Responsible Staff</label>
-          <span>{damagedEntry.staff}</span>
-        </div>
-        <div className="info-card card">
-          <label><FaGraduationCap /> Class / Division</label>
-          <span>{damagedEntry.class_name}</span>
-        </div>
-        <div className="info-card card">
-          <label><FaCalendarAlt /> Date of Incident</label>
-          <span>{damagedEntry.date}</span>
-        </div>
-        <div className="info-card card details-full-width">
-          <label>Investigation Details</label>
-          <span>{damagedEntry.details}</span>
-        </div>
-      </div>
+          <div className="sd-back-row" onClick={() => navigate('/damaged-entry')}>
+            <FaArrowLeft />
+            <span>Damaged Entry Details</span>
+          </div>
 
-      {damagedEntry.damaged_items?.length > 0 && (
-        <div className="items-section animate-fade">
-          <h3><FaTools /> Damaged Apparatus List</h3>
-          <div className="card no-padding">
-            <table className="detail-table">
-              <thead>
-                <tr>
-                  <th>Apparatus Name</th>
-                  <th>Quantity Broken</th>
-                  <th>Caused By</th>
-                </tr>
-              </thead>
-              <tbody>
-                {damagedEntry.damaged_items.map(it => (
-                  <tr key={it.id}>
-                    <td className="item-name">{it.apparatus_name}</td>
-                    <td><span className="qty-badge">{it.quantity} pcs</span></td>
-                    <td><span className="cause-tag">{it.caused_by}</span></td>
-                  </tr>
+          <div className="sd-card">
+            <div className="sd-card-header">
+              <span className="sd-req-id">REF: DMG-{String(entry.id).padStart(3, '0')}</span>
+              <div className="sd-header-right">
+                <button className="sd-action-icon-btn" onClick={() => window.print()} title="Print">
+                  <FaPrint />
+                </button>
+              </div>
+            </div>
+            <hr className="sd-divider" />
+            <div className="sd-meta-grid">
+              <div className="sd-meta-item">
+                <div className="sd-meta-label">Staff Name</div>
+                <div className="sd-meta-value">{entry.staff || '—'}</div>
+              </div>
+              <div className="sd-meta-item">
+                <div className="sd-meta-label">Class / Division</div>
+                <div className="sd-meta-value">{entry.class_name || '—'}</div>
+              </div>
+              <div className="sd-meta-item">
+                <div className="sd-meta-label">Date of Incident</div>
+                <div className="sd-meta-value">{formatDate(entry.date)}</div>
+              </div>
+            </div>
+          </div>
+
+          {damagedItems.length > 0 && (
+            <div className="sd-card">
+              <div className="sd-card-title">
+                <FaTools /> Damaged Items
+              </div>
+              <hr className="sd-divider" />
+              <div className="sd-chem-list">
+                {damagedItems.map(item => (
+                  <div key={item.id} className="sd-chem-row multi-col">
+                    <span className="sd-chem-name">{item.apparatus_name}</span>
+                    <span className="sd-chem-qty">{item.quantity}<span className="sd-chem-unit"> pcs</span></span>
+                    <span className="sd-chem-rate">{item.caused_by || '-'}</span>
+                  </div>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+              </div>
+            </div>
+          )}
 
-      {isStoreKeeper && (
-        <div className="delete-action-box">
-          <div className="delete-text">
-            <h4><FaExclamationTriangle /> Admin Actions</h4>
-            <p>Removing this record will add the damaged quantities back to the available inventory.</p>
-          </div>
-          <button className="btn-delete-danger" onClick={handleDelete} disabled={deleting}>
-            <FaTrash /> {deleting ? 'Reverting...' : 'Delete Incident Report'}
-          </button>
+          {entry.details && (
+            <div className="sd-card">
+              <div className="sd-card-title">Incident Details</div>
+              <hr className="sd-divider" />
+              <p className="sd-remarks-text">{entry.details}</p>
+            </div>
+          )}
+
+          {isStoreKeeper && (
+            <div className="sd-actions">
+              <button className="sd-btn sd-btn-danger" onClick={handleDelete} disabled={deleting}>
+                {deleting ? 'Removing...' : 'Permanently Delete Entry'}
+              </button>
+            </div>
+          )}
+
         </div>
-      )}
+      </div>
 
       <ConfirmDialog
         open={dialog.open}
@@ -123,4 +135,3 @@ function DamagedEntryDetail() {
 }
 
 export default DamagedEntryDetail;
-

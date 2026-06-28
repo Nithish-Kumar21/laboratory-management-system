@@ -1,0 +1,225 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: Inter, sans-serif; }
+.shell { display: flex; flex-direction: column; height: 720px; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); overflow: hidden; background: #F0F2F5; }
+
+.hdr { height: 56px; background: #1A3C6E; display: flex; align-items: center; padding: 0 24px; flex-shrink: 0; border-bottom: 3px solid #4A90D9; }
+.hdr-logo { display: flex; align-items: center; gap: 8px; flex: 1; }
+.hdr-logo i { color: #fff; font-size: 20px; }
+.hdr-logo span { color: #fff; font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+.hdr-right { display: flex; align-items: center; gap: 10px; }
+.hdr-btn { width: 32px; height: 32px; border-radius: 8px; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; }
+.hdr-btn i { color: rgba(255,255,255,0.85); font-size: 17px; }
+.notif-dot { position: absolute; top: 5px; right: 5px; width: 7px; height: 7px; background: #ef4444; border-radius: 50%; border: 1.5px solid #1A3C6E; }
+.hdr-profile { display: flex; align-items: center; gap: 8px; }
+.av { width: 32px; height: 32px; border-radius: 50%; background: #4A90D9; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 11px; font-weight: 600; }
+.hdr-name { color: #fff; font-size: 13px; font-weight: 500; line-height: 1.2; }
+.hdr-role { color: rgba(255,255,255,0.55); font-size: 11px; }
+
+.body { display: flex; flex: 1; overflow: hidden; }
+
+.sidebar { width: 220px; background: #1A3C6E; display: flex; flex-direction: column; flex-shrink: 0; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 11px 20px; font-size: 13px; color: rgba(255,255,255,0.7); cursor: pointer; position: relative; transition: background 0.15s; }
+.nav-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
+.nav-item.active { background: #2d5aa0; color: #fff; font-weight: 500; }
+.nav-item.active::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #fff; }
+.nav-item i { font-size: 17px; flex-shrink: 0; }
+.sidebar-bot { margin-top: auto; border-top: 1px solid rgba(255,255,255,0.12); padding: 8px 0; }
+
+.main { flex: 1; overflow-y: auto; padding: 24px 32px; }
+.back-row { display: flex; align-items: center; gap-8; gap: 8px; margin-bottom: 20px; cursor: pointer; }
+.back-row i { font-size: 18px; color: #1A3C6E; }
+.back-row span { font-size: 14px; font-weight: 600; color: #1A3C6E; }
+.page-title { font-size: 20px; font-weight: 700; color: var(--color-text-primary); margin-bottom: 20px; }
+
+.content-col { max-width: 680px; display: flex; flex-direction: column; gap: 16px; }
+
+.card { background: #fff; border-radius: 12px; border: 0.5px solid var(--color-border-tertiary); padding: 20px; }
+.card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.card-title { font-size: 15px; font-weight: 600; color: var(--color-text-primary); display: flex; align-items: center; gap: 8px; }
+.card-title i { font-size: 18px; color: #1A3C6E; }
+
+.req-id { font-size: 15px; font-weight: 700; color: var(--color-text-primary); }
+.badge { padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+.badge-pending { background: #FEF3C7; color: #92400E; }
+.badge-dot { width: 7px; height: 7px; border-radius: 50%; background: #F59E0B; display: inline-block; margin-right: 5px; }
+
+.meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 24px; margin-top: 4px; }
+.meta-item { }
+.meta-label { font-size: 11px; color: var(--color-text-tertiary); margin-bottom: 2px; }
+.meta-value { font-size: 13px; font-weight: 600; color: var(--color-text-primary); }
+
+.divider { border: none; border-top: 0.5px solid var(--color-border-tertiary); margin: 14px 0; }
+
+.chem-row { display: flex; align-items: center; justify-content: space-between; padding: 9px 0; border-bottom: 0.5px solid var(--color-border-tertiary); }
+.chem-row:last-child { border-bottom: none; }
+.chem-name { font-size: 13px; color: var(--color-text-primary); }
+.chem-qty { font-size: 13px; font-weight: 700; color: #1A3C6E; }
+.chem-unit { font-size: 12px; font-weight: 400; color: var(--color-text-secondary); margin-left: 2px; }
+
+.remarks-text { font-size: 13px; color: var(--color-text-secondary); line-height: 1.6; }
+
+.timeline { display: flex; flex-direction: column; gap: 0; }
+.tl-item { display: flex; align-items: flex-start; gap: 12px; position: relative; padding-bottom: 16px; }
+.tl-item:last-child { padding-bottom: 0; }
+.tl-left { display: flex; flex-direction: column; align-items: center; width: 16px; flex-shrink: 0; margin-top: 2px; }
+.tl-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+.tl-dot.done { background: #22C55E; }
+.tl-dot.active { background: #F59E0B; border: 2px solid #FEF3C7; }
+.tl-dot.pending { background: #fff; border: 2px solid #d1d5db; }
+.tl-line { width: 2px; flex: 1; background: #e5e7eb; margin-top: 2px; min-height: 20px; }
+.tl-line.done { background: #22C55E; }
+.tl-content { flex: 1; }
+.tl-label { font-size: 13px; font-weight: 600; color: var(--color-text-primary); }
+.tl-label.active { color: #D97706; }
+.tl-label.faded { color: var(--color-text-tertiary); font-weight: 400; }
+.tl-sub { font-size: 11px; color: var(--color-text-tertiary); margin-top: 2px; }
+
+.action-row { display: flex; gap: 12px; margin-top: 8px; }
+.btn { flex: 1; height: 42px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; border: none; display: flex; align-items: center; justify-content: center; }
+.btn-outline { background: #fff; border: 1.5px solid #1A3C6E; color: #1A3C6E; }
+.btn-danger { background: #EF4444; color: #fff; }
+</style>
+
+<div class="shell">
+  <div class="hdr">
+    <div class="hdr-logo">
+      <i class="ti ti-flask" aria-hidden="true"></i>
+      <span>LMS</span>
+    </div>
+    <div class="hdr-right">
+      <div class="hdr-btn">
+        <i class="ti ti-bell" aria-hidden="true"></i>
+        <div class="notif-dot"></div>
+      </div>
+      <div class="hdr-btn"><i class="ti ti-moon" aria-hidden="true"></i></div>
+      <div class="hdr-profile">
+        <div class="av">ST</div>
+        <div>
+          <div class="hdr-name">Staff</div>
+          <div class="hdr-role">Store Department</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="body">
+    <div class="sidebar">
+      <div style="padding-top: 8px;">
+        <div class="nav-item"><i class="ti ti-packages" aria-hidden="true"></i>Inventory</div>
+        <div class="nav-item active"><i class="ti ti-file-text" aria-hidden="true"></i>Chemical Request</div>
+        <div class="nav-item"><i class="ti ti-pencil" aria-hidden="true"></i>My Draft</div>
+      </div>
+      <div class="sidebar-bot">
+        <div class="nav-item"><i class="ti ti-settings" aria-hidden="true"></i>Settings</div>
+        <div class="nav-item"><i class="ti ti-logout" aria-hidden="true"></i>Logout</div>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="back-row">
+        <i class="ti ti-arrow-left" aria-hidden="true"></i>
+        <span>Request Details</span>
+      </div>
+
+      <div class="content-col">
+
+        <div class="card">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+            <span class="req-id">REQ-20260425-001</span>
+            <span class="badge badge-pending"><span class="badge-dot"></span>Pending</span>
+          </div>
+          <div class="meta-grid">
+            <div class="meta-item">
+              <div class="meta-label">Staff</div>
+              <div class="meta-value">Test Staff</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label">Staff ID</div>
+              <div class="meta-value">EMP-001</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label">Class</div>
+              <div class="meta-value">I B.Sc Chemistry</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label">Date</div>
+              <div class="meta-value">25-04-2026</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title" style="margin-bottom:12px;">
+            <i class="ti ti-flask" aria-hidden="true"></i>Chemical Requirements
+          </div>
+          <div class="chem-row">
+            <span class="chem-name">Hydrochloric Acid</span>
+            <span class="chem-qty">100<span class="chem-unit">ml</span></span>
+          </div>
+          <div class="chem-row">
+            <span class="chem-name">Sodium Chloride</span>
+            <span class="chem-qty">50<span class="chem-unit">g</span></span>
+          </div>
+          <div class="chem-row">
+            <span class="chem-name">Ethanol</span>
+            <span class="chem-qty">200<span class="chem-unit">ml</span></span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title" style="margin-bottom:10px;">Purpose / Remarks</div>
+          <p class="remarks-text">Titration experiment for I B.Sc practical session</p>
+        </div>
+
+        <div class="card">
+          <div class="card-title" style="margin-bottom:16px;">Request Status</div>
+          <div class="timeline">
+            <div class="tl-item">
+              <div class="tl-left">
+                <div class="tl-dot done"></div>
+                <div class="tl-line done"></div>
+              </div>
+              <div class="tl-content">
+                <div class="tl-label">Submitted</div>
+                <div class="tl-sub">25-04-2026 · 11px</div>
+              </div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-left">
+                <div class="tl-dot active"></div>
+                <div class="tl-line"></div>
+              </div>
+              <div class="tl-content">
+                <div class="tl-label active">Pending HOD Approval</div>
+              </div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-left">
+                <div class="tl-dot pending"></div>
+                <div class="tl-line"></div>
+              </div>
+              <div class="tl-content">
+                <div class="tl-label faded">Approved &amp; Issued</div>
+              </div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-left">
+                <div class="tl-dot pending"></div>
+              </div>
+              <div class="tl-content">
+                <div class="tl-label faded">Completed</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="action-row">
+          <button class="btn btn-outline">Edit Request</button>
+          <button class="btn btn-danger">Cancel Request</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
