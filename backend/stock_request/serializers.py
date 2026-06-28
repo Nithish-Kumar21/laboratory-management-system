@@ -6,7 +6,7 @@ from inventory.models import AvailableChemical
 
 class ChemicalItemWriteSerializer(serializers.Serializer):
     chemical_name = serializers.CharField(max_length=64)
-    quantity = serializers.DecimalField(source='quantity_ml', max_digits=10, decimal_places=2)
+    quantity = serializers.DecimalField(max_digits=10, decimal_places=2)
 
     def validate_quantity(self, value):
         if value <= 0:
@@ -15,9 +15,9 @@ class ChemicalItemWriteSerializer(serializers.Serializer):
 
 
 class ChemicalItemSerializer(serializers.ModelSerializer):
-    quantity = serializers.DecimalField(source='quantity_ml', max_digits=10, decimal_places=2)
+    quantity = serializers.DecimalField(max_digits=10, decimal_places=2)
     unit = serializers.SerializerMethodField()
-    actual_used_quantity = serializers.DecimalField(source='actual_used_quantity_ml', max_digits=10, decimal_places=2, allow_null=True)
+    actual_used_quantity = serializers.DecimalField(max_digits=10, decimal_places=2, allow_null=True)
 
     class Meta:
         model = StockRequestChemicalItem
@@ -63,13 +63,13 @@ class StockRequestCreateSerializer(serializers.ModelSerializer):
                 )
         for item in chemicals:
             chem_name = item.get('chemical_name')
-            qty = item.get('quantity_ml')
+            qty = item.get('quantity')
             if chem_name and qty:
                 try:
                     chem = AvailableChemical.objects.get(chemical_name=chem_name)
-                    if qty > chem.available_quantity_ml:
+                    if qty > chem.quantity:
                         raise serializers.ValidationError(
-                            f"Requested quantity for '{chem_name}' exceeds available stock (Available: {chem.available_quantity_ml})"
+                            f"Requested quantity for '{chem_name}' exceeds available stock (Available: {chem.quantity})"
                         )
                 except AvailableChemical.DoesNotExist:
                     pass

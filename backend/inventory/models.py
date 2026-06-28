@@ -2,8 +2,9 @@ from django.db import models
 
 class AvailableChemical(models.Model):
     chemical_name = models.CharField(max_length=64, unique=True)
-    available_quantity_ml = models.DecimalField(max_digits=10, decimal_places=2)
-    last_updated = models.DateField()
+    quantity = models.DecimalField(max_digits=10, decimal_places=2)
+    unit = models.CharField(max_length=2, default='ml')
+    last_updated = models.DateField(auto_now=True)
     reorder_level = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
 
     class Meta:
@@ -30,7 +31,8 @@ class AvailableApparatus(models.Model):
 
 class LowStockChemical(models.Model):
     chemical_name = models.CharField(max_length=64, unique=True)
-    current_quantity_ml = models.DecimalField(max_digits=10, decimal_places=2)
+    quantity = models.DecimalField(max_digits=10, decimal_places=2)
+    unit = models.CharField(max_length=2, default='ml')
     reorder_level = models.DecimalField(max_digits=10, decimal_places=2)
     last_checked = models.DateField()
 

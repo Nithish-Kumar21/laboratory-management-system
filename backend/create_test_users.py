@@ -28,10 +28,10 @@ users_to_create = [
     {
         'employee_id': 'test_hod',
         'full_name': 'Test HOD',
-        'email': 'hod@test.com',
+        'email': 'test_hod@lab.com',
         'password': 'hod@123456',
         'role': 'hod',
-        'phone': '+911111111111',
+        'phone': '+910000000001',
         'designation': 'Head of Department',
         'department': 'B.Sc Chemistry',
         'password_must_change': False
@@ -39,10 +39,10 @@ users_to_create = [
     {
         'employee_id': 'test_store_keeper',
         'full_name': 'Test Store Keeper',
-        'email': 'sk@test.com',
+        'email': 'test_sk@lab.com',
         'password': 'storekeeper@123456',
         'role': 'store_keeper',
-        'phone': '+912222222222',
+        'phone': '+910000000002',
         'designation': 'Store Keeper',
         'department': 'B.Sc Chemistry',
         'password_must_change': False
@@ -50,10 +50,10 @@ users_to_create = [
     {
         'employee_id': 'test_staff',
         'full_name': 'Test Staff',
-        'email': 'staff@test.com',
+        'email': 'test_staff@lab.com',
         'password': 'staff@123456',
         'role': 'staff',
-        'phone': '+913333333333',
+        'phone': '+910000000003',
         'designation': 'Assistant Professor',
         'department': 'B.Sc Chemistry',
         'password_must_change': False

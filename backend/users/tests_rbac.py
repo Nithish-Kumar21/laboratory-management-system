@@ -15,28 +15,40 @@ class RBACVerificationTest(APITestCase):
             email='admin@test.com',
             password='password123',
             role='admin',
-            full_name='Admin User'
+            full_name='Admin User',
+            phone='+911111111111',
+            designation='Admin',
+            department='B.Sc Chemistry'
         )
         self.hod = User.objects.create_user(
             employee_id='hod_test',
             email='hod@test.com',
             password='password123',
             role='hod',
-            full_name='HOD User'
+            full_name='HOD User',
+            phone='+912222222222',
+            designation='HOD',
+            department='B.Sc Chemistry'
         )
         self.store_keeper = User.objects.create_user(
             employee_id='sk_test',
             email='sk@test.com',
             password='password123',
             role='store_keeper',
-            full_name='Store Keeper User'
+            full_name='Store Keeper User',
+            phone='+913333333333',
+            designation='Store Keeper',
+            department='B.Sc Chemistry'
         )
         self.staff = User.objects.create_user(
             employee_id='staff_test',
             email='staff@test.com',
             password='password123',
             role='staff',
-            full_name='Staff User'
+            full_name='Staff User',
+            phone='+914444444444',
+            designation='Staff',
+            department='B.Sc Chemistry'
         )
 
     def get_tokens(self, username):

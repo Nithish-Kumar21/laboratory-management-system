@@ -6,7 +6,7 @@ from .models import (
 )
 
 class AvailableChemicalSerializer(serializers.ModelSerializer):
-    quantity = serializers.DecimalField(source='available_quantity_ml', max_digits=10, decimal_places=2)
+    quantity = serializers.DecimalField(max_digits=10, decimal_places=2)
     unit = serializers.SerializerMethodField()
 
     class Meta:
@@ -24,7 +24,7 @@ class AvailableApparatusSerializer(serializers.ModelSerializer):
 
 
 class LowStockChemicalSerializer(serializers.ModelSerializer):
-    quantity = serializers.DecimalField(source='current_quantity_ml', max_digits=10, decimal_places=2)
+    quantity = serializers.DecimalField(max_digits=10, decimal_places=2)
     unit = serializers.SerializerMethodField()
 
     class Meta:

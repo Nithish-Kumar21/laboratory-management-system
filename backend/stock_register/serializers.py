@@ -7,7 +7,7 @@ from inventory.models import AvailableChemical, AvailableApparatus
 
 # Read-only serializers (existing + NEW 'make' field)
 class ChemicalItemSerializer(serializers.ModelSerializer):
-    quantity = serializers.DecimalField(source='quantity_ml', max_digits=10, decimal_places=2)
+    quantity = serializers.DecimalField(max_digits=10, decimal_places=2)
     unit = serializers.SerializerMethodField()
 
     class Meta:
@@ -57,7 +57,7 @@ class StockRegisterDetailSerializer(serializers.ModelSerializer):
 
 # Write serializers
 class ChemicalItemWriteSerializer(serializers.ModelSerializer):
-    quantity = serializers.DecimalField(source='quantity_ml', max_digits=10, decimal_places=2)
+    quantity = serializers.DecimalField(max_digits=10, decimal_places=2)
     unit = serializers.CharField(write_only=True, required=False)
 
     class Meta:
@@ -101,7 +101,7 @@ class StockRegisterCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = StockRegister
-        fields = ['invoice_number', 'date', 'supplier_name', 'remarks', 'chemical_items', 'apparatus_items']
+        fields = ['id', 'invoice_number', 'date', 'supplier_name', 'remarks', 'chemical_items', 'apparatus_items']
     
     def validate_invoice_number(self, value):
         if StockRegister.objects.filter(invoice_number=value).exists():

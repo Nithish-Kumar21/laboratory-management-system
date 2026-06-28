@@ -41,7 +41,6 @@ class DamagedEntryViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         
         if not serializer.is_valid():
-            print("Validation errors:", serializer.errors)  # Debug print
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
         try:
@@ -49,11 +48,14 @@ class DamagedEntryViewSet(viewsets.ModelViewSet):
             headers = self.get_success_headers(serializer.data)
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
         except Exception as e:
-            print("Error creating damaged entry:", str(e))  # Debug print
             return Response(
                 {"error": str(e)}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+    @transaction.atomic
+    def perform_create(self, serializer):
+        serializer.save()
     
     @action(detail=False, methods=['get'])
     def apparatus_names(self, request):

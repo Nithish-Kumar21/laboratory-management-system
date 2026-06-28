@@ -92,21 +92,27 @@ class StockRequest(models.Model):
 
 
 class StockRequestChemicalItem(models.Model):
+    UNIT_CHOICES = [
+        ('ml', 'mL'),
+        ('g', 'g'),
+    ]
+
     stock_request = models.ForeignKey(
         StockRequest,
         on_delete=models.CASCADE,
         related_name='chemical_items'
     )
     chemical_name = models.CharField(max_length=64)
-    quantity_ml = models.DecimalField(max_digits=10, decimal_places=2)
-    actual_used_quantity_ml = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    quantity = models.DecimalField(max_digits=10, decimal_places=2)
+    unit = models.CharField(max_length=2, choices=UNIT_CHOICES, default='ml')
+    actual_used_quantity = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
     class Meta:
         db_table = 'stock_request_chemical_item'
         managed = False
 
     def __str__(self):
-        return f"{self.chemical_name} - {self.quantity_ml} ml"
+        return f"{self.chemical_name} - {self.quantity} {self.unit}"
 
 
 class StockRequestApparatusItem(models.Model):

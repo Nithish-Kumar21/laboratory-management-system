@@ -18,7 +18,7 @@ class AvailableChemicalViewSet(viewsets.ModelViewSet):
     """
     API endpoint for viewing and updating available chemicals.
     """
-    queryset = AvailableChemical.objects.filter(available_quantity_ml__gte=0)
+    queryset = AvailableChemical.objects.filter(quantity__gte=0).order_by('chemical_name')
     serializer_class = AvailableChemicalSerializer
     permission_classes = [InventoryPermission]
     http_method_names = ['get', 'patch', 'head', 'options']
@@ -29,15 +29,15 @@ class AvailableChemicalViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def names(self, request):
         """Get list of chemical names and available quantity"""
-        data = AvailableChemical.objects.values('chemical_name', 'available_quantity_ml').order_by('chemical_name')
-        result = [{'name': item['chemical_name'], 'available_quantity': float(item['available_quantity_ml']), 'unit': 'ml'} for item in data]
+        data = AvailableChemical.objects.values('chemical_name', 'quantity', 'unit').order_by('chemical_name')
+        result = [{'name': item['chemical_name'], 'available_quantity': float(item['quantity']), 'unit': item.get('unit', 'ml')} for item in data]
         return Response(result)
 
 class AvailableApparatusViewSet(viewsets.ModelViewSet):
     """
     API endpoint for viewing and updating available apparatus.
     """
-    queryset = AvailableApparatus.objects.filter(available_quantity_pieces__gte=0)
+    queryset = AvailableApparatus.objects.filter(available_quantity_pieces__gte=0).order_by('apparatus_name')
     serializer_class = AvailableApparatusSerializer
     permission_classes = [InventoryPermission]
     http_method_names = ['get', 'patch', 'head', 'options']
@@ -53,7 +53,7 @@ class LowStockChemicalViewSet(viewsets.ReadOnlyModelViewSet):
     """
     API endpoint for viewing low stock chemicals.
     """
-    queryset = LowStockChemical.objects.all()
+    queryset = LowStockChemical.objects.all().order_by('chemical_name')
     serializer_class = LowStockChemicalSerializer
     permission_classes = [InventoryPermission]
 
@@ -62,7 +62,7 @@ class LowStockApparatusViewSet(viewsets.ReadOnlyModelViewSet):
     """
     API endpoint for viewing low stock apparatus.
     """
-    queryset = LowStockApparatus.objects.all()
+    queryset = LowStockApparatus.objects.all().order_by('apparatus_name')
     serializer_class = LowStockApparatusSerializer
     permission_classes = [InventoryPermission]
 

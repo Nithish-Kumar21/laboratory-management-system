@@ -4,6 +4,7 @@ import {
   TbFlask, TbSettings, TbBrandLinkedin, TbBrandX,
   TbBrandYoutube, TbBrandInstagram, TbWorld, TbMail
 } from 'react-icons/tb';
+import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 // TODO: Swap placeholder assets with real files at:
@@ -62,6 +63,7 @@ const SocialIconRow = ({ icons, size = 20, containerClass = '' }) => (
 const Login = () => {
   const [employeeId, setEmployeeId] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -111,16 +113,27 @@ const Login = () => {
         aria-label="Employee ID"
         className="w-full h-11 bg-[#EDEFF2] rounded-lg px-4 text-sm text-gray-800 placeholder-gray-400 outline-none focus:ring-2 focus:ring-[#4A90D9] disabled:opacity-60 disabled:cursor-not-allowed"
       />
-      <input
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        required
-        disabled={loading}
-        placeholder="Password"
-        aria-label="Password"
-        className="w-full h-11 bg-[#EDEFF2] rounded-lg px-4 text-sm text-gray-800 placeholder-gray-400 outline-none focus:ring-2 focus:ring-[#4A90D9] disabled:opacity-60 disabled:cursor-not-allowed"
-      />
+      <div className="relative">
+        <input
+          type={showPassword ? 'text' : 'password'}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          disabled={loading}
+          placeholder="Password"
+          aria-label="Password"
+          className="w-full h-11 bg-[#EDEFF2] rounded-lg pl-4 pr-10 text-sm text-gray-800 placeholder-gray-400 outline-none focus:ring-2 focus:ring-[#4A90D9] disabled:opacity-60 disabled:cursor-not-allowed"
+        />
+        <button
+          type="button"
+          onClick={() => setShowPassword(!showPassword)}
+          disabled={loading}
+          aria-label={showPassword ? 'Hide password' : 'Show password'}
+          className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 disabled:opacity-60"
+        >
+          {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+        </button>
+      </div>
       <button
         type="submit"
         disabled={loading}

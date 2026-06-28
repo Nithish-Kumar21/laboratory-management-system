@@ -86,6 +86,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_superuser = models.BooleanField(default=False)
     
     password_must_change = models.BooleanField(default=True)
+    is_first_login = models.BooleanField(default=False)
+    degree = models.CharField(max_length=50, null=True, blank=True)
     last_password_change = models.DateTimeField(null=True, blank=True)
     
     failed_login_attempts = models.IntegerField(default=0)

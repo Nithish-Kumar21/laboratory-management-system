@@ -3,6 +3,47 @@
 from django.db import migrations, models
 
 
+def rename_issue_register_table(apps, schema_editor):
+    """Rename chemical_issue_register to issue_register.
+    Uses RunSQL because AlterModelTable is a no-op when managed=False.
+    """
+    connection = schema_editor.connection
+    vendor = connection.vendor
+    with connection.cursor() as cursor:
+        if vendor == 'sqlite':
+            cursor.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='chemical_issue_register'"
+            )
+            if cursor.fetchone():
+                cursor.execute("ALTER TABLE chemical_issue_register RENAME TO issue_register")
+        else:
+            cursor.execute(
+                "SELECT table_name FROM information_schema.tables "
+                "WHERE table_name = 'chemical_issue_register'"
+            )
+            if cursor.fetchone():
+                cursor.execute("ALTER TABLE chemical_issue_register RENAME TO issue_register")
+
+
+def reverse_rename(apps, schema_editor):
+    connection = schema_editor.connection
+    vendor = connection.vendor
+    with connection.cursor() as cursor:
+        if vendor == 'sqlite':
+            cursor.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='issue_register'"
+            )
+            if cursor.fetchone():
+                cursor.execute("ALTER TABLE issue_register RENAME TO chemical_issue_register")
+        else:
+            cursor.execute(
+                "SELECT table_name FROM information_schema.tables "
+                "WHERE table_name = 'issue_register'"
+            )
+            if cursor.fetchone():
+                cursor.execute("ALTER TABLE issue_register RENAME TO chemical_issue_register")
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -15,8 +56,5 @@ class Migration(migrations.Migration):
             name='rejection_reason',
             field=models.TextField(blank=True),
         ),
-        migrations.AlterModelTable(
-            name='issueregister',
-            table='issue_register',
-        ),
+        migrations.RunPython(rename_issue_register_table, reverse_rename),
     ]

@@ -41,32 +41,14 @@ class StockRegisterViewSet(viewsets.ModelViewSet):
 
     @transaction.atomic
     def perform_create(self, serializer):
-        stock_register = serializer.save()
-
-        # Increase inventory for each chemical item
-        for chem in stock_register.chemical_items.all():
-            available, created = AvailableChemical.objects.get_or_create(
-                chemical_name=chem.chemical_name,
-                defaults={'available_quantity_ml': 0}
-            )
-            available.available_quantity_ml += chem.quantity_ml
-            available.save()
-
-        # Increase inventory for each apparatus item
-        for app in stock_register.apparatus_items.all():
-            try:
-                available = AvailableApparatus.objects.get(apparatus_name=app.apparatus_name)
-                available.available_quantity_pieces += app.quantity_pieces
-                available.save()
-            except AvailableApparatus.DoesNotExist:
-                pass
+        serializer.save()
 
     @action(detail=False, methods=['get'])
     def chemical_names(self, request):
         """Get list of unique chemical names and available quantity for autocomplete"""
-        data = AvailableChemical.objects.values('chemical_name', 'available_quantity_ml').order_by('chemical_name')
+        data = AvailableChemical.objects.values('chemical_name', 'quantity').order_by('chemical_name')
         # Map to consistent keys
-        result = [{'name': item['chemical_name'], 'available_quantity': float(item['available_quantity_ml']), 'unit': 'ml'} for item in data]
+        result = [{'name': item['chemical_name'], 'available_quantity': float(item['quantity']), 'unit': 'ml'} for item in data]
         return Response(result)
     
     @action(detail=False, methods=['get'])
@@ -105,6 +87,7 @@ class StockRegisterViewSet(viewsets.ModelViewSet):
             make=''
         ).values_list('make', flat=True).distinct().order_by('make')
         return Response(list(makes))
+
     @transaction.atomic
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -113,7 +96,7 @@ class StockRegisterViewSet(viewsets.ModelViewSet):
         for chem in instance.chemical_items.all():
             try:
                 available = AvailableChemical.objects.get(chemical_name=chem.chemical_name)
-                available.available_quantity_ml -= chem.quantity_ml
+                available.quantity -= chem.quantity
                 available.save()
             except AvailableChemical.DoesNotExist:
                 pass
