@@ -8,5 +8,6 @@ urlpatterns = [
     path('api/', include('damaged_entry.urls')),
     path('api/', include('stock_request.urls')),
     path('api/users/', include('users.urls')),
+    path('api/', include('reports.urls')),
 
 ]

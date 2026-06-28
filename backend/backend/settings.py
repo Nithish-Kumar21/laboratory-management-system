@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'stock_register',
     'damaged_entry',
     'stock_request',
+    'reports',
 ]
 
 MIDDLEWARE = [

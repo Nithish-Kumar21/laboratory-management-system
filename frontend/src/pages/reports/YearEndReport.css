@@ -1,0 +1,282 @@
+.yer-container {
+  padding: 16px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.yer-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.yer-header-left h1 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-main);
+}
+
+.yer-header-left p {
+  font-size: 0.8rem;
+  margin: 2px 0 0 0;
+  color: var(--text-muted);
+}
+
+.yer-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.yer-year-select {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #D1D5DB;
+  background: var(--bg-surface);
+  color: var(--text-main);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.yer-download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: white;
+  transition: opacity 0.2s;
+}
+
+.yer-download-btn:hover {
+  opacity: 0.85;
+}
+
+.yer-download-btn.pdf {
+  background: #EF4444;
+}
+
+.yer-download-btn.excel {
+  background: #10B981;
+}
+
+.yer-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.yer-stat-card {
+  background: var(--bg-surface);
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.yer-stat-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.yer-stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.yer-stat-value.rupee {
+  color: #F59E0B;
+}
+
+.yer-stat-value.blue {
+  color: #3B82F6;
+}
+
+.yer-stat-value.green {
+  color: #10B981;
+}
+
+.yer-stat-value.red {
+  color: #EF4444;
+}
+
+.yer-chart-section {
+  background: var(--bg-surface);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.yer-chart-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin: 0 0 12px 0;
+}
+
+.yer-chart-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.yer-table-container {
+  overflow-x: auto;
+}
+
+.yer-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.yer-table th {
+  background: #1E3A8A;
+  color: white;
+  padding: 8px 12px;
+  text-align: left;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.yer-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #E5E7EB;
+  color: var(--text-main);
+}
+
+.yer-table tr:nth-child(even) {
+  background: #F8FAFC;
+}
+
+.yer-table tr:hover {
+  background: #EEF2FF;
+}
+
+.yer-error {
+  text-align: center;
+  padding: 40px 20px;
+  color: #EF4444;
+}
+
+.yer-error p {
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+}
+
+.yer-retry-btn {
+  padding: 8px 20px;
+  background: #3B82F6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.yer-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+}
+
+.yer-empty p {
+  font-size: 0.9rem;
+}
+
+.yer-skeleton {
+  animation: yer-shimmer 1.5s infinite;
+  background: linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%);
+  background-size: 200% 100%;
+  border-radius: 8px;
+}
+
+.yer-skeleton-card {
+  height: 80px;
+}
+
+.yer-skeleton-chart {
+  height: 300px;
+  margin-bottom: 16px;
+}
+
+.yer-skeleton-table {
+  height: 200px;
+}
+
+@keyframes yer-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@media (min-width: 768px) {
+  .yer-container {
+    padding: 24px;
+  }
+
+  .yer-stat-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .yer-chart-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .yer-header-left h1 {
+    font-size: 1.5rem;
+  }
+
+  .yer-stat-value {
+    font-size: 1.75rem;
+  }
+}
+
+/* Mobile download sticky bar */
+.yer-mobile-download-bar {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .yer-mobile-download-bar {
+    display: flex;
+    position: fixed;
+    bottom: 60px;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: var(--bg-surface);
+    border-top: 1px solid #E5E7EB;
+    padding: 8px 16px;
+    gap: 8px;
+    justify-content: center;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+  }
+
+  .yer-mobile-download-bar .yer-download-btn {
+    flex: 1;
+    justify-content: center;
+    max-width: 160px;
+  }
+
+  .yer-container {
+    padding-bottom: 70px;
+  }
+
+  .yer-header-actions .yer-download-btn {
+    display: none;
+  }
+}

@@ -7,7 +7,8 @@ import {
   FaFileAlt,
   FaSignOutAlt,
   FaEdit,
-  FaCog
+  FaCog,
+  FaChartBar
 } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import './Sidebar.css';
@@ -28,6 +29,7 @@ function Sidebar() {
     { path: '/damaged-entry', label: 'Damaged Entry', icon: FaExclamationTriangle, show: isHOD || isStoreKeeper },
     { path: '/issue-register', label: 'Issue Register', icon: FaFileAlt, show: isHOD || isStoreKeeper },
     { path: '/drafts', label: 'Draft', icon: FaEdit, show: isStaff },
+    { path: '/reports/year-end', label: 'Year-End Report', icon: FaChartBar, show: isHOD || isStoreKeeper },
   ];
 
   return (

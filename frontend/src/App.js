@@ -28,6 +28,7 @@ import NewChemicalRequest from './pages/NewChemicalRequest';
 import NewStockRegister from './pages/NewStockRegister';
 import NewDamagedEntry from './pages/NewDamagedEntry';
 import Settings from './components/Settings';
+import YearEndReport from './pages/reports/YearEndReport';
 import LowStockToast from './components/LowStockToast';
 import './styles/App.css';
 
@@ -104,6 +105,7 @@ function AppContent() {
                       <Route path="new-stock-register" element={<NewStockRegister />} />
                       <Route path="new-damaged-entry" element={<NewDamagedEntry />} />
                       <Route path="drafts" element={<StockRequest draftsOnly />} />
+                      <Route path="reports/year-end" element={<YearEndReport />} />
 
                       {/* Catch all - redirect to home */}
                       <Route path="*" element={<Navigate to="/" replace />} />
