@@ -2,7 +2,7 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 from django.core.validators import RegexValidator
 from django.db import models
 from django.utils import timezone
-from datetime import timedelta
+from datetime import timedelta, timezone as dt_tz
 import secrets
 import random
 import string
@@ -117,9 +117,12 @@ class User(AbstractBaseUser, PermissionsMixin):
         return f"{self.employee_id} - {self.full_name}"
     
     def is_account_locked(self):
-        if self.account_locked_until and timezone.now() < self.account_locked_until:
+        locked_until = self.account_locked_until
+        if locked_until and timezone.is_naive(locked_until):
+            locked_until = timezone.make_aware(locked_until, dt_tz.utc)
+        if locked_until and timezone.now() < locked_until:
             return True
-        if self.account_locked_until and timezone.now() >= self.account_locked_until:
+        if locked_until and timezone.now() >= locked_until:
             self.reset_failed_attempts()
         return False
     
@@ -170,16 +173,24 @@ class PasswordResetToken(models.Model):
         return f"Reset token for {self.user.employee_id}"
     
     def is_valid(self):
-        return not self.used and timezone.now() < self.expires_at
+        expires = self.expires_at
+        if timezone.is_naive(expires):
+            expires = timezone.make_aware(expires, dt_tz.utc)
+        return not self.used and expires > timezone.now()
     
     def mark_as_used(self):
         self.used = True
         self.save(update_fields=['used'])
     
     @staticmethod
-    def create_for_user(user):
+    def create_for_user(user, expiry_hours=None):
         token = secrets.token_urlsafe(32)
-        expires_at = timezone.now() + timedelta(hours=1)
+        if expiry_hours:
+            expires_at = timezone.now() + timedelta(hours=expiry_hours)
+        else:
+            from django.conf import settings
+            expiry_minutes = getattr(settings, 'PASSWORD_RESET_TOKEN_EXPIRY_MINUTES', 30)
+            expires_at = timezone.now() + timedelta(minutes=expiry_minutes)
         return PasswordResetToken.objects.create(
             user=user,
             token=token,

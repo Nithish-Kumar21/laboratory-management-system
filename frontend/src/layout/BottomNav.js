@@ -5,7 +5,8 @@ import {
   FaClipboardList,
   FaExclamationTriangle,
   FaFileAlt,
-  FaEdit
+  FaEdit,
+  FaChartBar
 } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import './BottomNav.css';
@@ -26,6 +27,7 @@ function BottomNav() {
     { path: '/damaged-entry', label: 'Damaged', icon: FaExclamationTriangle, show: isHOD || isStoreKeeper },
     { path: '/issue-register', label: 'Issue', icon: FaFileAlt, show: isHOD || isStoreKeeper },
     { path: '/drafts', label: 'Draft', icon: FaEdit, show: isStaff },
+    { path: '/reports/year-end', label: 'Report', icon: FaChartBar, show: isHOD || isStoreKeeper },
   ];
 
   return (
