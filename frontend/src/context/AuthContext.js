@@ -17,7 +17,6 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     checkAuth();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const checkAuth = async () => {
@@ -28,7 +27,6 @@ export const AuthProvider = ({ children }) => {
         const parsedUser = JSON.parse(storedUser);
         setUser(parsedUser);
       } catch (error) {
-        console.error('Auth check failed:', error);
         logout();
       }
     }
@@ -37,6 +35,13 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (username, password) => {
     const response = await api.post('users/login/', { username, password });
+
+    if (response.data.first_login) {
+      sessionStorage.setItem('temp_token', response.data.temp_token);
+      sessionStorage.setItem('user_id', response.data.user_id);
+      return { first_login: true, message: response.data.message };
+    }
+
     const { access, refresh, user: userData } = response.data;
     localStorage.setItem('access_token', access);
     localStorage.setItem('refresh_token', refresh);
@@ -49,6 +54,8 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
+    sessionStorage.removeItem('temp_token');
+    sessionStorage.removeItem('user_id');
     setUser(null);
   };
 
@@ -64,7 +71,7 @@ export const AuthProvider = ({ children }) => {
     updateUser,
     loading,
     isAuthenticated: !!user,
-    isAdmin: user?.role === 'hod', // Changed from 'admin' to 'hod'
+    isAdmin: user?.role === 'hod',
     isHOD: user?.role === 'hod',
     isStoreKeeper: user?.role === 'store_keeper',
     isStaff: user?.role === 'staff',

@@ -12,8 +12,14 @@ const api = axios.create({
 // Add token to requests
 api.interceptors.request.use(
   (config) => {
-    // Don't attach token for login requests
-    if (config.url === 'users/login/') {
+    const normalizedUrl = (config.url || '').replace(/^\//, '');
+
+    if (normalizedUrl === 'users/login/') {
+      return config;
+    }
+
+    // Don't override an Authorization header already set (e.g. temp_token for change-password)
+    if (config.headers.Authorization) {
       return config;
     }
 

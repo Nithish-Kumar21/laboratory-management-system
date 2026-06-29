@@ -86,6 +86,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {'min_length': 8},
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
@@ -94,6 +95,8 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+PASSWORD_COMPLEXITY_VALIDATOR = 'users.validators.PasswordComplexityValidator'
 
 # Internationalization
 LANGUAGE_CODE = 'en-us'
@@ -184,8 +187,20 @@ AUTH_USER_MODEL = 'users.User'
 AUTHENTICATION_BACKENDS = ['users.backends.EmployeeIDBackend']
 
 # Frontend URL for password reset links
-FRONTEND_URL = "http://localhost:3001"
-DEFAULT_FROM_EMAIL = "noreply@labmanagement.com"
+FRONTEND_URL = "http://localhost:3000"
+
+# Email (Gmail SMTP)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = config('EMAIL_APP_PASSWORD')
+DEFAULT_FROM_EMAIL = config('EMAIL_HOST_USER')
+
+# Password Management
+PASSWORD_RESET_TOKEN_EXPIRY_MINUTES = 30
+FIRST_LOGIN_TOKEN_EXPIRY_MINUTES = 15
 
 # Logging Configuration
 LOGGING = {

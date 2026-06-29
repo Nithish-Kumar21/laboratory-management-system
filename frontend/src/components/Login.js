@@ -1,16 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import {
   TbFlask, TbSettings, TbBrandLinkedin, TbBrandX,
   TbBrandYoutube, TbBrandInstagram, TbWorld, TbMail
 } from 'react-icons/tb';
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-
-// TODO: Swap placeholder assets with real files at:
-//   src/assets/college-logo.png
-//   src/assets/college-building.jpg
-// Currently using public/gnc_logo.png and public/gnc_bg.jpg as fallbacks.
 
 const socialLinks = [
   { icon: TbBrandLinkedin, label: 'LinkedIn' },
@@ -82,8 +77,10 @@ const Login = () => {
     setError('');
     setLoading(true);
     try {
-      const userData = await login(employeeId, password);
-      if (userData.password_must_change) {
+      const result = await login(employeeId, password);
+      if (result.first_login) {
+        navigate('/change-password');
+      } else if (result.password_must_change) {
         navigate('/change-password', { state: { forced: true } });
       } else {
         const from = location.state?.from?.pathname || '/';
@@ -134,6 +131,14 @@ const Login = () => {
           {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
         </button>
       </div>
+      <p style={{ textAlign: 'right', margin: 0 }}>
+        <Link
+          to="/forgot-password"
+          style={{ color: '#93C5FD', fontSize: '0.8rem', textDecoration: 'none' }}
+        >
+          Forgot Password?
+        </Link>
+      </p>
       <button
         type="submit"
         disabled={loading}
@@ -146,12 +151,10 @@ const Login = () => {
 
   return (
     <>
-      {/* ─── MOBILE LAYOUT (<768px) ─── */}
       <div className="md:hidden min-h-screen bg-[#1A3C6E] flex flex-col">
         <div className="flex justify-end p-4">
           <TbSettings className="text-white/80" size={22} />
         </div>
-
         <div className="flex-1 flex flex-col items-center px-6 pb-0">
           <div className="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center mb-4 overflow-hidden">
             <img
@@ -161,28 +164,23 @@ const Login = () => {
               onError={(e) => { e.target.style.display = 'none'; }}
             />
           </div>
-
           <h1 className="text-white text-xl font-bold text-center leading-tight">
             GURU NANAK COLLEGE<br />
             <span className="text-base font-medium opacity-80">(AUTONOMOUS)</span>
           </h1>
-
           <div className="mt-2 text-center text-xs text-[#C9D6E8] space-y-0.5 leading-relaxed">
             <p>Accredited at &apos;A++&apos; Grade by NAAC,</p>
             <p>Affiliated to University of Madras, Approved by AICTE</p>
             <p>An ISO 9001:2015 Certified Institution</p>
             <p>Guru Nanak Salai, Velachery, Chennai 600 042</p>
           </div>
-
           <div className="w-full max-w-sm mt-6">
             {formContent}
           </div>
-
           <div className="mt-6 mb-4">
             <SocialIconRow icons={mobileSocialIcons} size={16} />
           </div>
         </div>
-
         <div className="relative h-[35vh] min-h-[220px] w-full mt-auto">
           <div
             className="absolute inset-0 bg-cover bg-center"
@@ -197,9 +195,7 @@ const Login = () => {
         </div>
       </div>
 
-      {/* ─── DESKTOP LAYOUT (>=768px) ─── */}
       <div className="hidden md:flex h-screen w-screen overflow-hidden">
-        {/* ── Left Column (30%) ── */}
         <div className="w-[30%] bg-[#1A3C6E] relative flex flex-col justify-between px-8 py-10">
           <div className="flex items-start gap-5">
             <div className="w-[70px] h-[70px] bg-white rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
@@ -209,27 +205,19 @@ const Login = () => {
               LABORATORY<br />MANAGEMENT<br />SYSTEM
             </div>
           </div>
-
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <FlaskWatermark />
           </div>
-
           <div className="relative z-10">
             <SocialIconRow icons={socialLinks} size={18} />
           </div>
-
           <div className="absolute right-0 top-8 bottom-8 w-px bg-white/15" />
         </div>
-
-        {/* ── Right Column (70%) ── */}
         <div className="w-[70%] relative h-screen overflow-hidden bg-[#1A3C6E]">
-          {/* Pink diagonal stripe (behind photo, shifted left so ~8px is visible) */}
           <div
             className="absolute inset-0 bg-[#F4C9D6] z-[1]"
             style={{ clipPath: 'polygon(calc(78% - 8px) 0, 100% 0, 100% 100%, calc(42% - 8px) 100%)' }}
           />
-
-          {/* Photo — clipped to the right side, diagonal from 78% top to 42% bottom */}
           <div
             className="absolute inset-0 bg-cover bg-center z-[2]"
             style={{
@@ -237,8 +225,6 @@ const Login = () => {
               clipPath: 'polygon(78% 0, 100% 0, 100% 100%, 42% 100%)'
             }}
           />
-
-          {/* Content — constrained to the left portion of the navy area */}
           <div className="relative z-[3] flex flex-col items-center pt-10 h-full overflow-y-auto w-[55%] ml-[8%] pr-12">
             <div className="w-20 h-20 rounded-full bg-white/15 flex items-center justify-center overflow-hidden ring-2 ring-white/20">
               <img
@@ -248,19 +234,16 @@ const Login = () => {
                 onError={(e) => { e.target.style.display = 'none'; }}
               />
             </div>
-
             <h1 className="text-white text-[22px] font-bold text-center leading-tight mt-4">
               GURU NANAK COLLEGE<br />
               <span className="text-lg font-medium opacity-75">(AUTONOMOUS)</span>
             </h1>
-
             <div className="mt-3 text-center text-sm text-[#C9D6E8] space-y-0.5 leading-relaxed">
               <p>Accredited at &apos;A++&apos; Grade by NAAC,</p>
               <p>Affiliated to University of Madras, Approved by AICTE</p>
               <p>An ISO 9001:2015 Certified Institution</p>
               <p>Guru Nanak Salai, Velachery, Chennai 600 042</p>
             </div>
-
             <div className="w-full max-w-sm mt-7">
               {formContent}
             </div>
