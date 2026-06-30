@@ -11,13 +11,14 @@ from rest_framework_simplejwt.exceptions import TokenError
 from django.contrib.auth import authenticate
 from django.conf import settings
 from django.utils import timezone
-from .models import User, PasswordResetToken
+from .models import User, PasswordResetToken, DegreeClass
 from .serializers import (
     UserSerializer, UserCreateSerializer, UserUpdateSerializer,
     ChangePasswordSerializer, FirstLoginChangePasswordSerializer,
     PasswordResetRequestSerializer, PasswordResetConfirmSerializer
 )
 from .email_utils import send_password_reset_email, send_welcome_email
+from audit.services import AuditLogService
 
 logger = logging.getLogger(__name__)
 
@@ -59,6 +60,14 @@ class LoginView(APIView):
             )
 
         if user.is_first_login:
+            AuditLogService.log(
+                user=user,
+                action='LOGIN_SUCCESS',
+                entity_type='User',
+                entity_id=user.id,
+                description=f'First-login for user {user.employee_id} (must change password)',
+                request=request,
+            )
             temp_token = AccessToken()
             temp_token['user_id'] = user.id
             temp_token['purpose'] = 'change_password'
@@ -74,6 +83,15 @@ class LoginView(APIView):
                 'user_id': user.id,
                 'temp_token': str(temp_token),
             })
+
+        AuditLogService.log(
+            user=user,
+            action='LOGIN_SUCCESS',
+            entity_type='User',
+            entity_id=user.id,
+            description=f'User {user.employee_id} ({user.full_name}) logged in',
+            request=request,
+        )
 
         refresh = RefreshToken.for_user(user)
 
@@ -136,6 +154,15 @@ class ChangePasswordView(APIView):
                 if serializer.is_valid():
                     serializer.save()
 
+                    AuditLogService.log(
+                        user=user,
+                        action='PASSWORD_CHANGED',
+                        entity_type='User',
+                        entity_id=user.id,
+                        description=f'First-login password change for user {user.employee_id}',
+                        request=request,
+                    )
+
                     refresh = RefreshToken.for_user(user)
                     return Response({
                         'message': 'Password changed successfully.',
@@ -162,6 +189,14 @@ class ChangePasswordView(APIView):
         )
         if serializer.is_valid():
             serializer.save()
+            AuditLogService.log(
+                user=request.user,
+                action='PASSWORD_CHANGED',
+                entity_type='User',
+                entity_id=request.user.id,
+                description=f'Password changed for user {request.user.employee_id}',
+                request=request,
+            )
             return Response({'message': 'Password changed successfully.'})
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -257,6 +292,15 @@ class ResetPasswordView(APIView):
         user.last_password_change = timezone.now()
         user.save()
 
+        AuditLogService.log(
+            user=user,
+            action='PASSWORD_CHANGED',
+            entity_type='User',
+            entity_id=user.id,
+            description=f'Password reset for user {user.employee_id} via forgot-password flow',
+            request=request,
+        )
+
         reset_token.used = True
         reset_token.save()
 
@@ -310,6 +354,15 @@ class UserListCreateView(generics.ListCreateAPIView):
             raise PermissionDenied("Only HODs can create users")
         user = serializer.save()
 
+        AuditLogService.log(
+            user=self.request.user,
+            action='USER_CREATED',
+            entity_type='User',
+            entity_id=user.id,
+            description=f'User {user.employee_id} ({user.full_name}) created with role {user.role}',
+            request=self.request,
+        )
+
         try:
             reset_token = PasswordResetToken.create_for_user(user, expiry_hours=24)
             send_welcome_email(
@@ -339,13 +392,26 @@ class UserRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         return user
 
     def perform_update(self, serializer):
+        instance = self.get_object()
+        old_active = instance.is_active
         if self.request.user.role != 'hod':
             serializer.save(
-                role=self.get_object().role,
-                is_active=self.get_object().is_active
+                role=instance.role,
+                is_active=instance.is_active
             )
         else:
             serializer.save()
+
+        instance.refresh_from_db()
+        if old_active and not instance.is_active:
+            AuditLogService.log(
+                user=self.request.user,
+                action='USER_DEACTIVATED',
+                entity_type='User',
+                entity_id=instance.id,
+                description=f'User {instance.employee_id} ({instance.full_name}) deactivated by {self.request.user.full_name}',
+                request=self.request,
+            )
 
     def perform_destroy(self, instance):
         if self.request.user.role != 'hod':
@@ -359,3 +425,31 @@ class CurrentUserView(APIView):
     def get(self, request):
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
+
+
+from rest_framework import serializers as drf_serializers
+
+class DegreeClassSerializer(drf_serializers.ModelSerializer):
+    class Meta:
+        model = DegreeClass
+        fields = ['id', 'degree', 'name']
+
+
+class ClassesListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = DegreeClassSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        degree = getattr(user, 'degree', None)
+        if not degree:
+            return DegreeClass.objects.none()
+        return DegreeClass.objects.filter(degree=degree, is_active=True)
+
+
+class AllClassesListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = DegreeClassSerializer
+
+    def get_queryset(self):
+        return DegreeClass.objects.filter(is_active=True)

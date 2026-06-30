@@ -9,5 +9,7 @@ urlpatterns = [
     path('api/', include('stock_request.urls')),
     path('api/users/', include('users.urls')),
     path('api/', include('reports.urls')),
+    path('api/', include('users.class_urls')),
+    path('api/', include('audit.urls')),
 
 ]

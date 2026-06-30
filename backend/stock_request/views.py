@@ -14,6 +14,7 @@ from .serializers import (
 )
 from .permissions import StockRequestPermission
 from inventory.models import AvailableChemical
+from audit.services import AuditLogService
 
 
 class StockRequestViewSet(viewsets.ModelViewSet):
@@ -128,13 +129,18 @@ class StockRequestViewSet(viewsets.ModelViewSet):
     def mark_as_issued(self, request, pk=None):
         if request.user.role not in ['store_keeper', 'admin']:
             return Response(
-                {'error': 'Only store keeper or admin can mark requests as issued'},
+                {'success': False, 'error': 'Only store keeper or admin can mark requests as issued'},
                 status=status.HTTP_403_FORBIDDEN
             )
         obj = self.get_object()
+        if obj.status == 'issued':
+            return Response(
+                {'success': True, 'data': {'message': 'Already issued.'}},
+                status=status.HTTP_200_OK
+            )
         if obj.status != 'accepted':
             return Response(
-                {'error': f'Only approved requests can be marked as issued. Current status: {obj.status}'},
+                {'success': False, 'error': f'Only accepted requests can be marked as issued. Current status: {obj.status}'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -145,14 +151,14 @@ class StockRequestViewSet(viewsets.ModelViewSet):
                 )
                 if chem.quantity < item.quantity:
                     return Response(
-                        {'error': f'Insufficient stock for {item.chemical_name}. Available: {chem.quantity}, Requested: {item.quantity}'},
+                        {'success': False, 'error': f'Insufficient stock for {item.chemical_name}. Available: {chem.quantity}, Requested: {item.quantity}'},
                         status=status.HTTP_400_BAD_REQUEST
                     )
                 chem.quantity -= item.quantity
                 chem.save()
             except AvailableChemical.DoesNotExist:
                 return Response(
-                    {'error': f'Chemical {item.chemical_name} not found in inventory'},
+                    {'success': False, 'error': f'Chemical {item.chemical_name} not found in inventory'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
@@ -161,30 +167,44 @@ class StockRequestViewSet(viewsets.ModelViewSet):
         obj.issued_by = request.user
         obj.save()
 
+        AuditLogService.log(
+            user=request.user,
+            action='REQUEST_ISSUED',
+            entity_type='StockRequest',
+            entity_id=obj.id,
+            description=f'Request {obj.request_id} issued by {request.user.full_name}',
+            request=request,
+        )
         return Response(StockRequestDetailSerializer(obj).data)
 
     @action(detail=True, methods=['post'])
+    @transaction.atomic
     def report_usage(self, request, pk=None):
         """
         Staff reports actual usage of chemicals.
         """
         obj = self.get_object()
         if obj.requested_by != request.user:
-            return Response({'error': 'You can only report usage for your own requests'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'success': False, 'error': 'You can only report usage for your own requests'}, status=status.HTTP_403_FORBIDDEN)
         
+        if obj.status == 'reported':
+            return Response(
+                {'success': True, 'data': {'message': 'Usage already reported.'}},
+                status=status.HTTP_200_OK
+            )
         if obj.status != 'issued':
-            return Response({'error': f'Cannot report usage for request with status {obj.status}'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'success': False, 'error': f'Usage can only be reported for issued requests. Current status: {obj.status}'}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = UsageReportSerializer(data=request.data)
         if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'success': False, 'error': 'Invalid data', 'details': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
         reported_items = {item['id']: item['actual_used_quantity'] for item in serializer.validated_data['items']}
         
         # Verify all items in the request are being reported
         request_items = {item.id for item in obj.chemical_items.all()}
         if not set(reported_items.keys()).issubset(request_items):
-             return Response({'error': 'Invalid item IDs provided'}, status=status.HTTP_400_BAD_REQUEST)
+             return Response({'success': False, 'error': 'Invalid item IDs provided'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Update items with actual usage
         for item in obj.chemical_items.all():
@@ -196,20 +216,34 @@ class StockRequestViewSet(viewsets.ModelViewSet):
         obj.reported_at = timezone.now()
         obj.save()
 
+        AuditLogService.log(
+            user=request.user,
+            action='USAGE_REPORTED',
+            entity_type='StockRequest',
+            entity_id=obj.id,
+            description=f'Usage reported for request {obj.request_id} by {request.user.full_name}',
+            request=request,
+        )
         return Response(StockRequestDetailSerializer(obj).data)
 
 
     @action(detail=True, methods=['post'])
+    @transaction.atomic
     def mark_as_completed(self, request, pk=None):
         """
         Store Keeper marks request as completed, adjusts inventory, and logs to issue register.
         """
         if request.user.role not in ['store_keeper', 'admin']:
-             return Response({'error': 'Only store keeper can complete requests'}, status=status.HTTP_403_FORBIDDEN)
+             return Response({'success': False, 'error': 'Only store keeper can complete requests'}, status=status.HTTP_403_FORBIDDEN)
 
         obj = self.get_object()
+        if obj.status == 'completed':
+            return Response(
+                {'success': True, 'data': {'message': 'Already completed.'}},
+                status=status.HTTP_200_OK
+            )
         if obj.status != 'reported':
-             return Response({'error': 'Request must be in "reported" status to complete'}, status=status.HTTP_400_BAD_REQUEST)
+             return Response({'success': False, 'error': 'Only reported requests can be completed.'}, status=status.HTTP_400_BAD_REQUEST)
 
         # 1. Create Issue Register Entry
         issue_register = IssueRegister.objects.create(
@@ -234,9 +268,11 @@ class StockRequestViewSet(viewsets.ModelViewSet):
                 actual_usage=actual
             )
 
-            # Apply delta: add returned, deduct additional
+            # Apply delta: add returned, deduct additional (with select_for_update)
             try:
-                stock_item = AvailableChemical.objects.get(chemical_name=item.chemical_name)
+                stock_item = AvailableChemical.objects.select_for_update().get(
+                    chemical_name__iexact=item.chemical_name
+                )
                 stock_item.quantity += ic.returned
                 stock_item.quantity -= ic.additional
                 stock_item.save()
@@ -247,6 +283,14 @@ class StockRequestViewSet(viewsets.ModelViewSet):
         obj.completed_at = timezone.now()
         obj.save()
 
+        AuditLogService.log(
+            user=request.user,
+            action='REQUEST_COMPLETED',
+            entity_type='StockRequest',
+            entity_id=obj.id,
+            description=f'Request {obj.request_id} completed by {request.user.full_name}',
+            request=request,
+        )
         return Response(StockRequestDetailSerializer(obj).data)
 
     @action(detail=False, methods=['get'], url_path='reviewed')
@@ -270,7 +314,15 @@ class StockRequestViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     def perform_create(self, serializer):
-        serializer.save()
+        instance = serializer.save()
+        AuditLogService.log(
+            user=self.request.user,
+            action='REQUEST_CREATED',
+            entity_type='StockRequest',
+            entity_id=instance.id,
+            description=f'Stock request created by {self.request.user.full_name}',
+            request=self.request,
+        )
 
     def retrieve(self, request, *args, **kwargs):
         """Override retrieve to mark as viewed when requester accesses detail page"""
@@ -292,12 +344,17 @@ class StockRequestViewSet(viewsets.ModelViewSet):
         obj = self.get_object()
         if obj.requested_by != request.user:
             return Response(
-                {'error': 'You can only submit your own drafts'},
+                {'success': False, 'error': 'You can only submit your own drafts'},
                 status=status.HTTP_403_FORBIDDEN
+            )
+        if obj.status == 'pending':
+            return Response(
+                {'success': True, 'data': {'message': 'Already submitted.'}},
+                status=status.HTTP_200_OK
             )
         if obj.status != 'draft':
             return Response(
-                {'error': f'Cannot submit a request that is already {obj.status}'},
+                {'success': False, 'error': f'Cannot submit a request that is already {obj.status}'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
@@ -309,50 +366,76 @@ class StockRequestViewSet(viewsets.ModelViewSet):
         ).exists()
         if has_active:
             return Response(
-                {'error': 'You already have an active request. Complete your previous request first.'},
+                {'success': False, 'error': 'You already have an active request. Complete your previous request first.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         obj.status = 'pending'
         obj.save()
+        AuditLogService.log(
+            user=request.user,
+            action='REQUEST_SUBMITTED',
+            entity_type='StockRequest',
+            entity_id=obj.id,
+            description=f'Request {obj.request_id} submitted by {request.user.full_name}',
+            request=request,
+        )
         return Response(StockRequestDetailSerializer(obj).data)
 
     @action(detail=True, methods=['post'])
     def accept(self, request, pk=None):
         if request.user.role != 'hod':
             return Response(
-                {'error': 'Only HOD can accept requests'},
+                {'success': False, 'error': 'Only HOD can accept requests'},
                 status=status.HTTP_403_FORBIDDEN
             )
         obj = self.get_object()
+        if obj.status == 'accepted':
+            return Response(
+                {'success': True, 'data': {'message': 'Already accepted.'}},
+                status=status.HTTP_200_OK
+            )
         if obj.status != 'pending':
             return Response(
-                {'error': f'Request is already {obj.status}'},
+                {'success': False, 'error': 'Only pending requests can be accepted.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         obj.status = 'accepted'
         obj.reviewed_at = timezone.now()
         obj.reviewed_by = request.user
         obj.save()
+        AuditLogService.log(
+            user=request.user,
+            action='REQUEST_ACCEPTED',
+            entity_type='StockRequest',
+            entity_id=obj.id,
+            description=f'Request {obj.request_id} accepted by {request.user.full_name}',
+            request=request,
+        )
         return Response(StockRequestDetailSerializer(obj).data)
 
     @action(detail=True, methods=['post'])
     def reject(self, request, pk=None):
         if request.user.role != 'hod':
             return Response(
-                {'error': 'Only HOD can reject requests'},
+                {'success': False, 'error': 'Only HOD can reject requests'},
                 status=status.HTTP_403_FORBIDDEN
             )
         rejection_reason = (request.data.get('rejection_reason') or '').strip()
         if not rejection_reason:
             return Response(
-                {'error': 'Reason for rejection is required.', 'rejection_reason': ['This field is required.']},
+                {'success': False, 'error': 'Reason for rejection is required.', 'rejection_reason': ['This field is required.']},
                 status=status.HTTP_400_BAD_REQUEST
             )
         obj = self.get_object()
+        if obj.status == 'rejected':
+            return Response(
+                {'success': True, 'data': {'message': 'Already rejected.'}},
+                status=status.HTTP_200_OK
+            )
         if obj.status != 'pending':
             return Response(
-                {'error': f'Request is already {obj.status}'},
+                {'success': False, 'error': 'Only pending requests can be rejected.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         obj.status = 'rejected'
@@ -360,6 +443,46 @@ class StockRequestViewSet(viewsets.ModelViewSet):
         obj.reviewed_at = timezone.now()
         obj.reviewed_by = request.user
         obj.save()
+        AuditLogService.log(
+            user=request.user,
+            action='REQUEST_REJECTED',
+            entity_type='StockRequest',
+            entity_id=obj.id,
+            description=f'Request {obj.request_id} rejected by {request.user.full_name}. Reason: {rejection_reason}',
+            request=request,
+        )
+        return Response(StockRequestDetailSerializer(obj).data)
+
+
+    @action(detail=True, methods=['post'])
+    def cancel(self, request, pk=None):
+        """Cancel a pending request"""
+        obj = self.get_object()
+        if obj.requested_by != request.user:
+            return Response(
+                {'success': False, 'error': 'You can only cancel your own requests'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        if obj.status == 'cancelled':
+            return Response(
+                {'success': True, 'data': {'message': 'Already cancelled.'}},
+                status=status.HTTP_200_OK
+            )
+        if obj.status != 'pending':
+            return Response(
+                {'success': False, 'error': 'Only pending requests can be cancelled.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        obj.status = 'cancelled'
+        obj.save()
+        AuditLogService.log(
+            user=request.user,
+            action='REQUEST_CANCELLED',
+            entity_type='StockRequest',
+            entity_id=obj.id,
+            description=f'Request {obj.request_id} cancelled by {request.user.full_name}',
+            request=request,
+        )
         return Response(StockRequestDetailSerializer(obj).data)
 
 

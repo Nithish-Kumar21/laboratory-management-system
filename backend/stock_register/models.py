@@ -1,5 +1,10 @@
 from django.db import models
 
+UNIT_CHOICES = [
+    ('ml', 'mL'),
+    ('g', 'g'),
+]
+
 class StockRegister(models.Model):
     invoice_number = models.CharField(max_length=50, unique=True)
     date = models.DateField()
@@ -25,7 +30,7 @@ class ChemicalItem(models.Model):
     quantity = models.DecimalField(max_digits=10, decimal_places=2)
     rate = models.DecimalField(max_digits=10, decimal_places=2)
     make = models.CharField(max_length=100)
-    unit = models.CharField(max_length=2, default='ml')
+    unit = models.CharField(max_length=2, choices=UNIT_CHOICES, default='ml')
 
     class Meta:
         db_table = 'chemical_item'

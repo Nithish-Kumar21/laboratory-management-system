@@ -10,6 +10,7 @@ from .serializers import (
 from django.db import transaction
 from backend.permissions import StockRegisterPermission
 from inventory.models import AvailableChemical, AvailableApparatus
+from audit.services import AuditLogService
 
 
 
@@ -41,7 +42,16 @@ class StockRegisterViewSet(viewsets.ModelViewSet):
 
     @transaction.atomic
     def perform_create(self, serializer):
-        serializer.save()
+        instance = serializer.save()
+        item_count = instance.chemical_items.count() + instance.apparatus_items.count()
+        AuditLogService.log(
+            user=self.request.user,
+            action='STOCK_ENTRY_ADDED',
+            entity_type='StockRegister',
+            entity_id=instance.id,
+            description=f'Stock entry #{instance.invoice_number} from {instance.supplier_name} ({item_count} items)',
+            request=self.request,
+        )
 
     @action(detail=False, methods=['get'])
     def chemical_names(self, request):

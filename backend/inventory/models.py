@@ -1,9 +1,14 @@
 from django.db import models
 
+UNIT_CHOICES = [
+    ('ml', 'mL'),
+    ('g', 'g'),
+]
+
 class AvailableChemical(models.Model):
     chemical_name = models.CharField(max_length=64, unique=True)
     quantity = models.DecimalField(max_digits=10, decimal_places=2)
-    unit = models.CharField(max_length=2, default='ml')
+    unit = models.CharField(max_length=2, choices=UNIT_CHOICES, default='ml')
     last_updated = models.DateField(auto_now=True)
     reorder_level = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
 

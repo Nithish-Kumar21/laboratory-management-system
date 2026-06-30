@@ -13,6 +13,7 @@ class StockRequest(models.Model):
         ('issued', 'Issued'),
         ('reported', 'Reported'),
         ('completed', 'Completed'),
+        ('cancelled', 'Cancelled'),
     ]
     
     CLASS_CHOICES = [
