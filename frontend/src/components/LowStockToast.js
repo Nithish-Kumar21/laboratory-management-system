@@ -68,11 +68,9 @@ function LowStockToast() {
             if (e.key === 'inventory-updated') checkLowStock();
         };
         window.addEventListener('storage', handleStorage);
-        const interval = setInterval(checkLowStock, 3000);
         return () => {
             window.removeEventListener('inventory-updated', handleUpdate);
             window.removeEventListener('storage', handleStorage);
-            clearInterval(interval);
         };
     }, [checkLowStock, isStaff, isAdmin]);
 

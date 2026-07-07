@@ -413,3 +413,99 @@ class StockRegisterWorkflowTest(APITestCase):
         r = self.client.get('/api/stock_register/apparatus_makes/')
         self.assertEqual(r.status_code, status.HTTP_200_OK)
         self.assertIn('Borosil', r.data)
+
+    # ── TRIGGER INTEGRATION (Part 0) ─────────────────────────
+
+    def test_trigger_increment_multi_pack(self):
+        """pack_size=500, no_of_packs=4 => available_chemicals.quantity += 2000 via trigger"""
+        self._login(self.store_keeper)
+        r = self._create_sr({'invoice_number': 'INV-TR1', 'date': self.today.isoformat(), 'supplier_name': 'S',
+                             'chemical_items': [{'chemical_name': 'TriggerTestChem', 'make': 'M',
+                                                  'pack_size': '500', 'no_of_packs': 4, 'rate': '100'}]})
+        self.assertEqual(r.status_code, status.HTTP_201_CREATED)
+        ac = AvailableChemical.objects.get(chemical_name='TriggerTestChem')
+        self.assertEqual(ac.quantity, Decimal('2000.00'))
+
+    def test_trigger_increment_single_pack(self):
+        """pack_size=500, no_of_packs=1 => available_chemicals.quantity += 500 (regression check)"""
+        self._login(self.store_keeper)
+        r = self._create_sr({'invoice_number': 'INV-TR2', 'date': self.today.isoformat(), 'supplier_name': 'S',
+                             'chemical_items': [{'chemical_name': 'TriggerTestChem2', 'make': 'M',
+                                                  'pack_size': '500', 'no_of_packs': 1, 'rate': '100'}]})
+        self.assertEqual(r.status_code, status.HTTP_201_CREATED)
+        ac = AvailableChemical.objects.get(chemical_name='TriggerTestChem2')
+        self.assertEqual(ac.quantity, Decimal('500.00'))
+
+    def test_trigger_apparatus_increment(self):
+        """apparatus trigger still works correctly after changes"""
+        self._login(self.store_keeper)
+        r = self._create_sr({'invoice_number': 'INV-TR3', 'date': self.today.isoformat(), 'supplier_name': 'S',
+                             'apparatus_items': [{'apparatus_name': 'TriggerTestApp', 'make': 'M',
+                                                   'quantity_pieces': 15, 'rate': '100'}]})
+        self.assertEqual(r.status_code, status.HTTP_201_CREATED)
+        aa = AvailableApparatus.objects.get(apparatus_name='TriggerTestApp')
+        self.assertEqual(aa.available_quantity_pieces, 15)
+
+    # ── 500 ERROR / ROBUSTNESS (Part 1) ─────────────────────
+
+    def test_reproduction_payload_success(self):
+        """Exact reproduction payload from the bug report must return 201"""
+        self._login(self.store_keeper)
+        payload = {
+            'invoice_number': 'DEMO-001',
+            'date': self.today.isoformat(),
+            'supplier_name': 'Demo Supplier, Singapore (+65)',
+            'supplier_contact_country_code': '+65',
+            'supplier_contact_phone': '9090909090',
+            'supplier_email': 'supplier@gmail.com',
+            'chemical_items': [{
+                'chemical_name': 'Demo Chemical 1',
+                'pack_size': '500',
+                'no_of_packs': 4,
+                'unit': 'ml',
+                'rate': '200',
+                'make': 'Demo Make',
+            }],
+        }
+        r = self.client.post('/api/stock_register/', payload, format='json')
+        self.assertEqual(r.status_code, status.HTTP_201_CREATED)
+
+    def test_bad_payload_zero_pack_size(self):
+        """zero pack_size should return clean 400 with field-level error, not 500"""
+        self._login(self.store_keeper)
+        payload = {
+            'invoice_number': 'INV-BAD1',
+            'date': self.today.isoformat(),
+            'supplier_name': 'S',
+            'chemical_items': [{
+                'chemical_name': 'BadChem',
+                'pack_size': '0',
+                'no_of_packs': 1,
+                'unit': 'ml',
+                'rate': '50',
+                'make': 'TestMake',
+            }],
+        }
+        r = self.client.post('/api/stock_register/', payload, format='json')
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('pack_size', str(r.data).lower())
+
+    def test_bad_payload_negative_rate(self):
+        """negative rate should return clean 400 with field-level error, not 500"""
+        self._login(self.store_keeper)
+        payload = {
+            'invoice_number': 'INV-BAD2',
+            'date': self.today.isoformat(),
+            'supplier_name': 'S',
+            'chemical_items': [{
+                'chemical_name': 'BadChem2',
+                'pack_size': '100',
+                'no_of_packs': 1,
+                'unit': 'ml',
+                'rate': '-50',
+                'make': 'TestMake',
+            }],
+        }
+        r = self.client.post('/api/stock_register/', payload, format='json')
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('rate', str(r.data).lower())
