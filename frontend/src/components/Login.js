@@ -174,7 +174,7 @@ const Login = () => {
             <p>An ISO 9001:2015 Certified Institution</p>
             <p>Guru Nanak Salai, Velachery, Chennai 600 042</p>
           </div>
-          <div className="w-full max-w-sm mt-6">
+          <div className="w-full max-w-[380px] mt-6">
             {formContent}
           </div>
           <div className="mt-6 mb-4">
@@ -244,7 +244,7 @@ const Login = () => {
               <p>An ISO 9001:2015 Certified Institution</p>
               <p>Guru Nanak Salai, Velachery, Chennai 600 042</p>
             </div>
-            <div className="w-full max-w-sm mt-7">
+            <div className="w-full max-w-[380px] mt-7">
               {formContent}
             </div>
           </div>

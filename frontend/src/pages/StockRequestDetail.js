@@ -374,6 +374,14 @@ function StockRequestDetail() {
                                 <div className="sd-meta-label"><FaCalendarAlt /> Date</div>
                                 <div className="sd-meta-value">{request.date ? new Date(request.date).toLocaleDateString() : new Date(request.created_at).toLocaleDateString()}</div>
                             </div>
+                            <div className="sd-meta-item">
+                                <div className="sd-meta-label">Day Order</div>
+                                <div className="sd-meta-value">{request.day_order || '-'}</div>
+                            </div>
+                            <div className="sd-meta-item">
+                                <div className="sd-meta-label">Hour</div>
+                                <div className="sd-meta-value">{request.hour?.length ? request.hour.sort((a,b)=>a-b).join(', ') : '-'}</div>
+                            </div>
                         </div>
                     </div>
 
@@ -396,12 +404,25 @@ function StockRequestDetail() {
                         </div>
                     </div>
 
-                    {/* Purpose / Remarks Card */}
-                    {request.reason && (
+                    {/* Purpose Type Card */}
+                    {request.purpose_type && (
                         <div className="sd-card">
-                            <div className="sd-card-title">Purpose / Remarks</div>
+                            <div className="sd-card-title">
+                                {request.purpose_type === 'research_project' ? 'Research / Project' : 'Practical Lab'}
+                            </div>
                             <hr className="sd-divider" />
-                            <p className="sd-remarks-text">{request.reason}</p>
+                            <div className="sd-meta-grid">
+                                <div className="sd-meta-item" style={{ gridColumn: '1 / -1' }}>
+                                    <div className="sd-meta-label">Experiment Name(s)</div>
+                                    <div className="sd-meta-value">{request.experiment_name || '-'}</div>
+                                </div>
+                                {request.purpose_type === 'research_project' && (
+                                    <div className="sd-meta-item" style={{ gridColumn: '1 / -1' }}>
+                                        <div className="sd-meta-label">Student Name(s)</div>
+                                        <div className="sd-meta-value">{request.student_name || '-'}</div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     )}
 
@@ -559,6 +580,14 @@ function StockRequestDetail() {
                             <div className="sd-meta-label"><FaCalendarAlt /> Date</div>
                             <div className="sd-meta-value">{request.date ? new Date(request.date).toLocaleDateString() : new Date(request.created_at).toLocaleDateString()}</div>
                         </div>
+                        <div className="sd-meta-item">
+                            <div className="sd-meta-label">Day Order</div>
+                            <div className="sd-meta-value">{request.day_order || '-'}</div>
+                        </div>
+                        <div className="sd-meta-item">
+                            <div className="sd-meta-label">Hour</div>
+                            <div className="sd-meta-value">{request.hour?.length ? request.hour.sort((a,b)=>a-b).join(', ') : '-'}</div>
+                        </div>
                     </div>
                 </div>
 
@@ -581,12 +610,25 @@ function StockRequestDetail() {
                     </div>
                 </div>
 
-                {/* Purpose / Remarks Card */}
-                {request.reason && (
+                {/* Purpose Type Card */}
+                {request.purpose_type && (
                     <div className="sd-card">
-                        <div className="sd-card-title">Purpose / Remarks</div>
+                        <div className="sd-card-title">
+                            {request.purpose_type === 'research_project' ? 'Research / Project' : 'Practical Lab'}
+                        </div>
                         <hr className="sd-divider" />
-                        <p className="sd-remarks-text">{request.reason}</p>
+                        <div className="sd-meta-grid">
+                            <div className="sd-meta-item" style={{ gridColumn: '1 / -1' }}>
+                                <div className="sd-meta-label">Experiment Name(s)</div>
+                                <div className="sd-meta-value">{request.experiment_name || '-'}</div>
+                            </div>
+                            {request.purpose_type === 'research_project' && (
+                                <div className="sd-meta-item" style={{ gridColumn: '1 / -1' }}>
+                                    <div className="sd-meta-label">Student Name(s)</div>
+                                    <div className="sd-meta-value">{request.student_name || '-'}</div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 )}
 
