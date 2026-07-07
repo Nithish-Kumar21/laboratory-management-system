@@ -76,12 +76,13 @@ class YearEndReportView(APIView):
         # --- Chemical Items ---
         chem_items = ChemicalItem.objects.filter(stock_register_id__in=stock_register_ids)
         chem_items_list = list(chem_items)
-        chem_by_name = defaultdict(lambda: {'total_qty': Decimal('0'), 'total_cost': Decimal('0'), 'count': 0})
+        chem_by_name = defaultdict(lambda: {'total_qty': Decimal('0'), 'total_cost': Decimal('0'), 'count': 0, 'unit': 'ml'})
         for item in chem_items_list:
             name = item.chemical_name
             chem_by_name[name]['total_qty'] += item.quantity
             chem_by_name[name]['total_cost'] += item.quantity * item.rate
             chem_by_name[name]['count'] += 1
+            chem_by_name[name]['unit'] = item.unit
 
         # --- Apparatus Items ---
         app_items = ApparatusItem.objects.filter(stock_register_id__in=stock_register_ids)
@@ -158,7 +159,7 @@ class YearEndReportView(APIView):
 
         # --- Purchases ---
         purchases_chemicals = [
-            {'name': k, 'total_quantity': float(v['total_qty']), 'unit': 'ml',
+            {'name': k, 'total_quantity': float(v['total_qty']), 'unit': v['unit'],
              'total_cost': float(v['total_cost']), 'purchase_count': v['count']}
             for k, v in chem_by_name.items()
         ]

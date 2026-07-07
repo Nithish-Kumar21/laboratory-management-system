@@ -24,7 +24,7 @@ class ChemicalItemSerializer(serializers.ModelSerializer):
         fields = ['id', 'chemical_name', 'quantity', 'unit', 'actual_used_quantity']
 
     def get_unit(self, obj):
-        return 'ml'
+        return obj.unit
 
 
 class StockRequestCreateSerializer(serializers.ModelSerializer):
@@ -93,6 +93,12 @@ class StockRequestCreateSerializer(serializers.ModelSerializer):
         stock_request = StockRequest.objects.create(**validated_data)
 
         for item_data in chemical_items_data:
+            chem_name = item_data.get('chemical_name')
+            try:
+                chem = AvailableChemical.objects.get(chemical_name=chem_name)
+                item_data['unit'] = chem.unit
+            except AvailableChemical.DoesNotExist:
+                pass
             StockRequestChemicalItem.objects.create(stock_request=stock_request, **item_data)
 
         return stock_request
@@ -120,6 +126,12 @@ class StockRequestUpdateSerializer(StockRequestCreateSerializer):
             instance.chemical_items.all().delete()
             # Create new items
             for item_data in chemical_items_data:
+                chem_name = item_data.get('chemical_name')
+                try:
+                    chem = AvailableChemical.objects.get(chemical_name=chem_name)
+                    item_data['unit'] = chem.unit
+                except AvailableChemical.DoesNotExist:
+                    pass
                 StockRequestChemicalItem.objects.create(stock_request=instance, **item_data)
 
         return instance
@@ -194,7 +206,7 @@ class IssueChemicalsSerializer(serializers.ModelSerializer):
         fields = ['id', 'chemical_name', 'issued_quantity', 'unit', 'actual_usage', 'returned', 'additional']
 
     def get_unit(self, obj):
-        return 'ml'
+        return obj.unit
 
 
 class IssueRegisterSerializer(serializers.ModelSerializer):

@@ -265,6 +265,7 @@ class StockRequestViewSet(viewsets.ModelViewSet):
                 ir=issue_register,
                 chemical_name=item.chemical_name,
                 issued_quantity=requested,
+                unit=item.unit,
                 actual_usage=actual
             )
 

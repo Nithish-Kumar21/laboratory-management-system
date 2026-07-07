@@ -387,7 +387,7 @@ function StockRequestDetail() {
                             {request.chemical_items?.map((item, idx) => (
                                 <div key={idx} className="sd-chem-row">
                                     <span className="sd-chem-name">{item.chemical_name}</span>
-                                    <span className="sd-chem-qty">{item.quantity}<span className="sd-chem-unit"> {item.unit || 'ml'}</span></span>
+                                    <span className="sd-chem-qty">{item.quantity}<span className="sd-chem-unit"> {item.unit}</span></span>
                                 </div>
                             ))}
                             {(!request.chemical_items || request.chemical_items.length === 0) && (
@@ -444,7 +444,7 @@ function StockRequestDetail() {
                                 {request.chemical_items?.map(item => (
                                     <div key={item.id} className="sd-usage-row">
                                         <span className="sd-usage-name">{item.chemical_name}</span>
-                                        <span className="sd-usage-requested">{item.quantity} {item.unit || 'ml'}</span>
+                                        <span className="sd-usage-requested">{item.quantity} {item.unit}</span>
                                         <div className="sd-usage-input-wrap">
                                             <input
                                                 type="number"
@@ -455,7 +455,7 @@ function StockRequestDetail() {
                                                 className="sd-usage-input"
                                                 placeholder="0.00"
                                             />
-                                            <span className="sd-input-unit">{item.unit || 'ml'}</span>
+                                            <span className="sd-input-unit">{item.unit}</span>
                                         </div>
                                     </div>
                                 ))}
@@ -572,7 +572,7 @@ function StockRequestDetail() {
                         {request.chemical_items?.map((item, idx) => (
                             <div key={idx} className="sd-chem-row">
                                 <span className="sd-chem-name">{item.chemical_name}</span>
-                                <span className="sd-chem-qty">{item.quantity}<span className="sd-chem-unit"> {item.unit || 'ml'}</span></span>
+                                <span className="sd-chem-qty">{item.quantity}<span className="sd-chem-unit"> {item.unit}</span></span>
                             </div>
                         ))}
                         {(!request.chemical_items || request.chemical_items.length === 0) && (
@@ -645,10 +645,10 @@ function StockRequestDetail() {
                                         return (
                                             <tr key={item.id}>
                                                 <td className="item-name">{item.chemical_name}</td>
-                                                <td><span className="qty-badge muted">{req} {item.unit || 'ml'}</span></td>
-                                                <td><span className="qty-badge primary">{act} {item.unit || 'ml'}</span></td>
-                                                <td>{ret > 0 ? <span className="diff-badge positive"><FaArrowLeft /> {ret.toFixed(2)} {item.unit || 'ml'}</span> : <span className="diff-none">-</span>}</td>
-                                                <td>{add > 0 ? <span className="diff-badge negative"><FaArrowRight /> {add.toFixed(2)} {item.unit || 'ml'}</span> : <span className="diff-none">-</span>}</td>
+                                                <td><span className="qty-badge muted">{req} {item.unit}</span></td>
+                                                <td><span className="qty-badge primary">{act} {item.unit}</span></td>
+                                                <td>{ret > 0 ? <span className="diff-badge positive"><FaArrowLeft /> {ret.toFixed(2)} {item.unit}</span> : <span className="diff-none">-</span>}</td>
+                                                <td>{add > 0 ? <span className="diff-badge negative"><FaArrowRight /> {add.toFixed(2)} {item.unit}</span> : <span className="diff-none">-</span>}</td>
                                             </tr>
                                         );
                                     })}
@@ -670,7 +670,7 @@ function StockRequestDetail() {
                             {request.chemical_items?.map(item => (
                                 <div key={item.id} className="sd-chem-row">
                                     <span className="sd-chem-name">{item.chemical_name}</span>
-                                    <span className="sd-chem-qty">{item.actual_used_quantity}<span className="sd-chem-unit"> {item.unit || 'ml'}</span></span>
+                                    <span className="sd-chem-qty">{item.actual_used_quantity}<span className="sd-chem-unit"> {item.unit}</span></span>
                                 </div>
                             ))}
                         </div>

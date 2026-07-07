@@ -14,7 +14,7 @@ class AvailableChemicalSerializer(serializers.ModelSerializer):
         fields = ['id', 'chemical_name', 'quantity', 'unit', 'reorder_level', 'last_updated']
 
     def get_unit(self, obj):
-        return 'ml'
+        return obj.unit
 
 class AvailableApparatusSerializer(serializers.ModelSerializer):
     class Meta:
@@ -32,7 +32,7 @@ class LowStockChemicalSerializer(serializers.ModelSerializer):
         fields = ['id', 'chemical_name', 'quantity', 'unit', 'reorder_level', 'last_checked']
 
     def get_unit(self, obj):
-        return 'ml'
+        return obj.unit
 
 
 class LowStockApparatusSerializer(serializers.ModelSerializer):

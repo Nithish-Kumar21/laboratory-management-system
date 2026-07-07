@@ -267,7 +267,7 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
                                 <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
                                   <span>{c.chemical_name}</span>
                                   <span style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 'bold' }}>
-                                    Stock: {c.quantity} {c.unit || 'ml'}
+                                    Stock: {c.quantity} {c.unit}
                                   </span>
                                 </div>
                               </li>
@@ -293,7 +293,7 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
                         <span className="unit-label">
                           {(() => {
                             const c = availableChemicals.find(c => c.chemical_name === item.chemical_name);
-                            return c?.unit || 'ml';
+                            return c?.unit || '';
                           })()}
                         </span>
                       )}

@@ -338,7 +338,7 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess, standalone }) {
                         onMouseDown={() => selectChemical(i, n.name)}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
                           <span>{n.name}</span>
-                          <span style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 'bold' }}>Stock: {n.quantity} {n.unit || 'ml'}</span>
+                          <span style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 'bold' }}>Stock: {n.quantity} {n.unit}</span>
                         </div>
                       </li>
                     ))}

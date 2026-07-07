@@ -151,9 +151,15 @@ class IssueRegister(models.Model):
 
 
 class IssueChemicals(models.Model):
+    UNIT_CHOICES = [
+        ('ml', 'mL'),
+        ('g', 'g'),
+    ]
+
     ir = models.ForeignKey(IssueRegister, on_delete=models.CASCADE, related_name='chemicals')
     chemical_name = models.CharField(max_length=64)
     issued_quantity = models.DecimalField(max_digits=10, decimal_places=2)
+    unit = models.CharField(max_length=2, choices=UNIT_CHOICES, default='ml')
     actual_usage = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
 
     @property

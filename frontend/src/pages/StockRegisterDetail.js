@@ -117,6 +117,10 @@ function StockRegisterDetail() {
                         <span className="sd-metric-value">{parseFloat(item.pack_size).toLocaleString()} {item.unit}</span>
                       </div>
                       <div className="sd-metric">
+                        <span className="sd-metric-label">No. of Packs</span>
+                        <span className="sd-metric-value">{item.no_of_packs}</span>
+                      </div>
+                      <div className="sd-metric">
                         <span className="sd-metric-label">Rate/Pack</span>
                         <span className="sd-metric-value">₹{parseFloat(item.rate).toFixed(2)}</span>
                       </div>

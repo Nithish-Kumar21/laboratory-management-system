@@ -239,7 +239,7 @@ function NewChemicalRequest() {
                           onMouseDown={() => { updateChemicalItem(i, 'chemical_name', c.chemical_name); setShowSuggestions({}); }}
                         >
                           <span>{c.chemical_name}</span>
-                          <span className="nrf-stock">Stock: {c.quantity} {c.unit || 'ml'}</span>
+                          <span className="nrf-stock">Stock: {c.quantity} {c.unit}</span>
                         </li>
                       ))}
                   </ul>
@@ -258,7 +258,7 @@ function NewChemicalRequest() {
                     updateChemicalItem(i, 'quantity', v === '' ? '' : v);
                   }}
                 />
-                <span className="nrf-qty-unit">{availableChemicals.find(c => c.chemical_name === item.chemical_name)?.unit || 'ml'}</span>
+                <span className="nrf-qty-unit">{availableChemicals.find(c => c.chemical_name === item.chemical_name)?.unit}</span>
               </div>
               <button
                 type="button"

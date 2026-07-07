@@ -3,7 +3,7 @@ from .settings.base import *
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "postgres",
+        "NAME": "LMS_db",
         "USER": "postgres",
         "PASSWORD": "postgres",
         "HOST": "localhost",

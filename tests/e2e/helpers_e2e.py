@@ -7,9 +7,9 @@ BASE_API = "http://127.0.0.1:8000/api"
 BASE_URL = "http://localhost:3000"
 
 CREDENTIALS = {
-    "staff":       {"username": "STAFF001",           "password": "test123"},
-    "hod":         {"username": "HOD001",             "password": "test123"},
-    "storekeeper": {"username": "Test_Store_Keeper",  "password": "test123"},
+    "staff":       {"username": "test_staff",         "password": "test@123"},
+    "hod":         {"username": "test_hod",            "password": "test123"},
+    "storekeeper": {"username": "test_store_keeper",  "password": "Test@1234"},
 }
 
 SCREENSHOT_DIR = os.path.join(os.path.dirname(__file__), "screenshots")

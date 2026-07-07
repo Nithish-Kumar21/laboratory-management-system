@@ -24,7 +24,7 @@ function getRoleLabel(role) {
 
 function Header() {
   const { themeMode, toggleTheme } = useTheme();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -79,6 +79,13 @@ function Header() {
                   className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 transition-colors flex items-center gap-2"
                 >
                   Settings
+                </button>
+                <div className="border-t border-gray-200 my-1" />
+                <button
+                  onClick={() => { logout(); setDropdownOpen(false); }}
+                  className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 transition-colors flex items-center gap-2"
+                >
+                  Logout
                 </button>
               </div>
             )}

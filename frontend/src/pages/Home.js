@@ -267,7 +267,7 @@ function Home() {
                   </div>
                   <div className="stock-item-quantity">
                     <span className="quantity-value">{item.quantity || item.quantity_pieces}</span>
-                    <span className="quantity-unit">{item.quantity ? (item.unit || 'ml').toUpperCase() : 'PCS'}</span>
+                    <span className="quantity-unit">{item.quantity ? (item.unit || '').toUpperCase() : 'PCS'}</span>
                   </div>
                 </div>
               ))}
