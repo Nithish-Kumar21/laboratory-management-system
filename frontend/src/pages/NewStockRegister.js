@@ -279,9 +279,6 @@ function NewStockRegister() {
               <div className="nrf-section-title"><FaFlask /> Chemicals</div>
               <button type="button" className="nrf-add-btn" onClick={addChemicalRow}><FaPlus /> Add Line</button>
             </div>
-            <div className="nrf-chem-hdr-1 nrf-hdr"><span></span><span></span></div>
-            <div className="nrf-chem-hdr-2 nrf-hdr"><span></span><span>Unit</span><span></span><span></span></div>
-            <div className="nrf-chem-hdr-3 nrf-hdr"><span></span><span>Restock Lvl</span><span>Total Qty</span><span>Total Price</span><span></span></div>
             {chemicalItems.map((it, i) => (
               <div key={i} className="nrf-chem-entry">
                 <div className="nrf-chem-row-1">
@@ -306,10 +303,13 @@ function NewStockRegister() {
                 <div className="nrf-chem-row-2">
                   <input type="number" step="1" className="nrf-input" placeholder="Pack size" value={it.pack_size ?? ''} required
                     onChange={e => { const next = [...chemicalItems]; next[i].pack_size = e.target.value; setChemicalItems(next); }} />
-                  <select value={it.unit} className="nrf-input" onChange={e => { const next = [...chemicalItems]; next[i].unit = e.target.value; setChemicalItems(next); }}>
-                    <option value="ml">mL</option>
-                    <option value="g">g</option>
-                  </select>
+                  <div className="nrf-labeled-field">
+                    <span className="nrf-inline-label">Unit</span>
+                    <select value={it.unit} className="nrf-input" onChange={e => { const next = [...chemicalItems]; next[i].unit = e.target.value; setChemicalItems(next); }}>
+                      <option value="ml">mL</option>
+                      <option value="g">g</option>
+                    </select>
+                  </div>
                   <input type="number" min="1" step="1" className="nrf-input" placeholder="No. of packs" value={it.no_of_packs ?? ''} required
                     onChange={e => { const next = [...chemicalItems]; next[i].no_of_packs = e.target.value; setChemicalItems(next); }} />
                   <input type="number" step="1" className="nrf-input" placeholder="Rate per pack (₹)" value={it.rate ?? ''} required
@@ -330,10 +330,19 @@ function NewStockRegister() {
                       </ul>
                     )}
                   </div>
-                  <input type="number" step="1" className="nrf-input" placeholder="Restock" value={it.restock_level ?? ''}
-                    onChange={e => { const next = [...chemicalItems]; next[i].restock_level = e.target.value; setChemicalItems(next); }} />
-                  <input type="text" className="nrf-input nrf-readonly" value={calcChemicalTotalQty(it) || ''} readOnly placeholder="0" />
-                  <input type="text" className="nrf-input nrf-readonly" value={calcChemicalTotalPrice(it) ? '₹' + calcChemicalTotalPrice(it).toFixed(2) : ''} readOnly placeholder="₹0.00" />
+                  <div className="nrf-labeled-field">
+                    <span className="nrf-inline-label">Restock Lvl</span>
+                    <input type="number" step="1" className="nrf-input" placeholder="Restock" value={it.restock_level ?? ''}
+                      onChange={e => { const next = [...chemicalItems]; next[i].restock_level = e.target.value; setChemicalItems(next); }} />
+                  </div>
+                  <div className="nrf-labeled-field">
+                    <span className="nrf-inline-label">Total Qty</span>
+                    <input type="text" className="nrf-input nrf-readonly" value={calcChemicalTotalQty(it) || ''} readOnly placeholder="0" />
+                  </div>
+                  <div className="nrf-labeled-field">
+                    <span className="nrf-inline-label">Total Price</span>
+                    <input type="text" className="nrf-input nrf-readonly" value={calcChemicalTotalPrice(it) ? '₹' + calcChemicalTotalPrice(it).toFixed(2) : ''} readOnly placeholder="₹0.00" />
+                  </div>
                   <button type="button" className="nrf-del-btn" onClick={() => setChemicalItems(chemicalItems.filter((_, idx) => idx !== i))} title="Remove"><FaTrash /></button>
                 </div>
               </div>
@@ -346,9 +355,6 @@ function NewStockRegister() {
               <div className="nrf-section-title"><FaBoxes /> Apparatus</div>
               <button type="button" className="nrf-add-btn" onClick={addApparatusRow}><FaPlus /> Add Line</button>
             </div>
-            <div className="nrf-app-hdr-1 nrf-hdr"><span></span><span></span></div>
-            <div className="nrf-app-hdr-2 nrf-hdr"><span></span><span></span><span></span><span></span></div>
-            <div className="nrf-app-hdr-3 nrf-hdr"><span>Restock Lvl</span><span>Total Price</span><span></span></div>
             {apparatusItems.map((it, i) => (
               <div key={i} className="nrf-app-entry">
                 <div className="nrf-app-row-1">
@@ -391,9 +397,15 @@ function NewStockRegister() {
                   </div>
                 </div>
                 <div className="nrf-app-row-3">
-                  <input type="number" step="1" className="nrf-input" placeholder="Restock" value={it.restock_level ?? ''}
-                    onChange={e => { const next = [...apparatusItems]; next[i].restock_level = e.target.value; setApparatusItems(next); }} />
-                  <input type="text" className="nrf-input nrf-readonly" value={calcApparatusTotalPrice(it) ? '₹' + calcApparatusTotalPrice(it).toFixed(2) : ''} readOnly placeholder="₹0.00" />
+                  <div className="nrf-labeled-field">
+                    <span className="nrf-inline-label">Restock Lvl</span>
+                    <input type="number" step="1" className="nrf-input" placeholder="Restock" value={it.restock_level ?? ''}
+                      onChange={e => { const next = [...apparatusItems]; next[i].restock_level = e.target.value; setApparatusItems(next); }} />
+                  </div>
+                  <div className="nrf-labeled-field">
+                    <span className="nrf-inline-label">Total Price</span>
+                    <input type="text" className="nrf-input nrf-readonly" value={calcApparatusTotalPrice(it) ? '₹' + calcApparatusTotalPrice(it).toFixed(2) : ''} readOnly placeholder="₹0.00" />
+                  </div>
                   <button type="button" className="nrf-del-btn" onClick={() => setApparatusItems(apparatusItems.filter((_, idx) => idx !== i))} title="Remove"><FaTrash /></button>
                 </div>
               </div>

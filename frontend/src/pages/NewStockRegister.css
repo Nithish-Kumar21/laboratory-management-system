@@ -99,7 +99,7 @@
   box-shadow: 0 0 0 2px rgba(63, 81, 181, 0.1);
 }
 
-.nrf-grid-row select.nrf-input {
+.nrf-chem-row-2 select.nrf-input {
   text-align: center;
   cursor: pointer;
   appearance: auto;
@@ -164,32 +164,6 @@
   background: #357ABD;
 }
 
-/* ── Desktop row headers ── */
-.nrf-hdr {
-  display: grid;
-  gap: 8px;
-  align-items: center;
-  padding: 0 2px;
-}
-
-.nrf-hdr span {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-muted);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-/* Chem headers */
-.nrf-chem-hdr-1 { grid-template-columns: 1fr 38px; }
-.nrf-chem-hdr-2 { grid-template-columns: 1fr 80px 80px 1fr; }
-.nrf-chem-hdr-3 { grid-template-columns: 1fr 80px 80px 100px 38px; }
-
-/* App headers */
-.nrf-app-hdr-1 { grid-template-columns: 1fr 38px; }
-.nrf-app-hdr-2 { grid-template-columns: 1fr 1fr 1fr 38px; }
-.nrf-app-hdr-3 { grid-template-columns: 80px 100px 38px; }
-
 /* ── Chem entry container ── */
 .nrf-chem-entry {
   display: flex;
@@ -221,13 +195,14 @@
   display: grid;
   grid-template-columns: 1fr 80px 80px 1fr;
   gap: 8px;
+  align-items: start;
 }
 
 .nrf-chem-row-3 {
   display: grid;
   grid-template-columns: 1fr 80px 80px 100px 38px;
   gap: 8px;
-  align-items: center;
+  align-items: start;
 }
 
 /* ── App entry container ── */
@@ -268,7 +243,23 @@
   display: grid;
   grid-template-columns: 80px 100px 38px;
   gap: 8px;
-  align-items: center;
+  align-items: start;
+}
+
+/* ── Inline labels ── */
+.nrf-labeled-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nrf-inline-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 /* Autocomplete */
@@ -508,11 +499,6 @@
     display: none;
   }
 
-  /* ===== Mobile: hide header rows ===== */
-  .nrf-hdr {
-    display: none;
-  }
-
   /* ===== Mobile: entry containers flex-wrap ===== */
   .nrf-chem-entry,
   .nrf-app-entry {
@@ -557,6 +543,12 @@
   .nrf-chem-entry select,
   .nrf-app-entry input,
   .nrf-app-entry select {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .nrf-chem-entry .nrf-labeled-field,
+  .nrf-app-entry .nrf-labeled-field {
     flex: 1;
     min-width: 0;
   }
