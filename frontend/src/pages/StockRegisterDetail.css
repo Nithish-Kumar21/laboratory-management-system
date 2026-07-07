@@ -167,58 +167,70 @@
   flex-direction: column;
 }
 
-.sd-chem-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 9px 0;
+.sd-chem-item {
+  padding: 12px 0;
   border-bottom: 0.5px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-:root.dark-mode .sd-chem-row {
+:root.dark-mode .sd-chem-item {
   border-color: #334155;
 }
 
-.sd-chem-row:last-child {
+.sd-chem-item:last-child {
   border-bottom: none;
+  padding-bottom: 0;
 }
 
-.sd-chem-row.multi-col {
-  display: grid;
-  grid-template-columns: 1fr 100px 100px 100px;
-  gap: 8px;
+.sd-item-row-1 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
-.sd-chem-name {
+.sd-item-row-2 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sd-item-name {
   font-size: 15px;
   color: var(--text-main);
   font-weight: 600;
+  flex: 1;
+  min-width: 0;
+  padding-right: 12px;
 }
 
-.sd-chem-qty {
+.sd-item-total {
   font-size: 15px;
   font-weight: 700;
   color: #1A3C6E;
-  text-align: right;
+  white-space: nowrap;
 }
 
-.sd-chem-unit {
+.sd-item-detail {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-muted);
+  flex: 1;
+  min-width: 0;
+  padding-right: 12px;
+}
+
+.sd-item-unit {
   font-size: 13px;
   font-weight: 400;
   color: var(--text-muted);
-  margin-left: 2px;
 }
 
-.sd-chem-rate {
-  font-size: 14px;
-  color: var(--text-main);
-  text-align: right;
-}
-
-.sd-chem-make {
-  font-size: 14px;
+.sd-item-make {
+  font-size: 13px;
   color: var(--text-muted);
-  text-align: right;
+  white-space: nowrap;
 }
 
 .sd-empty-text {
@@ -308,11 +320,6 @@
     min-width: 0;
     width: auto;
   }
-
-  .sd-chem-row.multi-col {
-    grid-template-columns: 1fr 80px 80px 80px;
-    gap: 6px;
-  }
 }
 
 @media (max-width: 480px) {
@@ -338,16 +345,6 @@
   .sd-req-id {
     font-size: 16px;
     word-break: break-word;
-  }
-
-  .sd-chem-row.multi-col {
-    grid-template-columns: 1fr 1fr;
-    gap: 2px 8px;
-  }
-
-  .sd-chem-rate,
-  .sd-chem-make {
-    font-size: 13px;
   }
 
   .sd-actions {

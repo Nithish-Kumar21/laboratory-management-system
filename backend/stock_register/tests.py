@@ -509,3 +509,40 @@ class StockRegisterWorkflowTest(APITestCase):
         r = self.client.post('/api/stock_register/', payload, format='json')
         self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('rate', str(r.data).lower())
+
+    # ── PHONE VALIDATION (Part 1) ───────────────────────────
+
+    def test_phone_10_digits_accepted(self):
+        self._login(self.store_keeper)
+        r = self._create_sr({'invoice_number': 'INV-PH1', 'date': self.today.isoformat(), 'supplier_name': 'S',
+                             'supplier_contact_country_code': '+91', 'supplier_contact_phone': '9876543210',
+                             'chemical_items': [{'chemical_name': 'PhoneChem', 'make': 'M', 'pack_size': '100',
+                                                  'no_of_packs': 1, 'rate': '50'}]})
+        self.assertEqual(r.status_code, status.HTTP_201_CREATED)
+
+    def test_phone_9_digits_rejected(self):
+        self._login(self.store_keeper)
+        r = self._create_sr({'invoice_number': 'INV-PH2', 'date': self.today.isoformat(), 'supplier_name': 'S',
+                             'supplier_contact_country_code': '+91', 'supplier_contact_phone': '987654321',
+                             'chemical_items': [{'chemical_name': 'PhoneChem2', 'make': 'M', 'pack_size': '100',
+                                                  'no_of_packs': 1, 'rate': '50'}]})
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('exactly 10 digits', str(r.data).lower())
+
+    def test_phone_11_digits_rejected(self):
+        self._login(self.store_keeper)
+        r = self._create_sr({'invoice_number': 'INV-PH3', 'date': self.today.isoformat(), 'supplier_name': 'S',
+                             'supplier_contact_country_code': '+91', 'supplier_contact_phone': '98765432101',
+                             'chemical_items': [{'chemical_name': 'PhoneChem3', 'make': 'M', 'pack_size': '100',
+                                                  'no_of_packs': 1, 'rate': '50'}]})
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('exactly 10 digits', str(r.data).lower())
+
+    def test_phone_non_numeric_rejected(self):
+        self._login(self.store_keeper)
+        r = self._create_sr({'invoice_number': 'INV-PH4', 'date': self.today.isoformat(), 'supplier_name': 'S',
+                             'supplier_contact_country_code': '+91', 'supplier_contact_phone': 'abc123defg',
+                             'chemical_items': [{'chemical_name': 'PhoneChem4', 'make': 'M', 'pack_size': '100',
+                                                  'no_of_packs': 1, 'rate': '50'}]})
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('exactly 10 digits', str(r.data).lower())

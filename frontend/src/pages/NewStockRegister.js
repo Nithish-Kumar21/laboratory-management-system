@@ -40,6 +40,7 @@ function NewStockRegister() {
   const [chemMakes, setChemMakes] = useState([]);
   const [appMakes, setAppMakes] = useState([]);
 
+  const [phoneError, setPhoneError] = useState('');
   const [showChemicalSuggestions, setShowChemicalSuggestions] = useState({});
   const [showApparatusSuggestions, setShowApparatusSuggestions] = useState({});
   const [showSupplierSuggestions, setShowSupplierSuggestions] = useState(false);
@@ -120,6 +121,12 @@ function NewStockRegister() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (submitting) return;
+    const phone = formData.supplier_contact_phone;
+    if (phone && !/^\d{10}$/.test(phone)) {
+      setPhoneError('Phone number must be exactly 10 digits');
+      setSubmitting(false);
+      return;
+    }
     setSubmitting(true);
     try {
       const payload = {
@@ -263,8 +270,29 @@ function NewStockRegister() {
                 </select>
               </div>
               <div className="nrf-supplier-phone">
-                <input type="text" className="nrf-input" placeholder="Phone number" value={formData.supplier_contact_phone}
-                  onChange={e => setFormData({ ...formData, supplier_contact_phone: e.target.value })} />
+                <input type="text" className={`nrf-input${phoneError ? ' nrf-input-error' : ''}`} placeholder="Phone number" value={formData.supplier_contact_phone}
+                  onBlur={() => {
+                    const v = formData.supplier_contact_phone;
+                    if (v && !/^\d{10}$/.test(v)) {
+                      setPhoneError('Phone number must be exactly 10 digits');
+                    } else {
+                      setPhoneError('');
+                    }
+                  }}
+                  onChange={e => {
+                    const v = e.target.value;
+                    if (v && !/^\d*$/.test(v)) {
+                      setPhoneError('Only digits allowed');
+                    } else {
+                      if (v && v.length !== 10) {
+                        setPhoneError('Phone number must be exactly 10 digits');
+                      } else {
+                        setPhoneError('');
+                      }
+                    }
+                    setFormData({ ...formData, supplier_contact_phone: v });
+                  }} />
+                {phoneError && <span className="nrf-field-error">{phoneError}</span>}
               </div>
               <div className="nrf-supplier-email">
                 <input type="email" className="nrf-input" placeholder="Email address" value={formData.supplier_email}

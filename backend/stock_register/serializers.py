@@ -20,8 +20,9 @@ COUNTRY_CODES = [
 
 
 def validate_phone(value):
-    if value and not re.match(r'^\d{6,15}$', value):
-        raise serializers.ValidationError("Phone number must contain 6-15 digits only")
+    if value:
+        if not re.match(r'^\d{10}$', value):
+            raise serializers.ValidationError("Phone number must be exactly 10 digits")
     return value
 
 
