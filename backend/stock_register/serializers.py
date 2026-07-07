@@ -187,7 +187,7 @@ class StockRegisterCreateSerializer(serializers.ModelSerializer):
             pack_size = item_data['pack_size']
             no_of_packs = item_data.get('no_of_packs', 1)
             item_data['total_quantity'] = pack_size * no_of_packs
-            item_data['total_price'] = item_data['total_quantity'] * item_data['rate']
+            item_data['total_price'] = no_of_packs * item_data['rate']
             chem_item = ChemicalItem.objects.create(stock_register=stock_register, **item_data)
 
             chem_name = chem_item.chemical_name

@@ -270,25 +270,31 @@ class StockRegisterWorkflowTest(APITestCase):
 
     # ── V2 FEATURES ─────────────────────────────────────────
 
-    def test_chemical_totals_calculated(self):
+    def test_chemical_totals_single_pack(self):
+        """pack_size=500, no_of_packs=1, rate=100 => total_qty=500, total_price=100"""
         self._login(self.store_keeper)
-        r = self._create_sr()
+        r = self._create_sr({'invoice_number': 'INV-CT1', 'date': self.today.isoformat(), 'supplier_name': 'S',
+                             'chemical_items': [{'chemical_name': 'ChemA', 'make': 'M', 'pack_size': '500',
+                                                  'no_of_packs': 1, 'rate': '100'}]})
         self.assertEqual(r.status_code, status.HTTP_201_CREATED)
-        chem = ChemicalItem.objects.get(chemical_name='Sulfuric Acid')
+        chem = ChemicalItem.objects.get(chemical_name='ChemA')
         self.assertEqual(chem.pack_size, Decimal('500.00'))
         self.assertEqual(chem.no_of_packs, 1)
         self.assertEqual(chem.total_quantity, Decimal('500.00'))
-        self.assertEqual(chem.total_price, Decimal('425000.00'))
+        self.assertEqual(chem.total_price, Decimal('100.00'))
 
-    def test_chemical_totals_with_multi_pack(self):
+    def test_chemical_totals_multi_pack(self):
+        """pack_size=500, no_of_packs=2, rate=250 => total_qty=1000, total_price=500"""
         self._login(self.store_keeper)
-        r = self._create_sr({'invoice_number': 'INV-PACK', 'date': self.today.isoformat(), 'supplier_name': 'S',
-                             'chemical_items': [{'chemical_name': 'Sulfuric Acid', 'make': 'Merck',
-                                                  'pack_size': '250', 'no_of_packs': 4, 'rate': '100'}]})
+        r = self._create_sr({'invoice_number': 'INV-CT2', 'date': self.today.isoformat(), 'supplier_name': 'S',
+                             'chemical_items': [{'chemical_name': 'ChemB', 'make': 'M', 'pack_size': '500',
+                                                  'no_of_packs': 2, 'rate': '250'}]})
         self.assertEqual(r.status_code, status.HTTP_201_CREATED)
-        chem = ChemicalItem.objects.get(chemical_name='Sulfuric Acid')
+        chem = ChemicalItem.objects.get(chemical_name='ChemB')
+        self.assertEqual(chem.pack_size, Decimal('500.00'))
+        self.assertEqual(chem.no_of_packs, 2)
         self.assertEqual(chem.total_quantity, Decimal('1000.00'))
-        self.assertEqual(chem.total_price, Decimal('100000.00'))
+        self.assertEqual(chem.total_price, Decimal('500.00'))
 
     def test_apparatus_total_price(self):
         self._login(self.store_keeper)

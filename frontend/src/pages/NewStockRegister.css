@@ -164,15 +164,15 @@
   background: #357ABD;
 }
 
-/* Grid Headers */
-.nrf-grid-cols {
+/* ── Desktop row headers ── */
+.nrf-hdr {
   display: grid;
   gap: 8px;
   align-items: center;
   padding: 0 2px;
 }
 
-.nrf-grid-cols span {
+.nrf-hdr span {
   font-size: 11px;
   font-weight: 600;
   color: var(--text-muted);
@@ -180,36 +180,95 @@
   text-transform: uppercase;
 }
 
-.cols-5 {
-  grid-template-columns: 1fr 90px 80px 90px 1fr 38px;
+/* Chem headers */
+.nrf-chem-hdr-1 { grid-template-columns: 1fr 38px; }
+.nrf-chem-hdr-2 { grid-template-columns: 1fr 80px 80px 1fr; }
+.nrf-chem-hdr-3 { grid-template-columns: 1fr 80px 80px 100px 38px; }
+
+/* App headers */
+.nrf-app-hdr-1 { grid-template-columns: 1fr 38px; }
+.nrf-app-hdr-2 { grid-template-columns: 1fr 1fr 1fr 38px; }
+.nrf-app-hdr-3 { grid-template-columns: 80px 100px 38px; }
+
+/* ── Chem entry container ── */
+.nrf-chem-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #F8F9FC;
+  border: 0.5px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 8px;
 }
 
-.cols-4 {
-  grid-template-columns: 1fr 110px 110px 1fr 38px;
+:root.dark-mode .nrf-chem-entry {
+  background: #0f172a;
+  border-color: #334155;
 }
 
-.cols-3 {
-  grid-template-columns: 1fr 100px 1fr 38px;
+.nrf-chem-entry .nrf-input {
+  height: 38px;
+  font-size: 13px;
 }
 
-.cols-chem {
-  grid-template-columns: minmax(120px, 1.5fr) 80px 70px 70px 90px minmax(100px, 1fr) 80px 80px 100px 38px;
-}
-
-.cols-app {
-  grid-template-columns: minmax(120px, 1.5fr) 90px 100px minmax(100px, 1fr) 80px 100px 38px;
-}
-
-/* Grid Rows */
-.nrf-grid-row {
+.nrf-chem-row-1 {
   display: grid;
+  grid-template-columns: 1fr;
+}
+
+.nrf-chem-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 80px 80px 1fr;
+  gap: 8px;
+}
+
+.nrf-chem-row-3 {
+  display: grid;
+  grid-template-columns: 1fr 80px 80px 100px 38px;
   gap: 8px;
   align-items: center;
 }
 
-.nrf-grid-row .nrf-input {
+/* ── App entry container ── */
+.nrf-app-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #F8F9FC;
+  border: 0.5px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 8px;
+}
+
+:root.dark-mode .nrf-app-entry {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+.nrf-app-entry .nrf-input {
   height: 38px;
   font-size: 13px;
+}
+
+.nrf-app-row-1 {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+.nrf-app-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  align-items: center;
+}
+
+.nrf-app-row-3 {
+  display: grid;
+  grid-template-columns: 80px 100px 38px;
+  gap: 8px;
+  align-items: center;
 }
 
 /* Autocomplete */
@@ -449,14 +508,15 @@
     display: none;
   }
 
-  /* ===== Mobile: hide grid headers ===== */
-  .nrf-grid-cols {
+  /* ===== Mobile: hide header rows ===== */
+  .nrf-hdr {
     display: none;
   }
 
-  /* ===== Mobile: stack item rows vertically ===== */
-  .nrf-grid-row {
-    display: flex !important;
+  /* ===== Mobile: entry containers flex-wrap ===== */
+  .nrf-chem-entry,
+  .nrf-app-entry {
+    display: flex;
     flex-wrap: wrap;
     gap: 8px;
     background: #F8F9FC;
@@ -467,31 +527,49 @@
     align-items: start;
   }
 
-  :root.dark-mode .nrf-grid-row {
+  :root.dark-mode .nrf-chem-entry,
+  :root.dark-mode .nrf-app-entry {
     background: #0f172a;
     border-color: #334155;
   }
 
-  /* Name / autocomplete — full width */
-  .nrf-grid-row > .nrf-autocomplete {
+  /* Override grid layouts on mobile — use flex */
+  .nrf-chem-row-1,
+  .nrf-chem-row-2,
+  .nrf-chem-row-3,
+  .nrf-app-row-1,
+  .nrf-app-row-2,
+  .nrf-app-row-3 {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+  }
+
+  /* Name / autocomplete — full width in any row */
+  .nrf-chem-entry .nrf-autocomplete,
+  .nrf-app-entry .nrf-autocomplete {
     width: 100%;
   }
 
   /* Inputs side by side */
-  .nrf-grid-row > input[type="number"],
-  .nrf-grid-row > input[type="text"],
-  .nrf-grid-row > select {
+  .nrf-chem-entry input,
+  .nrf-chem-entry select,
+  .nrf-app-entry input,
+  .nrf-app-entry select {
     flex: 1;
     min-width: 0;
   }
 
-  .nrf-grid-row .nrf-input {
+  .nrf-chem-entry .nrf-input,
+  .nrf-app-entry .nrf-input {
     height: 40px;
     font-size: 14px;
   }
 
   /* Delete button — full width at bottom */
-  .nrf-grid-row > .nrf-del-btn {
+  .nrf-chem-entry .nrf-del-btn,
+  .nrf-app-entry .nrf-del-btn {
     width: 100%;
     height: 40px;
     border-radius: 7px;
