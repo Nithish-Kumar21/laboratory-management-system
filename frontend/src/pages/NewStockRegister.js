@@ -279,14 +279,14 @@ function NewStockRegister() {
               <div className="nrf-section-title"><FaFlask /> Chemicals</div>
               <button type="button" className="nrf-add-btn" onClick={addChemicalRow}><FaPlus /> Add Line</button>
             </div>
-            <div className="nrf-chem-hdr-1 nrf-hdr"><span>Chemical Name</span><span></span></div>
-            <div className="nrf-chem-hdr-2 nrf-hdr"><span>Pack Size</span><span>Unit</span><span>Packs</span><span>Rate / Pack</span></div>
-            <div className="nrf-chem-hdr-3 nrf-hdr"><span>Make</span><span>Restock Lvl</span><span>Total Qty</span><span>Total Price</span><span></span></div>
+            <div className="nrf-chem-hdr-1 nrf-hdr"><span></span><span></span></div>
+            <div className="nrf-chem-hdr-2 nrf-hdr"><span></span><span>Unit</span><span></span><span></span></div>
+            <div className="nrf-chem-hdr-3 nrf-hdr"><span></span><span>Restock Lvl</span><span>Total Qty</span><span>Total Price</span><span></span></div>
             {chemicalItems.map((it, i) => (
               <div key={i} className="nrf-chem-entry">
                 <div className="nrf-chem-row-1">
                   <div className="nrf-autocomplete">
-                    <input type="text" className="nrf-input" placeholder="Item name..." value={it.chemical_name} required autoComplete="off"
+                    <input type="text" className="nrf-input" placeholder="Chemical name..." value={it.chemical_name} required autoComplete="off"
                       onChange={e => { const next = [...chemicalItems]; next[i].chemical_name = e.target.value; setChemicalItems(next); setShowChemicalSuggestions({ [i]: true }); setActiveSuggestionIndex(-1); }}
                       onFocus={() => { setShowChemicalSuggestions({ [i]: true }); setActiveSuggestionIndex(-1); }}
                       onBlur={() => setTimeout(() => setShowChemicalSuggestions({}), 250)} />
@@ -304,20 +304,20 @@ function NewStockRegister() {
                   </div>
                 </div>
                 <div className="nrf-chem-row-2">
-                  <input type="number" step="1" className="nrf-input" placeholder="Size" value={it.pack_size ?? ''} required
+                  <input type="number" step="1" className="nrf-input" placeholder="Pack size" value={it.pack_size ?? ''} required
                     onChange={e => { const next = [...chemicalItems]; next[i].pack_size = e.target.value; setChemicalItems(next); }} />
                   <select value={it.unit} className="nrf-input" onChange={e => { const next = [...chemicalItems]; next[i].unit = e.target.value; setChemicalItems(next); }}>
                     <option value="ml">mL</option>
                     <option value="g">g</option>
                   </select>
-                  <input type="number" min="1" step="1" className="nrf-input" placeholder="Packs" value={it.no_of_packs ?? ''} required
+                  <input type="number" min="1" step="1" className="nrf-input" placeholder="No. of packs" value={it.no_of_packs ?? ''} required
                     onChange={e => { const next = [...chemicalItems]; next[i].no_of_packs = e.target.value; setChemicalItems(next); }} />
-                  <input type="number" step="1" className="nrf-input" placeholder="Rate" value={it.rate ?? ''} required
+                  <input type="number" step="1" className="nrf-input" placeholder="Rate per pack (₹)" value={it.rate ?? ''} required
                     onChange={e => { const next = [...chemicalItems]; next[i].rate = e.target.value; setChemicalItems(next); }} />
                 </div>
                 <div className="nrf-chem-row-3">
                   <div className="nrf-autocomplete">
-                    <input type="text" className="nrf-input" placeholder="Make" value={it.make} required
+                    <input type="text" className="nrf-input" placeholder="Make / Brand" value={it.make} required
                       onChange={e => { const next = [...chemicalItems]; next[i].make = e.target.value; setChemicalItems(next); setShowChemMakesSuggestions({ [i]: true }); setActiveSuggestionIndex(-1); }}
                       onFocus={() => { setShowChemMakesSuggestions({ [i]: true }); setActiveSuggestionIndex(-1); }}
                       onBlur={() => setTimeout(() => setShowChemMakesSuggestions({}), 250)} />
@@ -346,14 +346,14 @@ function NewStockRegister() {
               <div className="nrf-section-title"><FaBoxes /> Apparatus</div>
               <button type="button" className="nrf-add-btn" onClick={addApparatusRow}><FaPlus /> Add Line</button>
             </div>
-            <div className="nrf-app-hdr-1 nrf-hdr"><span>Apparatus Name</span><span></span></div>
-            <div className="nrf-app-hdr-2 nrf-hdr"><span>Qty (PCS)</span><span>Rate / Piece</span><span>Make</span><span></span></div>
+            <div className="nrf-app-hdr-1 nrf-hdr"><span></span><span></span></div>
+            <div className="nrf-app-hdr-2 nrf-hdr"><span></span><span></span><span></span><span></span></div>
             <div className="nrf-app-hdr-3 nrf-hdr"><span>Restock Lvl</span><span>Total Price</span><span></span></div>
             {apparatusItems.map((it, i) => (
               <div key={i} className="nrf-app-entry">
                 <div className="nrf-app-row-1">
                   <div className="nrf-autocomplete">
-                    <input type="text" className="nrf-input" placeholder="Item name..." value={it.apparatus_name} required autoComplete="off"
+                    <input type="text" className="nrf-input" placeholder="Apparatus name..." value={it.apparatus_name} required autoComplete="off"
                       onChange={e => { const next = [...apparatusItems]; next[i].apparatus_name = e.target.value; setApparatusItems(next); setShowApparatusSuggestions({ [i]: true }); setActiveSuggestionIndex(-1); }}
                       onFocus={() => { setShowApparatusSuggestions({ [i]: true }); setActiveSuggestionIndex(-1); }}
                       onBlur={() => setTimeout(() => setShowApparatusSuggestions({}), 250)} />
@@ -371,12 +371,12 @@ function NewStockRegister() {
                   </div>
                 </div>
                 <div className="nrf-app-row-2">
-                  <input type="number" step="1" className="nrf-input" placeholder="Qty" value={it.quantity_pieces ?? ''} required
+                  <input type="number" step="1" className="nrf-input" placeholder="Qty (pcs)" value={it.quantity_pieces ?? ''} required
                     onChange={e => { const next = [...apparatusItems]; next[i].quantity_pieces = e.target.value; setApparatusItems(next); }} />
-                  <input type="number" step="1" className="nrf-input" placeholder="Price" value={it.rate ?? ''} required
+                  <input type="number" step="1" className="nrf-input" placeholder="Rate per piece (₹)" value={it.rate ?? ''} required
                     onChange={e => { const next = [...apparatusItems]; next[i].rate = e.target.value; setApparatusItems(next); }} />
                   <div className="nrf-autocomplete">
-                    <input type="text" className="nrf-input" placeholder="Make" value={it.make} required
+                    <input type="text" className="nrf-input" placeholder="Make / Brand" value={it.make} required
                       onChange={e => { const next = [...apparatusItems]; next[i].make = e.target.value; setApparatusItems(next); setShowAppMakesSuggestions({ [i]: true }); setActiveSuggestionIndex(-1); }}
                       onFocus={() => { setShowAppMakesSuggestions({ [i]: true }); setActiveSuggestionIndex(-1); }}
                       onBlur={() => setTimeout(() => setShowAppMakesSuggestions({}), 250)} />
