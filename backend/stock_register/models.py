@@ -9,6 +9,9 @@ class StockRegister(models.Model):
     invoice_number = models.CharField(max_length=50, unique=True)
     date = models.DateField()
     supplier_name = models.CharField(max_length=100)
+    supplier_contact_country_code = models.CharField(max_length=5, blank=True, default='')
+    supplier_contact_phone = models.CharField(max_length=20, blank=True, default='')
+    supplier_email = models.EmailField(max_length=100, blank=True, default='')
     remarks = models.TextField(blank=True, default='')
 
     class Meta:
@@ -27,7 +30,10 @@ class ChemicalItem(models.Model):
         db_column='stock_register_id'
     )
     chemical_name = models.CharField(max_length=64)
-    quantity = models.DecimalField(max_digits=10, decimal_places=2)
+    pack_size = models.DecimalField(max_digits=10, decimal_places=2)
+    no_of_packs = models.IntegerField(default=1)
+    total_quantity = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    total_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     rate = models.DecimalField(max_digits=10, decimal_places=2)
     make = models.CharField(max_length=100)
     unit = models.CharField(max_length=2, choices=UNIT_CHOICES, default='ml')
@@ -51,6 +57,7 @@ class ApparatusItem(models.Model):
     quantity_pieces = models.IntegerField()
     rate = models.DecimalField(max_digits=10, decimal_places=2)
     make = models.CharField(max_length=100)
+    total_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
 
     class Meta:
         db_table = 'apparatus_item'

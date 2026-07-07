@@ -168,11 +168,8 @@ const Login = () => {
             GURU NANAK COLLEGE<br />
             <span className="text-base font-medium opacity-80">(AUTONOMOUS)</span>
           </h1>
-          <div className="mt-2 text-center text-xs text-[#C9D6E8] space-y-0.5 leading-relaxed">
-            <p>Accredited at &apos;A++&apos; Grade by NAAC,</p>
-            <p>Affiliated to University of Madras, Approved by AICTE</p>
-            <p>An ISO 9001:2015 Certified Institution</p>
-            <p>Guru Nanak Salai, Velachery, Chennai 600 042</p>
+          <div className="mt-2 text-center text-xs text-[#C9D6E8] leading-relaxed">
+            <p>A Sikh Minority Institution.</p>
           </div>
           <div className="w-full max-w-sm mt-6">
             {formContent}
@@ -238,11 +235,8 @@ const Login = () => {
               GURU NANAK COLLEGE<br />
               <span className="text-lg font-medium opacity-75">(AUTONOMOUS)</span>
             </h1>
-            <div className="mt-3 text-center text-sm text-[#C9D6E8] space-y-0.5 leading-relaxed">
-              <p>Accredited at &apos;A++&apos; Grade by NAAC,</p>
-              <p>Affiliated to University of Madras, Approved by AICTE</p>
-              <p>An ISO 9001:2015 Certified Institution</p>
-              <p>Guru Nanak Salai, Velachery, Chennai 600 042</p>
+            <div className="mt-3 text-center text-sm text-[#C9D6E8] leading-relaxed">
+              <p>A Sikh Minority Institution.</p>
             </div>
             <div className="w-full max-w-sm mt-7">
               {formContent}

@@ -81,6 +81,18 @@ function StockRegisterDetail() {
                 <div className="sd-meta-label">Supplier Name</div>
                 <div className="sd-meta-value">{stockRegister.supplier_name}</div>
               </div>
+              {stockRegister.supplier_contact_phone && (
+                <div className="sd-meta-item">
+                  <div className="sd-meta-label">Supplier Contact</div>
+                  <div className="sd-meta-value">{stockRegister.supplier_contact_country_code || ''} {stockRegister.supplier_contact_phone}</div>
+                </div>
+              )}
+              {stockRegister.supplier_email && (
+                <div className="sd-meta-item">
+                  <div className="sd-meta-label">Supplier Email</div>
+                  <div className="sd-meta-value">{stockRegister.supplier_email}</div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -94,9 +106,12 @@ function StockRegisterDetail() {
                 {chemItems.map(item => (
                   <div key={item.id} className="sd-chem-row multi-col">
                     <span className="sd-chem-name">{item.chemical_name}</span>
-                    <span className="sd-chem-qty">{item.quantity}<span className="sd-chem-unit"> {item.unit || 'ml'}</span></span>
+                    <span className="sd-chem-qty">{item.pack_size}<span className="sd-chem-unit"> {item.unit} × {item.no_of_packs || 1} packs</span></span>
                     <span className="sd-chem-rate">₹{parseFloat(item.rate).toFixed(2)}</span>
                     <span className="sd-chem-make">{item.make || '-'}</span>
+                    {item.total_price != null && (
+                      <span className="sd-chem-total">₹{parseFloat(item.total_price).toFixed(2)}</span>
+                    )}
                   </div>
                 ))}
               </div>
@@ -116,6 +131,9 @@ function StockRegisterDetail() {
                     <span className="sd-chem-qty">{item.quantity_pieces}<span className="sd-chem-unit"> pcs</span></span>
                     <span className="sd-chem-rate">₹{parseFloat(item.rate).toFixed(2)}</span>
                     <span className="sd-chem-make">{item.make || '-'}</span>
+                    {item.total_price != null && (
+                      <span className="sd-chem-total">₹{parseFloat(item.total_price).toFixed(2)}</span>
+                    )}
                   </div>
                 ))}
               </div>

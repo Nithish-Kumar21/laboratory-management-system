@@ -29,8 +29,13 @@ class AvailableChemicalViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def names(self, request):
         """Get list of chemical names and available quantity"""
-        data = AvailableChemical.objects.values('chemical_name', 'quantity', 'unit').order_by('chemical_name')
-        result = [{'name': item['chemical_name'], 'available_quantity': float(item['quantity']), 'unit': item.get('unit', 'ml')} for item in data]
+        data = AvailableChemical.objects.values('chemical_name', 'quantity', 'unit', 'reorder_level').order_by('chemical_name')
+        result = [{
+            'name': item['chemical_name'],
+            'available_quantity': float(item['quantity']),
+            'unit': item.get('unit', 'ml'),
+            'reorder_level': float(item['reorder_level']) if item['reorder_level'] is not None else None
+        } for item in data]
         return Response(result)
 
 class AvailableApparatusViewSet(viewsets.ModelViewSet):

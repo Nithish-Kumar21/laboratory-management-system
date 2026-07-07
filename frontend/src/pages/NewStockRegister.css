@@ -192,6 +192,14 @@
   grid-template-columns: 1fr 100px 1fr 38px;
 }
 
+.cols-chem {
+  grid-template-columns: minmax(120px, 1.5fr) 80px 70px 70px 90px minmax(100px, 1fr) 80px 80px 100px 38px;
+}
+
+.cols-app {
+  grid-template-columns: minmax(120px, 1.5fr) 90px 100px minmax(100px, 1fr) 80px 100px 38px;
+}
+
 /* Grid Rows */
 .nrf-grid-row {
   display: grid;
@@ -258,6 +266,37 @@
   color: #EF4444;
   font-weight: 600;
   white-space: nowrap;
+}
+
+/* Supplier Details Row */
+.nrf-supplier-row {
+  display: grid;
+  grid-template-columns: 1fr 140px 1fr 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
+.nrf-supplier-name {
+  min-width: 0;
+}
+
+.nrf-supplier-code select.nrf-input {
+  text-align: center;
+  cursor: pointer;
+  padding: 0 4px;
+  font-size: 13px;
+}
+
+/* Read-only computed fields */
+.nrf-readonly {
+  background: #f3f4f6 !important;
+  color: #6b7280 !important;
+  cursor: default;
+}
+
+:root.dark-mode .nrf-readonly {
+  background: #1e293b !important;
+  color: #9ca3af !important;
 }
 
 /* Delete Button */
@@ -391,6 +430,11 @@
     grid-template-columns: 1fr;
   }
 
+  .nrf-supplier-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
   .nrf-action-row {
     flex-direction: column;
   }
@@ -433,9 +477,10 @@
     width: 100%;
   }
 
-  /* Qty / Rate / Caused By — side by side */
+  /* Inputs side by side */
   .nrf-grid-row > input[type="number"],
-  .nrf-grid-row > input[type="text"] {
+  .nrf-grid-row > input[type="text"],
+  .nrf-grid-row > select {
     flex: 1;
     min-width: 0;
   }
