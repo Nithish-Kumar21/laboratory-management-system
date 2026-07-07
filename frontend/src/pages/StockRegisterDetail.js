@@ -111,9 +111,23 @@ function StockRegisterDetail() {
                         <span className="sd-item-total">₹{parseFloat(item.total_price).toFixed(2)}</span>
                       )}
                     </div>
-                    <div className="sd-item-row-2">
-                      <span className="sd-item-detail">{item.pack_size}<span className="sd-item-unit"> {item.unit} × {item.no_of_packs || 1} packs</span></span>
-                      <span className="sd-item-make">{item.make || '-'}</span>
+                    <div className="sd-item-metrics">
+                      <div className="sd-metric">
+                        <span className="sd-metric-label">Pack Size</span>
+                        <span className="sd-metric-value">{parseFloat(item.pack_size).toLocaleString()} {item.unit}</span>
+                      </div>
+                      <div className="sd-metric">
+                        <span className="sd-metric-label">Rate/Pack</span>
+                        <span className="sd-metric-value">₹{parseFloat(item.rate).toFixed(2)}</span>
+                      </div>
+                      <div className="sd-metric">
+                        <span className="sd-metric-label">Total Qty</span>
+                        <span className="sd-metric-value">{parseFloat(item.total_quantity).toLocaleString()} {item.unit}</span>
+                      </div>
+                      <div className="sd-metric sd-metric-make">
+                        <span className="sd-metric-label">Make</span>
+                        <span className="sd-metric-value">{item.make || '-'}</span>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -136,9 +150,19 @@ function StockRegisterDetail() {
                         <span className="sd-item-total">₹{parseFloat(item.total_price).toFixed(2)}</span>
                       )}
                     </div>
-                    <div className="sd-item-row-2">
-                      <span className="sd-item-detail">{item.quantity_pieces}<span className="sd-item-unit"> pcs × ₹{parseFloat(item.rate).toFixed(2)}/pc</span></span>
-                      <span className="sd-item-make">{item.make || '-'}</span>
+                    <div className="sd-item-metrics">
+                      <div className="sd-metric">
+                        <span className="sd-metric-label">Pieces</span>
+                        <span className="sd-metric-value">{item.quantity_pieces} pcs</span>
+                      </div>
+                      <div className="sd-metric">
+                        <span className="sd-metric-label">Rate/Piece</span>
+                        <span className="sd-metric-value">₹{parseFloat(item.rate).toFixed(2)}</span>
+                      </div>
+                      <div className="sd-metric sd-metric-make">
+                        <span className="sd-metric-label">Make</span>
+                        <span className="sd-metric-value">{item.make || '-'}</span>
+                      </div>
                     </div>
                   </div>
                 ))}

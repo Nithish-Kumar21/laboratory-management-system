@@ -165,35 +165,29 @@
 .sd-chem-list {
   display: flex;
   flex-direction: column;
+  gap: 10px;
 }
 
 .sd-chem-item {
-  padding: 12px 0;
-  border-bottom: 0.5px solid #e2e8f0;
+  background: #F8FAFC;
+  border: 0.5px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
 }
 
 :root.dark-mode .sd-chem-item {
+  background: #1a2332;
   border-color: #334155;
-}
-
-.sd-chem-item:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
 }
 
 .sd-item-row-1 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-}
-
-.sd-item-row-2 {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  gap: 12px;
 }
 
 .sd-item-name {
@@ -202,7 +196,6 @@
   font-weight: 600;
   flex: 1;
   min-width: 0;
-  padding-right: 12px;
 }
 
 .sd-item-total {
@@ -210,27 +203,41 @@
   font-weight: 700;
   color: #1A3C6E;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.sd-item-detail {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-muted);
-  flex: 1;
+/* Metrics row */
+.sd-item-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+}
+
+.sd-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
   min-width: 0;
-  padding-right: 12px;
 }
 
-.sd-item-unit {
-  font-size: 13px;
-  font-weight: 400;
+.sd-metric-label {
+  font-size: 10px;
+  font-weight: 600;
   color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
-.sd-item-make {
+.sd-metric-value {
   font-size: 13px;
-  color: var(--text-muted);
+  font-weight: 500;
+  color: var(--text-main);
   white-space: nowrap;
+}
+
+.sd-metric-make {
+  margin-left: auto;
+  text-align: right;
 }
 
 .sd-empty-text {
