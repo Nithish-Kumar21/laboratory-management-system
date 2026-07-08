@@ -1,0 +1,239 @@
+import React, { useEffect, useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { FaArrowLeft, FaPlus, FaTrash, FaUserTie, FaPhone, FaEnvelope, FaCalendarAlt, FaTools, FaIdCard, FaUser } from 'react-icons/fa';
+import { useAuth } from '../context/AuthContext';
+import api from '../utils/api';
+import ConfirmDialog from '../components/ConfirmDialog';
+import './NewDamagedEntry.css';
+
+const COUNTRY_CODES = [
+  { code: '+91', label: 'India (+91)' },
+  { code: '+1', label: 'USA (+1)' },
+  { code: '+44', label: 'UK (+44)' },
+  { code: '+61', label: 'Australia (+61)' },
+  { code: '+7', label: 'Russia (+7)' },
+  { code: '+86', label: 'China (+86)' },
+  { code: '+49', label: 'Germany (+49)' },
+  { code: '+33', label: 'France (+33)' },
+  { code: '+81', label: 'Japan (+81)' },
+  { code: '+971', label: 'UAE (+971)' },
+];
+
+function NewServiceEntry() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [formData, setFormData] = useState({
+    service_person_name: '',
+    contact_country_code: '+91',
+    contact_number: '',
+    email: '',
+    deliver_by_date: '',
+  });
+  const [items, setItems] = useState([{ apparatus_name: '', quantity: '' }]);
+  const [apparatusNames, setApparatusNames] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [alertDialog, setAlertDialog] = useState({ open: false, message: '' });
+  const [showSuggestions, setShowSuggestions] = useState({});
+  const [activeIndex, setActiveIndex] = useState(-1);
+
+  const scrollRef = useRef(null);
+
+  useEffect(() => {
+    api.get('available_apparatus/names/')
+      .then(res => setApparatusNames(Array.isArray(res.data) ? res.data : []))
+      .catch(err => console.error(err));
+  }, []);
+
+  const scrollToBottom = () => {
+    if (scrollRef.current) {
+      setTimeout(() => {
+        scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+      }, 50);
+    }
+  };
+
+  const addRow = () => {
+    setItems([...items, { apparatus_name: '', quantity: '' }]);
+    scrollToBottom();
+  };
+
+  const selectApparatus = (i, n) => {
+    const next = [...items];
+    next[i].apparatus_name = n;
+    setItems(next);
+    setShowSuggestions({});
+    setActiveIndex(-1);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      const payload = {
+        ...formData,
+        items: items.filter(it => it.apparatus_name).map(it => ({
+          apparatus_name: it.apparatus_name,
+          quantity: parseInt(it.quantity),
+        })),
+      };
+      await api.post('service-entries/', payload);
+      navigate('/damaged-entry');
+    } catch (err) {
+      const serverErr = err.response?.data;
+      const msg = serverErr?.error || (typeof serverErr === 'object' ? Object.values(serverErr).flat().join('; ') : '') || 'Failed to submit service entry';
+      setAlertDialog({ open: true, message: msg });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    const { key } = e;
+    const rowIdx = Object.keys(showSuggestions).find(idx => showSuggestions[idx]);
+    if (rowIdx !== undefined) {
+      const query = items[rowIdx].apparatus_name;
+      const options = apparatusNames.filter(n => n.name.toLowerCase().startsWith(query.toLowerCase()));
+      if (key === 'ArrowDown') { e.preventDefault(); setActiveIndex(prev => Math.min(prev + 1, options.length - 1)); return; }
+      if (key === 'ArrowUp') { e.preventDefault(); setActiveIndex(prev => Math.max(prev - 1, 0)); return; }
+      if (key === 'Enter' && activeIndex >= 0) { e.preventDefault(); selectApparatus(rowIdx, options[activeIndex].name); return; }
+      if (key === 'Escape' || key === 'Tab') { setShowSuggestions({}); return; }
+    }
+  };
+
+  return (
+    <div className="nrf-page animate-up">
+      <div className="nrf-form-container">
+        <div className="nrf-back-row" onClick={() => navigate('/damaged-entry')}>
+          <FaArrowLeft />
+          <span>New Service Entry</span>
+        </div>
+
+        {/* Card 1 — Read-only details */}
+        <div className="nrf-card" style={{ marginBottom: '16px' }}>
+          <div className="nrf-auto-row">
+            <div className="nrf-field">
+              <label className="nrf-field-label"><FaIdCard /> Service ID</label>
+              <input type="text" className="nrf-input" value="SVC-### (auto-generated)" disabled />
+            </div>
+            <div className="nrf-field">
+              <label className="nrf-field-label"><FaCalendarAlt /> Date</label>
+              <input type="text" className="nrf-input" value={new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })} disabled />
+            </div>
+          </div>
+          <div className="nrf-auto-row">
+            <div className="nrf-field">
+              <label className="nrf-field-label"><FaUser /> Store Keeper</label>
+              <input type="text" className="nrf-input" value={user?.full_name || '-'} disabled />
+            </div>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} onKeyDown={handleKeyDown}>
+        <div className="nrf-card">
+          <div className="nrf-auto-row">
+            <div className="nrf-field">
+              <label className="nrf-field-label"><FaUserTie /> Service Person Name</label>
+              <input type="text" className="nrf-input" value={formData.service_person_name} required placeholder="Name of service person"
+                onChange={e => setFormData({ ...formData, service_person_name: e.target.value })} />
+            </div>
+            <div className="nrf-field">
+              <label className="nrf-field-label"><FaPhone /> Contact Number</label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <select
+                  className="nrf-input"
+                  style={{ width: '120px', flexShrink: 0 }}
+                  value={formData.contact_country_code}
+                  onChange={e => setFormData({ ...formData, contact_country_code: e.target.value })}
+                >
+                  {COUNTRY_CODES.map(c => (
+                    <option key={c.code} value={c.code}>{c.label}</option>
+                  ))}
+                </select>
+                <input
+                  type="text"
+                  className="nrf-input"
+                  placeholder="10-digit number"
+                  value={formData.contact_number}
+                  required
+                  maxLength={10}
+                  pattern="[0-9]{10}"
+                  title="Exactly 10 digits"
+                  onChange={e => setFormData({ ...formData, contact_number: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="nrf-auto-row">
+            <div className="nrf-field">
+              <label className="nrf-field-label"><FaEnvelope /> Email</label>
+              <input type="email" className="nrf-input" value={formData.email} placeholder="service@example.com"
+                onChange={e => setFormData({ ...formData, email: e.target.value })} />
+            </div>
+            <div className="nrf-field">
+              <label className="nrf-field-label"><FaCalendarAlt /> Tentative Delivery Date</label>
+              <input type="date" className="nrf-input" value={formData.deliver_by_date}
+                onChange={e => setFormData({ ...formData, deliver_by_date: e.target.value })} />
+            </div>
+          </div>
+
+          {/* Line Items */}
+          <div className="nrf-section">
+            <div className="nrf-section-header">
+              <div className="nrf-section-title"><FaTools /> Apparatus Items</div>
+              <button type="button" className="nrf-add-btn" onClick={addRow}><FaPlus /> Add Line</button>
+            </div>
+            {items.map((it, i) => (
+              <div key={i} className="nrf-app-entry">
+                <div className="nrf-app-row-1">
+                  <div className="nrf-autocomplete">
+                    <input type="text" className="nrf-input" placeholder="Search apparatus..." value={it.apparatus_name} required autoComplete="off"
+                      onChange={e => { const next = [...items]; next[i].apparatus_name = e.target.value; setItems(next); setShowSuggestions({ [i]: true }); setActiveIndex(-1); }}
+                      onFocus={() => { setShowSuggestions({ [i]: true }); setActiveIndex(-1); }}
+                      onBlur={() => setTimeout(() => setShowSuggestions({}), 250)} />
+                    {showSuggestions[i] && it.apparatus_name && (
+                      <ul className="nrf-suggestions">
+                        {apparatusNames.filter(n => n.name.toLowerCase().startsWith(it.apparatus_name.toLowerCase())).slice(0, 6).map((n, idx) => (
+                          <li key={idx} className={`nrf-suggestion-item ${activeIndex === idx ? 'active' : ''}`}
+                            onMouseDown={() => selectApparatus(i, n.name)}>
+                            <span>{n.name}</span>
+                            <span className="nrf-stock">Stock: {n.available_quantity}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
+                <div className="nrf-app-row-2">
+                  <div className="nrf-labeled-field">
+                    <span className="nrf-inline-label">Qty</span>
+                    <input type="number" step="1" className="nrf-input" placeholder="Qty" value={it.quantity ?? ''} required min="1"
+                      onChange={e => { const next = [...items]; next[i].quantity = e.target.value; setItems(next); }} />
+                  </div>
+                  <div></div>
+                  <button type="button" className="nrf-del-btn" onClick={() => setItems(items.filter((_, idx) => idx !== i))} title="Remove"><FaTrash /></button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="nrf-action-row">
+            <button type="button" className="nrf-btn nrf-btn-ghost" onClick={() => navigate('/damaged-entry')}>
+              Cancel
+            </button>
+            <div className="nrf-spacer"></div>
+            <button type="submit" className="nrf-btn nrf-btn-submit" disabled={submitting}>
+              {submitting ? 'Sending...' : 'Send for Service'}
+            </button>
+          </div>
+        </div>
+        </form>
+
+        <ConfirmDialog open={alertDialog.open} message={alertDialog.message} showCancel={false} confirmLabel="OK" onConfirm={() => setAlertDialog({ open: false })} />
+      </div>
+    </div>
+  );
+}
+
+export default NewServiceEntry;

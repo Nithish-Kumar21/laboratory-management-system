@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FaSearch, FaExclamationTriangle, FaFilter, FaSortUp, FaSortDown } from 'react-icons/fa';
+import { useNavigate, Link } from 'react-router-dom';
+import { FaSearch, FaExclamationTriangle, FaFilter, FaSortUp, FaSortDown, FaPlus } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import './DamagedEntry.css';
@@ -13,7 +13,10 @@ function formatDate(dateStr) {
 
 function DamagedEntry() {
   const navigate = useNavigate();
-  const { isStaff } = useAuth();
+  const { isStaff, isStoreKeeper } = useAuth();
+  const [activeTab, setActiveTab] = useState('breakage');
+
+  // Breakage state
   const [damagedEntries, setDamagedEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -26,6 +29,11 @@ function DamagedEntry() {
     staff: '',
     itemName: ''
   });
+
+  // Service state
+  const [serviceEntries, setServiceEntries] = useState([]);
+  const [serviceLoading, setServiceLoading] = useState(true);
+  const [serviceSearch, setServiceSearch] = useState('');
 
   const fetchEntries = async () => {
     setLoading(true);
@@ -42,6 +50,18 @@ function DamagedEntry() {
     }
   };
 
+  const fetchServiceEntries = async () => {
+    setServiceLoading(true);
+    try {
+      const res = await api.get('service-entries/?ordering=-date');
+      setServiceEntries(Array.isArray(res.data) ? res.data : res.data.results || []);
+    } catch (err) {
+      console.error('Error fetching service entries:', err);
+    } finally {
+      setServiceLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (isStaff) {
       navigate('/');
@@ -51,6 +71,12 @@ function DamagedEntry() {
     window.addEventListener('inventory-updated', fetchEntries);
     return () => window.removeEventListener('inventory-updated', fetchEntries);
   }, [isStaff, navigate, sortBy, sortOrder]);
+
+  useEffect(() => {
+    if (activeTab === 'service') {
+      fetchServiceEntries();
+    }
+  }, [activeTab]);
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -84,11 +110,18 @@ function DamagedEntry() {
     )
   );
 
+  const filteredService = serviceEntries.filter(entry =>
+    entry.service_code?.toLowerCase().includes(serviceSearch.toLowerCase()) ||
+    entry.storekeeper?.toLowerCase().includes(serviceSearch.toLowerCase()) ||
+    entry.service_person_name?.toLowerCase().includes(serviceSearch.toLowerCase())
+  );
+
   const handleCardClick = (id) => {
     navigate(`/damaged-entry/${id}`);
   };
 
   return (
+    <>
     <div className="de-page animate-up">
       {/* Title Row */}
       <div className="de-title-row">
@@ -96,7 +129,25 @@ function DamagedEntry() {
         <div className="de-title-right"></div>
       </div>
 
-      {/* Search + Filter Row */}
+      {/* Tabs */}
+      <div className="de-tabs">
+        <button
+          className={`de-tab ${activeTab === 'breakage' ? 'active' : ''}`}
+          onClick={() => setActiveTab('breakage')}
+        >
+          Breakage
+        </button>
+        <button
+          className={`de-tab ${activeTab === 'service' ? 'active' : ''}`}
+          onClick={() => setActiveTab('service')}
+        >
+          Service
+        </button>
+      </div>
+
+      {/* Breakage Tab */}
+      {activeTab === 'breakage' && (
+      <>
       <div className="de-search-row">
         <div className="de-search-left">
           <FaSearch className="de-search-icon" />
@@ -237,8 +288,114 @@ function DamagedEntry() {
           <div className="de-empty-sub">Log damaged items using the button above</div>
         </div>
       )}
+      </>)}
+      {activeTab === 'service' && (
+      <>
+      <div className="de-search-row">
+        <div className="de-search-left">
+          <FaSearch className="de-search-icon" />
+          <input
+            type="text"
+            className="de-search-input"
+            placeholder="Search service entries..."
+            value={serviceSearch}
+            onChange={(e) => setServiceSearch(e.target.value)}
+          />
+        </div>
+        <div className="de-search-divider" />
+        <div className="de-search-right">
+          <span className="de-sort-label">{serviceEntries.length} entry(ies)</span>
+        </div>
+      </div>
+
+      {serviceLoading ? (
+        <div className="de-loading"><div className="loading-spinner" /></div>
+      ) : filteredService.length > 0 ? (
+        <>
+          <div className="de-card-list-desktop">
+            {filteredService.map((entry) => {
+              const itemsCount = entry.items?.length || 0;
+              return (
+                <div
+                  key={entry.id}
+                  className="de-card"
+                  onClick={() => navigate(`/service-entry/${entry.id}`)}
+                >
+                  <div className="de-card-icon-box" style={{ background: '#E3F2FD', color: '#1E88E5' }}>
+                    <FaExclamationTriangle />
+                  </div>
+                  <div className="de-card-info">
+                    <div className="de-card-ref">{entry.service_code}</div>
+                    <div className="de-card-staff">{entry.storekeeper} → {entry.service_person_name}</div>
+                  </div>
+                  <div className="de-card-date">
+                    📅 {formatDate(entry.date)}
+                  </div>
+                  <div className="de-card-count">
+                    {itemsCount} Item{itemsCount !== 1 ? 's' : ''}
+                  </div>
+                  <span className={`status-badge-modern badge-sm ${entry.status === 'completed' ? 'status-completed' : 'status-warning'}`}>
+                    {entry.status === 'completed' ? 'Completed' : 'In Service'}
+                  </span>
+                  <button
+                    className="de-card-btn"
+                    onClick={(e) => { e.stopPropagation(); navigate(`/service-entry/${entry.id}`); }}
+                  >
+                    View Details ›
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="de-card-list-mobile">
+            {filteredService.map((entry) => {
+              const itemsCount = entry.items?.length || 0;
+              return (
+                <div
+                  key={entry.id}
+                  className="de-card-mobile"
+                  onClick={() => navigate(`/service-entry/${entry.id}`)}
+                >
+                  <div className="de-mobile-icon-box" style={{ background: '#E3F2FD', color: '#1E88E5' }}>
+                    <FaExclamationTriangle />
+                  </div>
+                  <div className="de-mobile-ref">{entry.service_code}</div>
+                  <span className={`status-badge-modern badge-xs ${entry.status === 'completed' ? 'status-completed' : 'status-warning'}`}>
+                    {entry.status === 'completed' ? 'Done' : 'Active'}
+                  </span>
+                  <div className="de-mobile-staff">{entry.storekeeper}</div>
+                  <div className="de-mobile-meta">
+                    📅 {formatDate(entry.date)} · {itemsCount} Item{itemsCount !== 1 ? 's' : ''}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      ) : (
+        <div className="de-empty">
+          <FaExclamationTriangle className="de-empty-icon" />
+          <div className="de-empty-title">No service entries yet</div>
+          <div className="de-empty-sub">Send apparatus for service using the button below</div>
+        </div>
+      )}
+      </>)}
 
     </div>
+
+    {/* Tab-aware FAB — outside .de-page to preserve fixed positioning */}
+    {isStoreKeeper && activeTab === 'breakage' && (
+      <Link to="/new-damaged-entry" className="cr-fab">
+        <FaPlus />
+      </Link>
+    )}
+    {isStoreKeeper && activeTab === 'service' && (
+      <Link to="/new-service-entry" className="cr-fab">
+        <FaPlus />
+      </Link>
+    )}
+  </>
   );
 }
 
