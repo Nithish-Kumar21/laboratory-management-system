@@ -169,7 +169,6 @@ const Login = () => {
               <span className="text-base font-medium opacity-80">(AUTONOMOUS), Chennai</span>
             </h1>
           <div className="mt-2 text-center text-xs text-[#C9D6E8] space-y-0.5 leading-relaxed">
-            <p>(AUTONOMOUS), Chennai</p>
             <p>A Sikh Minority Institution</p>
           </div>
           <div className="w-full max-w-[320px] mt-6">
@@ -237,7 +236,6 @@ const Login = () => {
               <span className="text-lg font-medium opacity-75">(AUTONOMOUS), Chennai</span>
             </h1>
             <div className="mt-3 text-center text-sm text-[#C9D6E8] space-y-0.5 leading-relaxed">
-              <p>(AUTONOMOUS), Chennai</p>
               <p>A Sikh Minority Institution</p>
             </div>
             <div className="w-full max-w-[320px] mt-7">
