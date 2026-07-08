@@ -80,7 +80,7 @@ class StockRequestViewSet(viewsets.ModelViewSet):
             qs = qs.filter(requested_by=self.request.user)
             if self.action == 'list':
                 if status_filter == 'all' or not status_filter:
-                    return qs.exclude(status='draft')
+                    return qs.exclude(status__in=['draft', 'completed'])
                 return qs.filter(status=status_filter)
             return qs
         
@@ -88,7 +88,7 @@ class StockRequestViewSet(viewsets.ModelViewSet):
             if self.action == 'list':
                 if status_filter == 'all':
                     # HOD: "their approved/rejected forms only"
-                    return qs.filter(reviewed_by=self.request.user).exclude(status='draft')
+                    return qs.filter(reviewed_by=self.request.user).exclude(status__in=['draft', 'completed'])
                 
                 if status_filter in ('pending', None):
                     # Others' pending requests for approval
@@ -105,7 +105,7 @@ class StockRequestViewSet(viewsets.ModelViewSet):
             if self.action == 'list':
                 if status_filter == 'all':
                     # Store Keeper: "their issued forms only"
-                    return qs.filter(issued_by=self.request.user).exclude(status='draft')
+                    return qs.filter(issued_by=self.request.user).exclude(status__in=['draft', 'completed'])
                 
                 if status_filter in ('accepted', None):
                     # Default: All approved requests waiting to be issued or completed
@@ -120,7 +120,7 @@ class StockRequestViewSet(viewsets.ModelViewSet):
 
         # Default for admin or other roles
         if status_filter == 'all' or not status_filter:
-            return qs.exclude(status='draft')
+            return qs.exclude(status__in=['draft', 'completed'])
         return qs.filter(status=status_filter)
 
     @action(detail=True, methods=['post'])
