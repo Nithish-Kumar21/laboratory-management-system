@@ -165,16 +165,14 @@ const Login = () => {
             />
           </div>
           <h1 className="text-white text-xl font-bold text-center leading-tight">
-            GURU NANAK COLLEGE<br />
-            <span className="text-base font-medium opacity-80">(AUTONOMOUS)</span>
-          </h1>
+              GURU NANAK COLLEGE<br />
+              <span className="text-base font-medium opacity-80">(AUTONOMOUS), Chennai</span>
+            </h1>
           <div className="mt-2 text-center text-xs text-[#C9D6E8] space-y-0.5 leading-relaxed">
-            <p>Accredited at &apos;A++&apos; Grade by NAAC,</p>
-            <p>Affiliated to University of Madras, Approved by AICTE</p>
-            <p>An ISO 9001:2015 Certified Institution</p>
-            <p>Guru Nanak Salai, Velachery, Chennai 600 042</p>
+            <p>(AUTONOMOUS), Chennai</p>
+            <p>A Sikh Minority Institution</p>
           </div>
-          <div className="w-full max-w-[380px] mt-6">
+          <div className="w-full max-w-[320px] mt-6">
             {formContent}
           </div>
           <div className="mt-6 mb-4">
@@ -189,7 +187,7 @@ const Login = () => {
           <div className="absolute inset-0 bg-gradient-to-b from-[#1A3C6E] via-[#1A3C6E]/60 to-transparent" />
           <div className="absolute bottom-4 inset-x-0 text-center px-4">
             <p className="text-white/60 text-[11px]">
-              Copyright &copy; Guru Nanak College (AUTONOMOUS)
+              Copyright &copy; Guru Nanak College (AUTONOMOUS), Chennai
             </p>
           </div>
         </div>
@@ -236,15 +234,13 @@ const Login = () => {
             </div>
             <h1 className="text-white text-[22px] font-bold text-center leading-tight mt-4">
               GURU NANAK COLLEGE<br />
-              <span className="text-lg font-medium opacity-75">(AUTONOMOUS)</span>
+              <span className="text-lg font-medium opacity-75">(AUTONOMOUS), Chennai</span>
             </h1>
             <div className="mt-3 text-center text-sm text-[#C9D6E8] space-y-0.5 leading-relaxed">
-              <p>Accredited at &apos;A++&apos; Grade by NAAC,</p>
-              <p>Affiliated to University of Madras, Approved by AICTE</p>
-              <p>An ISO 9001:2015 Certified Institution</p>
-              <p>Guru Nanak Salai, Velachery, Chennai 600 042</p>
+              <p>(AUTONOMOUS), Chennai</p>
+              <p>A Sikh Minority Institution</p>
             </div>
-            <div className="w-full max-w-[380px] mt-7">
+            <div className="w-full max-w-[320px] mt-7">
               {formContent}
             </div>
           </div>
