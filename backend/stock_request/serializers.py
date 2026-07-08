@@ -224,7 +224,7 @@ class IssueRegisterSerializer(serializers.ModelSerializer):
         if not obj.stock_request_db_id:
             return None
         try:
-            sr = StockRequest.objects.get(db_id=obj.stock_request_db_id)
+            sr = StockRequest.objects.get(id=obj.stock_request_db_id)
             return {
                 'day_order': sr.day_order,
                 'hour': sr.hour,
