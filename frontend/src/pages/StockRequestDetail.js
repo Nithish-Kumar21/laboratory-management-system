@@ -16,6 +16,12 @@ function StockRequestDetail() {
     const [actionLoading, setActionLoading] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [hasActiveRequest, setHasActiveRequest] = useState(false);
+    const [toast, setToast] = useState(null);
+
+    const showToast = (message) => {
+        setToast(message);
+        setTimeout(() => setToast(null), 3000);
+    };
 
     // Usage Reporting State
     const [usageReport, setUsageReport] = useState({});
@@ -70,28 +76,19 @@ function StockRequestDetail() {
     const [dialog, setDialog] = useState({ open: false, message: '', showCancel: true, variant: 'confirm', onConfirm: null });
 
     const handleAccept = () => {
-        setDialog({
-            open: true,
-            message: 'Are you sure you want to approve this request?',
-            showCancel: true,
-            onConfirm: () => {
-                setDialog({ open: false });
-                setActionLoading(true);
-                api.post(`stock_request/${id}/accept/`)
-                    .then(() => { fetchRequest(); window.dispatchEvent(new CustomEvent('inventory-updated')); })
-                    .catch(err => setDialog({ open: true, message: err.response?.data?.error || 'Failed to approve', showCancel: false }))
-                    .finally(() => setActionLoading(false));
-            }
-        });
+        setActionLoading(true);
+        api.post(`stock_request/${id}/accept/`)
+            .then(() => { fetchRequest(); window.dispatchEvent(new CustomEvent('inventory-updated')); showToast('Request Approved'); })
+            .catch(err => setDialog({ open: true, message: err.response?.data?.error || 'Failed to approve', showCancel: false }))
+            .finally(() => setActionLoading(false));
     };
 
     const handleReject = async () => {
         const reason = rejectionReason.trim();
         if (!reason) {
-            setDialog({ open: true, message: 'Please provide a reason for rejection.', showCancel: false, onConfirm: () => setDialog({ open: false }) });
+            showToast('Please provide a reason for rejection.');
             return;
         }
-        setDialog({ open: false });
         setActionLoading(true);
         try {
             await api.post(`stock_request/${id}/reject/`, { rejection_reason: reason });
@@ -99,6 +96,7 @@ function StockRequestDetail() {
             setRejectionReason('');
             fetchRequest();
             window.dispatchEvent(new CustomEvent('inventory-updated'));
+            showToast('Request Rejected');
         } catch (err) {
             setDialog({ open: true, message: err.response?.data?.error || err.response?.data?.rejection_reason?.[0] || 'Failed to reject', showCancel: false });
         } finally {
@@ -107,52 +105,28 @@ function StockRequestDetail() {
     };
 
     const handleMarkAsIssued = () => {
-        setDialog({
-            open: true,
-            message: 'Are you sure you want to mark this request as issued? This will update the inventory.',
-            showCancel: true,
-            onConfirm: () => {
-                setDialog({ open: false });
-                setActionLoading(true);
-                api.post(`stock_request/${id}/mark_as_issued/`)
-                    .then(() => { fetchRequest(); window.dispatchEvent(new CustomEvent('inventory-updated')); })
-                    .catch(err => setDialog({ open: true, message: err.response?.data?.error || 'Failed to mark as issued', showCancel: false }))
-                    .finally(() => setActionLoading(false));
-            }
-        });
+        setActionLoading(true);
+        api.post(`stock_request/${id}/mark_as_issued/`)
+            .then(() => { fetchRequest(); window.dispatchEvent(new CustomEvent('inventory-updated')); showToast('Marked as Issued'); })
+            .catch(err => setDialog({ open: true, message: err.response?.data?.error || 'Failed to mark as issued', showCancel: false }))
+            .finally(() => setActionLoading(false));
     };
 
     const handleReportUsage = () => {
-        setDialog({
-            open: true,
-            message: 'Are you sure you want to report usage? This cannot be undone.',
-            showCancel: true,
-            onConfirm: () => {
-                setDialog({ open: false });
-                setActionLoading(true);
-                    const items = Object.keys(usageReport).map(k => ({ id: parseInt(k), actual_used_quantity: parseFloat(usageReport[k]) }));
-                api.post(`stock_request/${id}/report_usage/`, { items })
-                    .then(() => { fetchRequest(); window.dispatchEvent(new CustomEvent('inventory-updated')); })
-                    .catch(err => setDialog({ open: true, message: err.response?.data?.error || 'Failed to report usage', showCancel: false }))
-                    .finally(() => setActionLoading(false));
-            }
-        });
+        setActionLoading(true);
+        const items = Object.keys(usageReport).map(k => ({ id: parseInt(k), actual_used_quantity: parseFloat(usageReport[k]) }));
+        api.post(`stock_request/${id}/report_usage/`, { items })
+            .then(() => { fetchRequest(); window.dispatchEvent(new CustomEvent('inventory-updated')); showToast('Quantity Updated'); })
+            .catch(err => setDialog({ open: true, message: err.response?.data?.error || 'Failed to report usage', showCancel: false }))
+            .finally(() => setActionLoading(false));
     };
 
     const handleMarkAsCompleted = () => {
-        setDialog({
-            open: true,
-            message: 'Are you sure you want to mark this request as completed? This will adjust inventory and log the transaction.',
-            showCancel: true,
-            onConfirm: () => {
-                setDialog({ open: false });
-                setActionLoading(true);
-                api.post(`stock_request/${id}/mark_as_completed/`)
-                    .then(() => { fetchRequest(); window.dispatchEvent(new CustomEvent('inventory-updated')); })
-                    .catch(err => setDialog({ open: true, message: err.response?.data?.error || 'Failed to complete request', showCancel: false }))
-                    .finally(() => setActionLoading(false));
-            }
-        });
+        setActionLoading(true);
+        api.post(`stock_request/${id}/mark_as_completed/`)
+            .then(() => { fetchRequest(); window.dispatchEvent(new CustomEvent('inventory-updated')); showToast('Request completed'); })
+            .catch(err => setDialog({ open: true, message: err.response?.data?.error || 'Failed to complete request', showCancel: false }))
+            .finally(() => setActionLoading(false));
     };
 
     const handleSend = () => {
@@ -536,6 +510,7 @@ function StockRequestDetail() {
                     onConfirm={() => { if (dialog.onConfirm) dialog.onConfirm(); else setDialog({ open: false }); }}
                     onCancel={() => setDialog({ open: false })}
                 />
+                {toast && <div className="cr-toast cr-toast-visible">{toast}</div>}
             </div>
             </div>
         );
@@ -792,6 +767,7 @@ function StockRequestDetail() {
 
             <AddRequestModal isOpen={showEditModal} onClose={() => setShowEditModal(false)} onSuccess={fetchRequest} editData={request} hasActiveRequest={hasActiveRequest} />
             <ConfirmDialog open={dialog.open} message={dialog.message} showCancel={dialog.showCancel} confirmLabel="OK" cancelLabel="Cancel" variant={dialog.variant || 'confirm'} onConfirm={() => { if (dialog.onConfirm) dialog.onConfirm(); else setDialog({ open: false }); }} onCancel={() => setDialog({ open: false })} />
+            {toast && <div className="cr-toast cr-toast-visible">{toast}</div>}
         </div>
         </div>
     );
