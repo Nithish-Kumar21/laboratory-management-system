@@ -35,6 +35,7 @@ function NewServiceEntry() {
   const [alertDialog, setAlertDialog] = useState({ open: false, message: '' });
   const [showSuggestions, setShowSuggestions] = useState({});
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [entryDate, setEntryDate] = useState(new Date().toLocaleDateString('en-CA'));
 
   const scrollRef = useRef(null);
 
@@ -118,7 +119,12 @@ function NewServiceEntry() {
             </div>
             <div className="nrf-field">
               <label className="nrf-field-label"><FaCalendarAlt /> Date</label>
-              <input type="text" className="nrf-input" value={new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })} disabled />
+              {/* ASSUMPTION: The storekeeper can now pick any date via the native
+                  date picker (matching Tentative Delivery Date's UX). If the business
+                  rule requires this always equal today's date and be non-editable,
+                  revert to a disabled input or constrain on change. */}
+              <input type="date" className="nrf-input" value={entryDate}
+                onChange={e => setEntryDate(e.target.value)} />
             </div>
           </div>
           <div className="nrf-auto-row">

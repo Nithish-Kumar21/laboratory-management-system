@@ -118,3 +118,43 @@ class ServiceEntryViewSet(viewsets.ModelViewSet):
         entry.refresh_from_db()
 
         return Response(ServiceEntryDetailSerializer(entry).data)
+
+    @action(detail=True, methods=['post'])
+    @transaction.atomic
+    def complete(self, request, pk=None):
+        if request.user.role not in ['store_keeper', 'admin']:
+            return Response(
+                {'error': 'Only store keeper can complete service entries'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        try:
+            entry = ServiceEntry.objects.select_for_update().get(pk=pk)
+        except ServiceEntry.DoesNotExist:
+            return Response(
+                {'error': 'Service entry not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        if entry.status == 'completed':
+            return Response(
+                {'error': 'This service entry is already completed'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        incomplete_items = ServiceEntryItem.objects.filter(
+            service_entry=entry, quantity_remaining__gt=0
+        )
+        if incomplete_items.exists():
+            names = list(incomplete_items.values_list('apparatus_name', flat=True))
+            return Response(
+                {'error': f'Cannot complete — items still in service: {", ".join(names)}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        from django.utils import timezone
+        entry.status = 'completed'
+        entry.completed_at = timezone.now()
+        entry.save()
+
+        return Response(ServiceEntryDetailSerializer(entry).data)

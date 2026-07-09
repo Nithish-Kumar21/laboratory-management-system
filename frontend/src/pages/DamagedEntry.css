@@ -7,6 +7,83 @@
   padding-bottom: 76px;
 }
 
+/* ===== TABS ===== */
+.de-tabs {
+  display: flex;
+  width: 100%;
+  border-bottom: 1px solid #E0E0E0;
+  margin-bottom: 16px;
+}
+
+.de-tab {
+  padding: 10px 0;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 500;
+  color: #9AA3AF;
+  cursor: pointer;
+  font-family: Inter, sans-serif;
+  position: relative;
+  transition: color 0.2s;
+  margin-right: 24px;
+  flex: 0 0 auto;
+}
+
+.de-tab.active {
+  font-weight: 700;
+  color: #1A3C6E;
+}
+
+.de-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #4A90D9;
+}
+
+/* ===== SERVICE PLACEHOLDER ===== */
+.de-service-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  text-align: center;
+}
+
+.de-service-placeholder-icon {
+  font-size: 3rem;
+  color: #D0D5DD;
+  margin-bottom: 16px;
+}
+
+.de-service-placeholder-title {
+  font-family: Inter, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1A1A1A;
+  margin-bottom: 6px;
+}
+
+.de-service-placeholder-sub {
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  color: #9AA3AF;
+  font-weight: 500;
+}
+
+:root.dark-mode .de-service-placeholder-title {
+  color: #F1F5F9;
+}
+
+:root.dark-mode .de-service-placeholder-sub {
+  color: #94A3B8;
+}
+
 /* ===== TITLE ROW ===== */
 .de-title-row {
   display: flex;
@@ -447,6 +524,22 @@
   font-weight: 500;
 }
 
+/* ===== STATUS BADGE SIZES ===== */
+.badge-sm {
+  padding: 4px 10px;
+  font-size: 11px;
+  margin-left: 16px;
+  flex-shrink: 0;
+}
+
+.badge-xs {
+  padding: 2px 8px;
+  font-size: 10px;
+  grid-row: 1;
+  grid-column: 3;
+  justify-self: end;
+}
+
 /* ===== LOADING ===== */
 .de-loading {
   display: flex;
@@ -465,6 +558,10 @@
 
   .de-title {
     font-size: 22px;
+  }
+
+  .de-tab {
+    margin-right: 32px;
   }
 
   .de-search-divider {

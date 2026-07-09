@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'damaged_entry',
     'stock_request',
     'reports',
+    'service_entry',
 ]
 
 MIDDLEWARE = [

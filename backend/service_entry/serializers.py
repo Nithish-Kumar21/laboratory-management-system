@@ -40,6 +40,12 @@ class ServiceEntryItemWriteSerializer(serializers.Serializer):
     apparatus_name = serializers.CharField()
     quantity = serializers.IntegerField(min_value=1)
 
+    def to_representation(self, instance):
+        return {
+            'apparatus_name': instance.apparatus_name,
+            'quantity': instance.quantity_sent,
+        }
+
     def validate(self, data):
         apparatus_name = data.get('apparatus_name')
         quantity = data.get('quantity')
