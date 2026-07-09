@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaPlusCircle, FaTimes, FaTrashAlt, FaExclamationTriangle, FaUserTie, FaGraduationCap, FaCalendarAlt, FaTools, FaChevronDown } from 'react-icons/fa';
+import { FaArrowLeft, FaPlusCircle, FaTimes, FaTrashAlt, FaExclamationTriangle, FaUserTie, FaGraduationCap, FaCalendarAlt, FaTools, FaChevronDown, FaSort, FaClock } from 'react-icons/fa';
 import api from '../../utils/api';
 import ConfirmDialog from '../ConfirmDialog';
 import './AddDamagedEntryModal.css';
@@ -12,6 +12,8 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess, standalone }) {
         class_name: '',
         date: new Date().toISOString().split('T')[0],
         details: '',
+        day_order: '',
+        hour: [],
     });
 
     const [damagedItems, setDamagedItems] = useState([{ apparatus_name: '', quantity: '', caused_by: '' }]);
@@ -23,9 +25,11 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess, standalone }) {
     const [position, setPosition] = useState({ x: 0, y: 0 });
     const [isDragging, setIsDragging] = useState(false);
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+    const [hourOpen, setHourOpen] = useState(false);
 
     const modalRef = useRef(null);
     const scrollRef = useRef(null);
+    const hourRef = useRef(null);
 
     useEffect(() => {
         if (isOpen) {
@@ -56,6 +60,16 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess, standalone }) {
             window.removeEventListener('mouseup', handleMouseUp);
         };
     }, [isDragging, dragStart]);
+
+    useEffect(() => {
+        const handleClick = (e) => {
+            if (hourRef.current && !hourRef.current.contains(e.target)) {
+                setHourOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClick);
+        return () => document.removeEventListener('mousedown', handleClick);
+    }, []);
 
     const onMouseDown = (e) => {
         if (e.target.closest('.modal-close')) return;
@@ -116,7 +130,7 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess, standalone }) {
                 }
             };
 
-            const gridStart = 3; // Staff, Class, Date are indices 0-2
+            const gridStart = 9; // Staff(0), Class(1), DayOrder(2), Hour chk(3-7), Date(8)
             const perRow = 3; // Apparatus, Quantity, Caused By
 
             if (key === 'ArrowDown' || (key === 'Enter' && target.tagName !== 'TEXTAREA')) {
@@ -177,7 +191,7 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess, standalone }) {
       } else {
         onClose();
       }
-      setFormData({ staff: '', class_name: '', date: new Date().toISOString().split('T')[0], details: '' });
+      setFormData({ staff: '', class_name: '', date: new Date().toISOString().split('T')[0], details: '', day_order: '', hour: [] });
       setDamagedItems([{ apparatus_name: '', quantity: '', caused_by: '' }]);
         } catch (err) {
             setAlertDialog({ open: true, message: 'Error: ' + (err.response?.data?.error || 'Failed to submit report') });
@@ -199,6 +213,53 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess, standalone }) {
                         <label><FaGraduationCap /> Class / Division</label>
                         <input type="text" value={formData.class_name} required placeholder="e.g. 10th A"
                             onChange={e => setFormData({ ...formData, class_name: e.target.value })} />
+                    </div>
+                </div>
+                <div className="incident-row">
+                    <div className="form-group">
+                        <label><FaSort /> Day Order</label>
+                        <select value={formData.day_order}
+                            onChange={e => setFormData({ ...formData, day_order: e.target.value })}>
+                            <option value="">Select day order</option>
+                            <option value="I">I</option>
+                            <option value="II">II</option>
+                            <option value="III">III</option>
+                            <option value="IV">IV</option>
+                            <option value="V">V</option>
+                            <option value="VI">VI</option>
+                        </select>
+                    </div>
+                    <div className="form-group" ref={hourRef}>
+                        <label><FaClock /> Hour</label>
+                        <div className="multi-select-wrapper">
+                            <button
+                                type="button"
+                                className="multi-select-btn"
+                                onClick={() => setHourOpen(!hourOpen)}
+                            >
+                                <span>{formData.hour.length ? formData.hour.sort((a, b) => a - b).join(', ') : 'Select hour(s)'}</span>
+                                <FaChevronDown className={`multi-chevron ${hourOpen ? 'multi-chevron-up' : ''}`} />
+                            </button>
+                            {hourOpen && (
+                                <div className="multi-select-dropdown">
+                                    {[1, 2, 3, 4, 5].map(h => (
+                                        <label key={h} className="multi-select-option">
+                                            <input
+                                                type="checkbox"
+                                                checked={formData.hour.includes(h)}
+                                                onChange={() => {
+                                                    const next = formData.hour.includes(h)
+                                                        ? formData.hour.filter(v => v !== h)
+                                                        : [...formData.hour, h];
+                                                    setFormData({ ...formData, hour: next });
+                                                }}
+                                            />
+                                            <span>Hour {h}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
                     <div className="form-group">
                         <label><FaCalendarAlt /> Date of Incident</label>

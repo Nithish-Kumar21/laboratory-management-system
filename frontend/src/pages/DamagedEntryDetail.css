@@ -145,6 +145,13 @@
   color: var(--text-main);
 }
 
+.sd-meta-grid-row2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.5fr;
+  gap: 10px 24px;
+  margin-top: 8px;
+}
+
 /* Card Title */
 .sd-card-title {
   font-size: 17px;
@@ -292,6 +299,11 @@
     gap: 8px 16px;
   }
 
+  .sd-meta-grid-row2 {
+    grid-template-columns: 1fr 1fr 1.5fr;
+    gap: 8px 16px;
+  }
+
   .sd-actions {
     flex-direction: row;
     flex-wrap: nowrap;
@@ -319,6 +331,11 @@
   }
 
   .sd-meta-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .sd-meta-grid-row2 {
     grid-template-columns: 1fr;
     gap: 8px;
   }
