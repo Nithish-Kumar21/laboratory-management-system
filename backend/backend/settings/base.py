@@ -17,6 +17,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.postgres',
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
@@ -27,6 +28,7 @@ INSTALLED_APPS = [
     'stock_request',
     'reports',
     'audit',
+    'service_entry',
 ]
 
 MIDDLEWARE = [

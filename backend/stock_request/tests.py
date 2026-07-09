@@ -50,17 +50,25 @@ class UnitPropagationTest(APITestCase):
         })
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {resp.data["access"]}')
 
+    def _default_request_data(self, chemical_items, reason='Test'):
+        return {
+            'class_name': 'I B.Sc Chemistry',
+            'reason': reason,
+            'day_order': 'I',
+            'hour': [1, 2],
+            'purpose_type': 'practical_lab',
+            'experiment_name': 'Test Experiment',
+            'chemical_items': chemical_items,
+            'status': 'pending',
+        }
+
     def test_unit_propagates_to_stock_request_chemical_item(self):
         """Creating a stock request should copy unit from AvailableChemical."""
         self._login(self.staff)
-        response = self.client.post('/api/stock_request/', {
-            'class_name': 'I B.Sc Chemistry',
-            'reason': 'Test unit propagation',
-            'chemical_items': [
-                {'chemical_name': self.chem_g.chemical_name, 'quantity': 100.00},
-            ],
-            'status': 'pending',
-        }, format='json')
+        response = self.client.post('/api/stock_request/', self._default_request_data(
+            [{'chemical_name': self.chem_g.chemical_name, 'quantity': 100.00}],
+            reason='Test unit propagation',
+        ), format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         req_id = response.data['id']
@@ -71,14 +79,10 @@ class UnitPropagationTest(APITestCase):
     def test_unit_propagates_for_ml_chemical(self):
         """Creating a stock request for an ml chemical should set unit='ml'."""
         self._login(self.staff)
-        response = self.client.post('/api/stock_request/', {
-            'class_name': 'I B.Sc Chemistry',
-            'reason': 'Test ml propagation',
-            'chemical_items': [
-                {'chemical_name': self.chem_ml.chemical_name, 'quantity': 50.00},
-            ],
-            'status': 'pending',
-        }, format='json')
+        response = self.client.post('/api/stock_request/', self._default_request_data(
+            [{'chemical_name': self.chem_ml.chemical_name, 'quantity': 50.00}],
+            reason='Test ml propagation',
+        ), format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         item = StockRequestChemicalItem.objects.filter(stock_request_id=response.data['id']).first()
@@ -87,14 +91,10 @@ class UnitPropagationTest(APITestCase):
     def test_unit_propagates_to_issue_chemicals(self):
         """Full workflow: request → accept → issue → report → complete should propagate unit to issue_chemicals."""
         self._login(self.staff)
-        response = self.client.post('/api/stock_request/', {
-            'class_name': 'I B.Sc Chemistry',
-            'reason': 'Test full propagation',
-            'chemical_items': [
-                {'chemical_name': self.chem_g.chemical_name, 'quantity': 100.00},
-            ],
-            'status': 'pending',
-        }, format='json')
+        response = self.client.post('/api/stock_request/', self._default_request_data(
+            [{'chemical_name': self.chem_g.chemical_name, 'quantity': 100.00}],
+            reason='Test full propagation',
+        ), format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         req_id = response.data['id']
 
@@ -128,14 +128,10 @@ class UnitPropagationTest(APITestCase):
     def test_api_response_includes_unit(self):
         """Serializer should return unit in API response."""
         self._login(self.staff)
-        response = self.client.post('/api/stock_request/', {
-            'class_name': 'I B.Sc Chemistry',
-            'reason': 'Test API unit response',
-            'chemical_items': [
-                {'chemical_name': self.chem_g.chemical_name, 'quantity': 50.00},
-            ],
-            'status': 'pending',
-        }, format='json')
+        response = self.client.post('/api/stock_request/', self._default_request_data(
+            [{'chemical_name': self.chem_g.chemical_name, 'quantity': 50.00}],
+            reason='Test API unit response',
+        ), format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         req_id = response.data['id']
