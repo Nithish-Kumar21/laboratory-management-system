@@ -19,6 +19,14 @@ const COUNTRY_CODES = [
   { code: '+971', label: 'UAE (+971)' },
 ];
 
+function extractErrorMessages(err) {
+  if (typeof err === 'string') return [err];
+  if (err === null || err === undefined) return [];
+  if (Array.isArray(err)) return err.flatMap(extractErrorMessages);
+  if (typeof err === 'object') return Object.values(err).flatMap(extractErrorMessages);
+  return [String(err)];
+}
+
 function NewServiceEntry() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -82,7 +90,7 @@ function NewServiceEntry() {
       navigate('/damaged-entry');
     } catch (err) {
       const serverErr = err.response?.data;
-      const msg = serverErr?.error || (typeof serverErr === 'object' ? Object.values(serverErr).flat().join('; ') : '') || 'Failed to submit service entry';
+      const msg = serverErr?.error || (typeof serverErr === 'object' && serverErr !== null ? extractErrorMessages(serverErr).join('; ') : '') || 'Failed to submit service entry';
       setAlertDialog({ open: true, message: msg });
     } finally {
       setSubmitting(false);

@@ -11,6 +11,14 @@ function formatDate(dateStr) {
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
+function extractErrorMessages(err) {
+  if (typeof err === 'string') return [err];
+  if (err === null || err === undefined) return [];
+  if (Array.isArray(err)) return err.flatMap(extractErrorMessages);
+  if (typeof err === 'object') return Object.values(err).flatMap(extractErrorMessages);
+  return [String(err)];
+}
+
 function ServiceEntryDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -51,7 +59,7 @@ function ServiceEntryDetail() {
       setActionPopup({ open: false, itemId: null, actionType: '', quantity: '', error: '' });
     } catch (err) {
       const serverErr = err.response?.data;
-      const msg = serverErr?.error || (typeof serverErr === 'object' ? Object.values(serverErr).flat().join('; ') : '') || 'Action failed';
+      const msg = serverErr?.error || (typeof serverErr === 'object' && serverErr !== null ? extractErrorMessages(serverErr).join('; ') : '') || 'Action failed';
       setActionPopup(prev => ({ ...prev, error: msg }));
     } finally {
       setActionLoading(false);
@@ -196,7 +204,7 @@ function ServiceEntryDetail() {
                     navigate('/damaged-entry');
                   } catch (err) {
                     const serverErr = err.response?.data;
-                    const msg = serverErr?.error || (typeof serverErr === 'object' ? Object.values(serverErr).flat().join('; ') : '') || 'Failed to complete';
+                    const msg = serverErr?.error || (typeof serverErr === 'object' && serverErr !== null ? extractErrorMessages(serverErr).join('; ') : '') || 'Failed to complete';
                     setCompleteError(msg);
                     setCompleting(false);
                   }
