@@ -1255,6 +1255,139 @@
   color: #4A90D9;
 }
 
+/* Field Row */
+.nrf-field-row {
+  display: flex;
+  gap: 16px;
+}
+
+.nrf-field-half {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Multi-select dropdown */
+.nrf-multi-select {
+  position: relative;
+}
+
+.nrf-multi-btn {
+  width: 100%;
+  height: 42px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0 36px 0 12px;
+  font-size: 14px;
+  color: var(--text-main);
+  background: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  text-align: left;
+  outline: none;
+  position: relative;
+}
+
+:root.dark-mode .nrf-multi-btn {
+  background: #1e293b;
+  border-color: #4B5563;
+}
+
+.nrf-multi-btn .nrf-chevron {
+  right: 12px;
+}
+
+.nrf-chevron-up {
+  transform: rotate(180deg);
+}
+
+.nrf-multi-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  margin-top: 4px;
+  padding: 4px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+:root.dark-mode .nrf-multi-dropdown {
+  background: #1e293b;
+  border-color: #4B5563;
+}
+
+.nrf-multi-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  font-size: 14px;
+  border-radius: 4px;
+}
+
+.nrf-multi-option:hover {
+  background: #f1f5f9;
+}
+
+:root.dark-mode .nrf-multi-option:hover {
+  background: #334155;
+}
+
+.nrf-multi-option input[type="checkbox"] {
+  margin: 0;
+}
+
+/* Radio tabs */
+.nrf-radio-tabs {
+  display: flex;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+:root.dark-mode .nrf-radio-tabs {
+  border-color: #4B5563;
+}
+
+.nrf-radio-tab {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  background: #fff;
+  color: var(--text-main);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+:root.dark-mode .nrf-radio-tab {
+  background: #1e293b;
+}
+
+.nrf-radio-tab:not(:last-child) {
+  border-right: 1px solid #d1d5db;
+}
+
+:root.dark-mode .nrf-radio-tab:not(:last-child) {
+  border-right-color: #4B5563;
+}
+
+.nrf-radio-tab.active {
+  background: #3b51bf;
+  color: #fff;
+  font-weight: 600;
+}
+
+.nrf-radio-tab.active + .nrf-radio-tab {
+  border-left: none;
+}
+
 /* Fields */
 .nrf-field {
   display: flex;
@@ -1339,6 +1472,24 @@
 
 .nrf-error {
   border-color: #EF4444 !important;
+}
+
+.nrf-text-input {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: var(--text-main);
+  background: #fff;
+  outline: none;
+  box-sizing: border-box;
+}
+
+:root.dark-mode .nrf-text-input {
+  background: #1e293b;
+  border-color: #4B5563;
 }
 
 .nrf-field-err {

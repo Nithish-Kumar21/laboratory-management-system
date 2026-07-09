@@ -15,7 +15,7 @@ class DamagedEntryListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DamagedEntry
-        fields = ['id', 'staff', 'class_name', 'date', 'details', 'damaged_items']
+        fields = ['id', 'staff', 'class_name', 'date', 'details', 'damaged_items', 'day_order', 'hour']
 
 
 
@@ -25,7 +25,7 @@ class DamagedEntryDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DamagedEntry
-        fields = ['id', 'staff', 'class_name', 'date', 'details', 'damaged_items']
+        fields = ['id', 'staff', 'class_name', 'date', 'details', 'damaged_items', 'day_order', 'hour']
 
 
 # Write serializers (NEW)
@@ -62,7 +62,7 @@ class DamagedEntryCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DamagedEntry
-        fields = ['staff', 'class_name', 'date', 'details', 'damaged_items']
+        fields = ['staff', 'class_name', 'date', 'details', 'damaged_items', 'day_order', 'hour']
 
     
     def validate(self, data):

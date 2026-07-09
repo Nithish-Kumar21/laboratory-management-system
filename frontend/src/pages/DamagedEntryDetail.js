@@ -76,6 +76,16 @@ function DamagedEntryDetail() {
                 <div className="sd-meta-label">Class / Division</div>
                 <div className="sd-meta-value">{entry.class_name || '—'}</div>
               </div>
+            </div>
+            <div className="sd-meta-grid-row2">
+              <div className="sd-meta-item">
+                <div className="sd-meta-label">Day Order</div>
+                <div className="sd-meta-value">{entry.day_order || '—'}</div>
+              </div>
+              <div className="sd-meta-item">
+                <div className="sd-meta-label">Hour</div>
+                <div className="sd-meta-value">{entry.hour?.length ? entry.hour.join(', ') : '—'}</div>
+              </div>
               <div className="sd-meta-item">
                 <div className="sd-meta-label">Date of Incident</div>
                 <div className="sd-meta-value">{formatDate(entry.date)}</div>
