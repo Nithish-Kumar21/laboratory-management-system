@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { FaArrowLeft, FaFlask, FaPlus, FaTrash, FaChevronDown, FaCalendarAlt, FaArrowRight } from 'react-icons/fa';
 import api from '../utils/api';
@@ -21,8 +21,15 @@ function NewChemicalRequest() {
   const [formData, setFormData] = useState({
     reason: '',
     class_name: classOptions[0],
-    date: new Date().toISOString().split('T')[0]
+    date: new Date().toISOString().split('T')[0],
+    day_order: 'I',
+    hour: [],
+    purpose_type: 'practical_lab',
+    experiment_name: '',
+    student_name: ''
   });
+  const [hourOpen, setHourOpen] = useState(false);
+  const hourRef = useRef(null);
   const [chemicalItems, setChemicalItems] = useState([{ chemical_name: '', quantity: '' }]);
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
@@ -47,6 +54,11 @@ function NewChemicalRequest() {
           reason: data.reason || '',
           class_name: data.class_name,
           date: data.date || new Date(data.created_at).toISOString().split('T')[0],
+          day_order: data.day_order || 'I',
+          hour: data.hour || [],
+          purpose_type: data.purpose_type || 'practical_lab',
+          experiment_name: data.experiment_name || '',
+          student_name: data.student_name || '',
         });
         if (data.chemical_items?.length) {
           setChemicalItems(data.chemical_items.map(item => ({
@@ -58,6 +70,16 @@ function NewChemicalRequest() {
       .catch(() => navigate('/requests'))
       .finally(() => setLoadingDraft(false));
   }, [editId]);
+
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (hourRef.current && !hourRef.current.contains(e.target)) {
+        setHourOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
 
   const addChemicalRow = () => {
     setChemicalItems([...chemicalItems, { chemical_name: '', quantity: '' }]);
@@ -79,6 +101,11 @@ function NewChemicalRequest() {
     const newErrors = {};
     const today = new Date().toISOString().split('T')[0];
     if (formData.date < today) newErrors.date = 'Date cannot be in the past.';
+    if (!formData.day_order) newErrors.day_order = 'Required';
+    if (!formData.hour.length) newErrors.hour = 'Select at least one hour';
+    if (!formData.purpose_type) newErrors.purpose_type = 'Select a purpose type';
+    if (formData.purpose_type && !formData.experiment_name?.trim()) newErrors.experiment_name = 'Required';
+    if (formData.purpose_type === 'research_project' && !formData.student_name?.trim()) newErrors.student_name = 'Required';
     chemicalItems.forEach((item, i) => {
       if (!item.chemical_name?.trim()) newErrors[`chemical_name_${i}`] = 'Required';
       const q = parseFloat(item.quantity);
@@ -100,6 +127,11 @@ function NewChemicalRequest() {
       class_name: formData.class_name,
       reason: formData.reason.trim(),
       date: formData.date,
+      day_order: formData.day_order,
+      hour: formData.hour,
+      purpose_type: formData.purpose_type,
+      experiment_name: formData.experiment_name,
+      student_name: formData.purpose_type === 'practical_lab' ? '' : formData.student_name,
       status: directSubmit ? 'pending' : 'draft',
       chemical_items: chemicalItems.map(item => ({
         chemical_name: item.chemical_name.trim(),
@@ -163,34 +195,90 @@ function NewChemicalRequest() {
           </div>
         </div>
 
-        <div className="nrf-field">
-          <label className="nrf-field-label">Class</label>
-          <div className="nrf-field-control">
-            <select
-              value={formData.class_name}
-              onChange={(e) => setFormData({ ...formData, class_name: e.target.value })}
-              className="nrf-select"
-            >
-              {classOptions.map(opt => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
-            <FaChevronDown className="nrf-chevron" />
+        <div className="nrf-field-row">
+          <div className="nrf-field nrf-field-half">
+            <label className="nrf-field-label">Class</label>
+            <div className="nrf-field-control">
+              <select
+                value={formData.class_name}
+                onChange={(e) => setFormData({ ...formData, class_name: e.target.value })}
+                className="nrf-select"
+              >
+                {classOptions.map(opt => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
+              <FaChevronDown className="nrf-chevron" />
+            </div>
+          </div>
+
+          <div className="nrf-field nrf-field-half">
+            <label className="nrf-field-label">Date</label>
+            <div className="nrf-field-control">
+              <input
+                type="date"
+                value={formData.date}
+                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                className={`nrf-date-input ${errors.date ? 'nrf-error' : ''}`}
+              />
+              <FaCalendarAlt className="nrf-cal-icon" />
+            </div>
+            {errors.date && <span className="nrf-field-err">{errors.date}</span>}
           </div>
         </div>
 
-        <div className="nrf-field">
-          <label className="nrf-field-label">Date</label>
-          <div className="nrf-field-control">
-            <input
-              type="date"
-              value={formData.date}
-              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-              className={`nrf-date-input ${errors.date ? 'nrf-error' : ''}`}
-            />
-            <FaCalendarAlt className="nrf-cal-icon" />
+        <div className="nrf-field-row">
+          <div className="nrf-field nrf-field-half">
+            <label className="nrf-field-label">Day Order</label>
+            <div className="nrf-field-control">
+              <select
+                value={formData.day_order}
+                onChange={(e) => setFormData({ ...formData, day_order: e.target.value })}
+                className={`nrf-select ${errors.day_order ? 'nrf-error' : ''}`}
+              >
+                <option value="I">I</option>
+                <option value="II">II</option>
+                <option value="III">III</option>
+                <option value="IV">IV</option>
+                <option value="V">V</option>
+                <option value="VI">VI</option>
+              </select>
+              <FaChevronDown className="nrf-chevron" />
+            </div>
           </div>
-          {errors.date && <span className="nrf-field-err">{errors.date}</span>}
+
+          <div className="nrf-field nrf-field-half" ref={hourRef}>
+            <label className="nrf-field-label">Hour</label>
+            <div className="nrf-multi-select">
+              <button
+                type="button"
+                className={`nrf-multi-btn ${errors.hour ? 'nrf-error' : ''}`}
+                onClick={() => setHourOpen(!hourOpen)}
+              >
+                <span>{formData.hour.length ? formData.hour.sort((a, b) => a - b).join(', ') : 'Select hour(s)'}</span>
+                <FaChevronDown className={`nrf-chevron ${hourOpen ? 'nrf-chevron-up' : ''}`} />
+              </button>
+              {hourOpen && (
+                <div className="nrf-multi-dropdown">
+                  {[1, 2, 3, 4, 5].map(h => (
+                    <label key={h} className="nrf-multi-option">
+                      <input
+                        type="checkbox"
+                        checked={formData.hour.includes(h)}
+                        onChange={() => {
+                          const next = formData.hour.includes(h)
+                            ? formData.hour.filter(v => v !== h)
+                            : [...formData.hour, h];
+                          setFormData({ ...formData, hour: next });
+                        }}
+                      />
+                      <span>Hour {h}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="nrf-chem-section">
@@ -239,7 +327,7 @@ function NewChemicalRequest() {
                           onMouseDown={() => { updateChemicalItem(i, 'chemical_name', c.chemical_name); setShowSuggestions({}); }}
                         >
                           <span>{c.chemical_name}</span>
-                          <span className="nrf-stock">Stock: {c.quantity} {c.unit || 'ml'}</span>
+                          <span className="nrf-stock">Stock: {c.quantity} {c.unit}</span>
                         </li>
                       ))}
                   </ul>
@@ -258,7 +346,7 @@ function NewChemicalRequest() {
                     updateChemicalItem(i, 'quantity', v === '' ? '' : v);
                   }}
                 />
-                <span className="nrf-qty-unit">{availableChemicals.find(c => c.chemical_name === item.chemical_name)?.unit || 'ml'}</span>
+                <span className="nrf-qty-unit">{availableChemicals.find(c => c.chemical_name === item.chemical_name)?.unit}</span>
               </div>
               <button
                 type="button"
@@ -273,15 +361,74 @@ function NewChemicalRequest() {
         </div>
 
         <div className="nrf-field">
-          <label className="nrf-field-label">Purpose / Remarks <span className="nrf-opt">(Optional)</span></label>
-          <textarea
-            value={formData.reason}
-            onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-            placeholder="Details..."
-            rows={3}
-            className="nrf-textarea"
-          />
+          <label className="nrf-field-label">Purpose Type</label>
+          <div className="nrf-radio-tabs">
+            <button
+              type="button"
+              className={`nrf-radio-tab ${formData.purpose_type === 'practical_lab' ? 'active' : ''}`}
+              onClick={() => setFormData({ ...formData, purpose_type: 'practical_lab', student_name: '' })}
+            >
+              Practical Lab
+            </button>
+            <button
+              type="button"
+              className={`nrf-radio-tab ${formData.purpose_type === 'research_project' ? 'active' : ''}`}
+              onClick={() => setFormData({ ...formData, purpose_type: 'research_project' })}
+            >
+              Research / Project
+            </button>
+          </div>
+          {errors.purpose_type && <span className="nrf-field-err">{errors.purpose_type}</span>}
         </div>
+
+        {formData.purpose_type === 'practical_lab' && (
+          <div className="nrf-field">
+            <label className="nrf-field-label">Experiment Name(s)</label>
+            <div className="nrf-field-control">
+              <textarea
+                value={formData.experiment_name}
+                onChange={(e) => setFormData({ ...formData, experiment_name: e.target.value })}
+                className={`nrf-text-input ${errors.experiment_name ? 'nrf-error' : ''}`}
+                placeholder="Enter experiment name(s), one per line"
+                rows={3}
+              />
+            </div>
+            {errors.experiment_name && <span className="nrf-field-err">{errors.experiment_name}</span>}
+          </div>
+        )}
+
+        {formData.purpose_type === 'research_project' && (
+          <>
+            <div className="nrf-field-row">
+              <div className="nrf-field nrf-field-half">
+                <label className="nrf-field-label">Student Name(s)</label>
+                <div className="nrf-field-control">
+                  <textarea
+                    value={formData.student_name}
+                    onChange={(e) => setFormData({ ...formData, student_name: e.target.value })}
+                    className={`nrf-text-input ${errors.student_name ? 'nrf-error' : ''}`}
+                    placeholder="Enter student name(s), one per line"
+                    rows={3}
+                  />
+                </div>
+                {errors.student_name && <span className="nrf-field-err">{errors.student_name}</span>}
+              </div>
+              <div className="nrf-field nrf-field-half">
+                <label className="nrf-field-label">Experiment Name(s)</label>
+                <div className="nrf-field-control">
+                  <textarea
+                    value={formData.experiment_name}
+                    onChange={(e) => setFormData({ ...formData, experiment_name: e.target.value })}
+                    className={`nrf-text-input ${errors.experiment_name ? 'nrf-error' : ''}`}
+                    placeholder="Enter experiment name(s), one per line"
+                    rows={3}
+                  />
+                </div>
+                {errors.experiment_name && <span className="nrf-field-err">{errors.experiment_name}</span>}
+              </div>
+            </div>
+          </>
+        )}
 
         {errors.submit && <div className="nrf-submit-err">{errors.submit}</div>}
 

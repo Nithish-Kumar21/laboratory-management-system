@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.postgres',
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
@@ -34,6 +35,7 @@ INSTALLED_APPS = [
     'damaged_entry',
     'stock_request',
     'reports',
+    'service_entry',
 ]
 
 MIDDLEWARE = [

@@ -67,7 +67,7 @@ const NotificationCenter = () => {
                     name: item.chemical_name,
                     type: 'Low Stock: Chemical',
                     qty: item.quantity,
-                    unit: item.unit || 'ml',
+                    unit: item.unit,
                     isAlert: true
                 }));
                 const lowApp = appData.filter(a => {
@@ -96,7 +96,6 @@ const NotificationCenter = () => {
 
     useEffect(() => {
         fetchNotificationData();
-        const interval = setInterval(fetchNotificationData, 5000);
 
         const handleClickOutside = (event) => {
             if (notifRef.current && !notifRef.current.contains(event.target)) {
@@ -108,7 +107,6 @@ const NotificationCenter = () => {
         window.addEventListener('inventory-updated', fetchNotificationData);
 
         return () => {
-            clearInterval(interval);
             document.removeEventListener('mousedown', handleClickOutside);
             window.removeEventListener('inventory-updated', fetchNotificationData);
         };

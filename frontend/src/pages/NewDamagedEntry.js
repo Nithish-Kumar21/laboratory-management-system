@@ -1,9 +1,17 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaPlus, FaTrash, FaUserTie, FaGraduationCap, FaCalendarAlt, FaTools } from 'react-icons/fa';
+import { FaArrowLeft, FaPlus, FaTrash, FaUserTie, FaGraduationCap, FaCalendarAlt, FaTools, FaSort, FaClock, FaChevronDown } from 'react-icons/fa';
 import api from '../utils/api';
 import ConfirmDialog from '../components/ConfirmDialog';
 import './NewDamagedEntry.css';
+
+function extractErrorMessages(err) {
+  if (typeof err === 'string') return [err];
+  if (err === null || err === undefined) return [];
+  if (Array.isArray(err)) return err.flatMap(extractErrorMessages);
+  if (typeof err === 'object') return Object.values(err).flatMap(extractErrorMessages);
+  return [String(err)];
+}
 
 function NewDamagedEntry() {
   const navigate = useNavigate();
@@ -12,21 +20,41 @@ function NewDamagedEntry() {
     class_name: '',
     date: new Date().toISOString().split('T')[0],
     details: '',
+    day_order: '',
+    hour: [],
   });
   const [damagedItems, setDamagedItems] = useState([{ apparatus_name: '', quantity: '', caused_by: '' }]);
   const [apparatusNames, setApparatusNames] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [alertDialog, setAlertDialog] = useState({ open: false, message: '' });
+  const [toast, setToast] = useState(null);
+
+  const showToast = (message) => {
+    setToast(message);
+    setTimeout(() => setToast(null), 3000);
+  };
   const [showSuggestions, setShowSuggestions] = useState({});
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [hourOpen, setHourOpen] = useState(false);
 
   const formRef = useRef(null);
   const scrollRef = useRef(null);
+  const hourRef = useRef(null);
 
   useEffect(() => {
     api.get('available_apparatus/names/')
       .then(res => setApparatusNames(Array.isArray(res.data) ? res.data : []))
       .catch(err => console.error(err));
+  }, []);
+
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (hourRef.current && !hourRef.current.contains(e.target)) {
+        setHourOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
   const scrollToBottom = () => {
@@ -65,10 +93,11 @@ function NewDamagedEntry() {
       };
       await api.post('damaged_entry/', payload);
       window.dispatchEvent(new Event('inventory-updated'));
-      navigate('/damaged-entry');
+      showToast('Damage report filed successfully');
+      setTimeout(() => navigate('/damaged-entry'), 1500);
     } catch (err) {
       const serverErr = err.response?.data;
-      const msg = serverErr?.error || (typeof serverErr === 'object' ? Object.values(serverErr).flat().join('; ') : '') || 'Failed to submit report';
+      const msg = serverErr?.error || (typeof serverErr === 'object' && serverErr !== null ? extractErrorMessages(serverErr).join('; ') : '') || 'Failed to submit report';
       setAlertDialog({ open: true, message: msg });
     } finally {
       setSubmitting(false);
@@ -108,15 +137,69 @@ function NewDamagedEntry() {
             </div>
             <div className="nrf-field">
               <label className="nrf-field-label"><FaGraduationCap /> Class / Division</label>
-              <input type="text" className="nrf-input" value={formData.class_name} required placeholder="e.g. 10th A"
-                onChange={e => setFormData({ ...formData, class_name: e.target.value })} />
+              <select className="nrf-input" value={formData.class_name}
+                onChange={e => setFormData({ ...formData, class_name: e.target.value })} required>
+                <option value="">Select class / division</option>
+                <option value="I B.Sc Chemistry">I B.Sc Chemistry</option>
+                <option value="II B.Sc Chemistry">II B.Sc Chemistry</option>
+                <option value="III B.Sc Chemistry">III B.Sc Chemistry</option>
+                <option value="I M.Sc Chemistry">I M.Sc Chemistry</option>
+                <option value="II M.Sc Chemistry">II M.Sc Chemistry</option>
+              </select>
             </div>
           </div>
 
-          <div className="nrf-field">
-            <label className="nrf-field-label"><FaCalendarAlt /> Date of Incident</label>
-            <input type="date" className="nrf-input" value={formData.date} required
-              onChange={e => setFormData({ ...formData, date: e.target.value })} />
+          <div className="nrf-incident-row">
+            <div className="nrf-field">
+              <label className="nrf-field-label"><FaSort /> Day Order</label>
+              <select className="nrf-input" value={formData.day_order}
+                onChange={e => setFormData({ ...formData, day_order: e.target.value })}>
+                <option value="">Select day order</option>
+                <option value="I">I</option>
+                <option value="II">II</option>
+                <option value="III">III</option>
+                <option value="IV">IV</option>
+                <option value="V">V</option>
+                <option value="VI">VI</option>
+              </select>
+            </div>
+            <div className="nrf-field" ref={hourRef}>
+              <label className="nrf-field-label"><FaClock /> Hour</label>
+              <div className="nrf-multi-select">
+                <button
+                  type="button"
+                  className="nrf-multi-btn"
+                  onClick={() => setHourOpen(!hourOpen)}
+                >
+                  <span>{formData.hour.length ? formData.hour.sort((a, b) => a - b).join(', ') : 'Select hour(s)'}</span>
+                  <FaChevronDown className={`nrf-chevron ${hourOpen ? 'nrf-chevron-up' : ''}`} />
+                </button>
+                {hourOpen && (
+                  <div className="nrf-multi-dropdown">
+                    {[1, 2, 3, 4, 5].map(h => (
+                      <label key={h} className="nrf-multi-option">
+                        <input
+                          type="checkbox"
+                          checked={formData.hour.includes(h)}
+                          onChange={() => {
+                            const next = formData.hour.includes(h)
+                              ? formData.hour.filter(v => v !== h)
+                              : [...formData.hour, h];
+                            setFormData({ ...formData, hour: next });
+                          }}
+                        />
+                        <span>Hour {h}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="nrf-field">
+              <label className="nrf-field-label"><FaCalendarAlt /> Date of Incident</label>
+              <input type="date" className="nrf-input" value={formData.date} required
+                onChange={e => setFormData({ ...formData, date: e.target.value })} />
+            </div>
           </div>
 
           {/* Damaged Items */}
@@ -178,6 +261,7 @@ function NewDamagedEntry() {
         </form>
 
         <ConfirmDialog open={alertDialog.open} message={alertDialog.message} showCancel={false} confirmLabel="OK" onConfirm={() => setAlertDialog({ open: false })} />
+        {toast && <div className="cr-toast cr-toast-visible">{toast}</div>}
       </div>
     </div>
   );

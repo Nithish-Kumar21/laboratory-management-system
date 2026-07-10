@@ -41,6 +41,17 @@
   border-color: #334155;
 }
 
+.nrf-input-error {
+  border-color: #EF4444 !important;
+}
+
+.nrf-field-error {
+  font-size: 12px;
+  color: #EF4444;
+  margin-top: 4px;
+  display: block;
+}
+
 .nrf-auto-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -99,7 +110,7 @@
   box-shadow: 0 0 0 2px rgba(63, 81, 181, 0.1);
 }
 
-.nrf-grid-row select.nrf-input {
+.nrf-chem-row-2 select.nrf-input {
   text-align: center;
   cursor: pointer;
   appearance: auto;
@@ -164,44 +175,102 @@
   background: #357ABD;
 }
 
-/* Grid Headers */
-.nrf-grid-cols {
-  display: grid;
+/* ── Chem entry container ── */
+.nrf-chem-entry {
+  display: flex;
+  flex-direction: column;
   gap: 8px;
-  align-items: center;
-  padding: 0 2px;
+  background: #F8F9FC;
+  border: 0.5px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 8px;
 }
 
-.nrf-grid-cols span {
-  font-size: 11px;
+:root.dark-mode .nrf-chem-entry {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+.nrf-chem-entry .nrf-input {
+  height: 38px;
+  font-size: 13px;
+}
+
+.nrf-chem-row-1 {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+.nrf-chem-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 80px 80px 1fr;
+  gap: 8px;
+  align-items: start;
+}
+
+.nrf-chem-row-3 {
+  display: grid;
+  grid-template-columns: 1fr 80px 80px 100px 38px;
+  gap: 8px;
+  align-items: start;
+}
+
+/* ── App entry container ── */
+.nrf-app-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #F8F9FC;
+  border: 0.5px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 8px;
+}
+
+:root.dark-mode .nrf-app-entry {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+.nrf-app-entry .nrf-input {
+  height: 38px;
+  font-size: 13px;
+}
+
+.nrf-app-row-1 {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+.nrf-app-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  align-items: center;
+}
+
+.nrf-app-row-3 {
+  display: grid;
+  grid-template-columns: 80px 100px 38px;
+  gap: 8px;
+  align-items: start;
+}
+
+/* ── Inline labels ── */
+.nrf-labeled-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nrf-inline-label {
+  font-size: 10px;
   font-weight: 600;
   color: var(--text-muted);
   letter-spacing: 0.04em;
   text-transform: uppercase;
-}
-
-.cols-5 {
-  grid-template-columns: 1fr 90px 80px 90px 1fr 38px;
-}
-
-.cols-4 {
-  grid-template-columns: 1fr 110px 110px 1fr 38px;
-}
-
-.cols-3 {
-  grid-template-columns: 1fr 100px 1fr 38px;
-}
-
-/* Grid Rows */
-.nrf-grid-row {
-  display: grid;
-  gap: 8px;
-  align-items: center;
-}
-
-.nrf-grid-row .nrf-input {
-  height: 38px;
-  font-size: 13px;
+  white-space: nowrap;
 }
 
 /* Autocomplete */
@@ -258,6 +327,37 @@
   color: #EF4444;
   font-weight: 600;
   white-space: nowrap;
+}
+
+/* Supplier Details Row */
+.nrf-supplier-row {
+  display: grid;
+  grid-template-columns: 1fr 140px 1fr 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
+.nrf-supplier-name {
+  min-width: 0;
+}
+
+.nrf-supplier-code select.nrf-input {
+  text-align: center;
+  cursor: pointer;
+  padding: 0 4px;
+  font-size: 13px;
+}
+
+/* Read-only computed fields */
+.nrf-readonly {
+  background: #f3f4f6 !important;
+  color: #6b7280 !important;
+  cursor: default;
+}
+
+:root.dark-mode .nrf-readonly {
+  background: #1e293b !important;
+  color: #9ca3af !important;
 }
 
 /* Delete Button */
@@ -377,6 +477,99 @@
   flex: 1;
 }
 
+/* Incident row — Day Order, Hour, Date */
+.nrf-incident-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.5fr;
+  gap: 16px;
+}
+
+/* Multi-select dropdown */
+.nrf-multi-select {
+  position: relative;
+}
+
+.nrf-multi-btn {
+  width: 100%;
+  height: 42px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0 36px 0 12px;
+  font-size: 14px;
+  color: var(--text-main);
+  background: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  text-align: left;
+  outline: none;
+  position: relative;
+}
+
+:root.dark-mode .nrf-multi-btn {
+  background: #1e293b;
+  border-color: #4B5563;
+}
+
+.nrf-multi-btn .nrf-chevron {
+  right: 12px;
+}
+
+.nrf-chevron-up {
+  transform: rotate(180deg);
+}
+
+.nrf-chevron {
+  position: absolute;
+  right: 12px;
+  font-size: 14px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.nrf-multi-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  margin-top: 4px;
+  padding: 4px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+:root.dark-mode .nrf-multi-dropdown {
+  background: #1e293b;
+  border-color: #4B5563;
+}
+
+.nrf-multi-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  font-size: 14px;
+  border-radius: 4px;
+}
+
+.nrf-multi-option:hover {
+  background: #f1f5f9;
+}
+
+:root.dark-mode .nrf-multi-option:hover {
+  background: #334155;
+}
+
+.nrf-multi-option input[type="checkbox"] {
+  accent-color: #1A3C6E;
+  margin: 0;
+  cursor: pointer;
+}
+
 @media (max-width: 768px) {
   .nrf-page {
     padding: 24px 12px;
@@ -389,6 +582,11 @@
 
   .nrf-auto-row {
     grid-template-columns: 1fr;
+  }
+
+  .nrf-supplier-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
   }
 
   .nrf-action-row {
@@ -405,14 +603,10 @@
     display: none;
   }
 
-  /* ===== Mobile: hide grid headers ===== */
-  .nrf-grid-cols {
-    display: none;
-  }
-
-  /* ===== Mobile: stack item rows vertically ===== */
-  .nrf-grid-row {
-    display: flex !important;
+  /* ===== Mobile: entry containers flex-wrap ===== */
+  .nrf-chem-entry,
+  .nrf-app-entry {
+    display: flex;
     flex-wrap: wrap;
     gap: 8px;
     background: #F8F9FC;
@@ -423,34 +617,63 @@
     align-items: start;
   }
 
-  :root.dark-mode .nrf-grid-row {
+  :root.dark-mode .nrf-chem-entry,
+  :root.dark-mode .nrf-app-entry {
     background: #0f172a;
     border-color: #334155;
   }
 
-  /* Name / autocomplete — full width */
-  .nrf-grid-row > .nrf-autocomplete {
+  /* Override grid layouts on mobile — use flex */
+  .nrf-chem-row-1,
+  .nrf-chem-row-2,
+  .nrf-chem-row-3,
+  .nrf-app-row-1,
+  .nrf-app-row-2,
+  .nrf-app-row-3 {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
     width: 100%;
   }
 
-  /* Qty / Rate / Caused By — side by side */
-  .nrf-grid-row > input[type="number"],
-  .nrf-grid-row > input[type="text"] {
+  /* Name / autocomplete — full width in any row */
+  .nrf-chem-entry .nrf-autocomplete,
+  .nrf-app-entry .nrf-autocomplete {
+    width: 100%;
+  }
+
+  /* Inputs side by side */
+  .nrf-chem-entry input,
+  .nrf-chem-entry select,
+  .nrf-app-entry input,
+  .nrf-app-entry select {
     flex: 1;
     min-width: 0;
   }
 
-  .nrf-grid-row .nrf-input {
+  .nrf-chem-entry .nrf-labeled-field,
+  .nrf-app-entry .nrf-labeled-field {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .nrf-chem-entry .nrf-input,
+  .nrf-app-entry .nrf-input {
     height: 40px;
     font-size: 14px;
   }
 
   /* Delete button — full width at bottom */
-  .nrf-grid-row > .nrf-del-btn {
+  .nrf-chem-entry .nrf-del-btn,
+  .nrf-app-entry .nrf-del-btn {
     width: 100%;
     height: 40px;
     border-radius: 7px;
     margin-top: 2px;
+  }
+
+  .nrf-incident-row {
+    grid-template-columns: 1fr;
   }
 
   .nrf-suggestions {

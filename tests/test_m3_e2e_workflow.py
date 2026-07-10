@@ -194,7 +194,8 @@ class TestM3E2EWorkflow:
         assert chem.quantity == Decimal('900.00'), f"Expected 900.00, got {chem.quantity}"
 
         complete_again = api_client.post(f'/api/stock_request/{req1_id}/mark_as_completed/')
-        assert complete_again.status_code == status.HTTP_400_BAD_REQUEST
+        assert complete_again.status_code == status.HTTP_200_OK
+        assert complete_again.data['data']['message'] == 'Already completed.'
 
         chem.refresh_from_db()
         assert chem.quantity == Decimal('900.00')

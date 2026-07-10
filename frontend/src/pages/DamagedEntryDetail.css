@@ -145,6 +145,13 @@
   color: var(--text-main);
 }
 
+.sd-meta-grid-row2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.5fr;
+  gap: 10px 24px;
+  margin-top: 8px;
+}
+
 /* Card Title */
 .sd-card-title {
   font-size: 17px;
@@ -269,6 +276,73 @@
   background: #DC2626;
 }
 
+/* ===== SERVICE ENTRY ACTION BUTTONS ===== */
+.sd-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.sd-action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.sd-action-btn.repaired-btn {
+  background: #E8F5E9;
+  color: #2E7D32;
+}
+
+.sd-action-btn.repaired-btn:hover:not(:disabled) {
+  background: #C8E6C9;
+}
+
+.sd-action-btn.damaged-btn {
+  background: #FFEBEE;
+  color: #C62828;
+}
+
+.sd-action-btn.damaged-btn:hover:not(:disabled) {
+  background: #FFCDD2;
+}
+
+.sd-btn.sd-complete-btn {
+  background: #1A3C6E;
+  color: #fff;
+  border: none;
+}
+
+.sd-btn.sd-complete-btn:hover:not(:disabled) {
+  background: #14305a;
+}
+
+.sd-btn.sd-complete-btn:disabled {
+  background: #E0E0E0;
+  color: #9AA3AF;
+  cursor: not-allowed;
+}
+
+:root.dark-mode .sd-btn.sd-complete-btn {
+  background: #4A90D9;
+}
+
+:root.dark-mode .sd-btn.sd-complete-btn:hover:not(:disabled) {
+  background: #357ABD;
+}
+
+:root.dark-mode .sd-btn.sd-complete-btn:disabled {
+  background: #334155;
+  color: #64748B;
+}
+
 /* Error */
 .error-message {
   text-align: center;
@@ -289,6 +363,11 @@
 
   .sd-meta-grid {
     grid-template-columns: 1fr 1fr;
+    gap: 8px 16px;
+  }
+
+  .sd-meta-grid-row2 {
+    grid-template-columns: 1fr 1fr 1.5fr;
     gap: 8px 16px;
   }
 
@@ -319,6 +398,11 @@
   }
 
   .sd-meta-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .sd-meta-grid-row2 {
     grid-template-columns: 1fr;
     gap: 8px;
   }

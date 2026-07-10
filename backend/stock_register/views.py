@@ -10,6 +10,7 @@ from .serializers import (
 from django.db import transaction
 from backend.permissions import StockRegisterPermission
 from inventory.models import AvailableChemical, AvailableApparatus
+from audit.services import AuditLogService
 
 
 
@@ -41,21 +42,38 @@ class StockRegisterViewSet(viewsets.ModelViewSet):
 
     @transaction.atomic
     def perform_create(self, serializer):
-        serializer.save()
+        instance = serializer.save()
+        item_count = instance.chemical_items.count() + instance.apparatus_items.count()
+        AuditLogService.log(
+            user=self.request.user,
+            action='STOCK_ENTRY_ADDED',
+            entity_type='StockRegister',
+            entity_id=instance.id,
+            description=f'Stock entry #{instance.invoice_number} from {instance.supplier_name} ({item_count} items)',
+            request=self.request,
+        )
 
     @action(detail=False, methods=['get'])
     def chemical_names(self, request):
         """Get list of unique chemical names and available quantity for autocomplete"""
-        data = AvailableChemical.objects.values('chemical_name', 'quantity').order_by('chemical_name')
-        # Map to consistent keys
-        result = [{'name': item['chemical_name'], 'available_quantity': float(item['quantity']), 'unit': 'ml'} for item in data]
+        data = AvailableChemical.objects.values('chemical_name', 'quantity', 'unit', 'reorder_level').order_by('chemical_name')
+        result = [{
+            'name': item['chemical_name'],
+            'available_quantity': float(item['quantity']),
+            'unit': item.get('unit', 'ml'),
+            'reorder_level': float(item['reorder_level']) if item['reorder_level'] is not None else None
+        } for item in data]
         return Response(result)
     
     @action(detail=False, methods=['get'])
     def apparatus_names(self, request):
         """Get list of unique apparatus names and available quantity for autocomplete"""
-        data = AvailableApparatus.objects.values('apparatus_name', 'available_quantity_pieces').order_by('apparatus_name')
-        result = [{'name': item['apparatus_name'], 'available_quantity': item['available_quantity_pieces']} for item in data]
+        data = AvailableApparatus.objects.values('apparatus_name', 'available_quantity_pieces', 'reorder_level').order_by('apparatus_name')
+        result = [{
+            'name': item['apparatus_name'],
+            'available_quantity': item['available_quantity_pieces'],
+            'reorder_level': item['reorder_level']
+        } for item in data]
         return Response(result)
     
     @action(detail=False, methods=['get'])
@@ -96,7 +114,7 @@ class StockRegisterViewSet(viewsets.ModelViewSet):
         for chem in instance.chemical_items.all():
             try:
                 available = AvailableChemical.objects.get(chemical_name=chem.chemical_name)
-                available.quantity -= chem.quantity
+                available.quantity -= chem.total_quantity
                 available.save()
             except AvailableChemical.DoesNotExist:
                 pass

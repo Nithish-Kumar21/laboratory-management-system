@@ -16,6 +16,12 @@ function StockRequestDetail() {
     const [actionLoading, setActionLoading] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [hasActiveRequest, setHasActiveRequest] = useState(false);
+    const [toast, setToast] = useState(null);
+
+    const showToast = (message) => {
+        setToast(message);
+        setTimeout(() => setToast(null), 3000);
+    };
 
     // Usage Reporting State
     const [usageReport, setUsageReport] = useState({});
@@ -70,28 +76,19 @@ function StockRequestDetail() {
     const [dialog, setDialog] = useState({ open: false, message: '', showCancel: true, variant: 'confirm', onConfirm: null });
 
     const handleAccept = () => {
-        setDialog({
-            open: true,
-            message: 'Are you sure you want to approve this request?',
-            showCancel: true,
-            onConfirm: () => {
-                setDialog({ open: false });
-                setActionLoading(true);
-                api.post(`stock_request/${id}/accept/`)
-                    .then(() => { fetchRequest(); window.dispatchEvent(new CustomEvent('inventory-updated')); })
-                    .catch(err => setDialog({ open: true, message: err.response?.data?.error || 'Failed to approve', showCancel: false }))
-                    .finally(() => setActionLoading(false));
-            }
-        });
+        setActionLoading(true);
+        api.post(`stock_request/${id}/accept/`)
+            .then(() => { fetchRequest(); window.dispatchEvent(new CustomEvent('inventory-updated')); showToast('Request Approved'); })
+            .catch(err => setDialog({ open: true, message: err.response?.data?.error || 'Failed to approve', showCancel: false }))
+            .finally(() => setActionLoading(false));
     };
 
     const handleReject = async () => {
         const reason = rejectionReason.trim();
         if (!reason) {
-            setDialog({ open: true, message: 'Please provide a reason for rejection.', showCancel: false, onConfirm: () => setDialog({ open: false }) });
+            showToast('Please provide a reason for rejection.');
             return;
         }
-        setDialog({ open: false });
         setActionLoading(true);
         try {
             await api.post(`stock_request/${id}/reject/`, { rejection_reason: reason });
@@ -99,6 +96,7 @@ function StockRequestDetail() {
             setRejectionReason('');
             fetchRequest();
             window.dispatchEvent(new CustomEvent('inventory-updated'));
+            showToast('Request Rejected');
         } catch (err) {
             setDialog({ open: true, message: err.response?.data?.error || err.response?.data?.rejection_reason?.[0] || 'Failed to reject', showCancel: false });
         } finally {
@@ -107,52 +105,28 @@ function StockRequestDetail() {
     };
 
     const handleMarkAsIssued = () => {
-        setDialog({
-            open: true,
-            message: 'Are you sure you want to mark this request as issued? This will update the inventory.',
-            showCancel: true,
-            onConfirm: () => {
-                setDialog({ open: false });
-                setActionLoading(true);
-                api.post(`stock_request/${id}/mark_as_issued/`)
-                    .then(() => { fetchRequest(); window.dispatchEvent(new CustomEvent('inventory-updated')); })
-                    .catch(err => setDialog({ open: true, message: err.response?.data?.error || 'Failed to mark as issued', showCancel: false }))
-                    .finally(() => setActionLoading(false));
-            }
-        });
+        setActionLoading(true);
+        api.post(`stock_request/${id}/mark_as_issued/`)
+            .then(() => { fetchRequest(); window.dispatchEvent(new CustomEvent('inventory-updated')); showToast('Marked as Issued'); })
+            .catch(err => setDialog({ open: true, message: err.response?.data?.error || 'Failed to mark as issued', showCancel: false }))
+            .finally(() => setActionLoading(false));
     };
 
     const handleReportUsage = () => {
-        setDialog({
-            open: true,
-            message: 'Are you sure you want to report usage? This cannot be undone.',
-            showCancel: true,
-            onConfirm: () => {
-                setDialog({ open: false });
-                setActionLoading(true);
-                    const items = Object.keys(usageReport).map(k => ({ id: parseInt(k), actual_used_quantity: parseFloat(usageReport[k]) }));
-                api.post(`stock_request/${id}/report_usage/`, { items })
-                    .then(() => { fetchRequest(); window.dispatchEvent(new CustomEvent('inventory-updated')); })
-                    .catch(err => setDialog({ open: true, message: err.response?.data?.error || 'Failed to report usage', showCancel: false }))
-                    .finally(() => setActionLoading(false));
-            }
-        });
+        setActionLoading(true);
+        const items = Object.keys(usageReport).map(k => ({ id: parseInt(k), actual_used_quantity: parseFloat(usageReport[k]) }));
+        api.post(`stock_request/${id}/report_usage/`, { items })
+            .then(() => { fetchRequest(); window.dispatchEvent(new CustomEvent('inventory-updated')); showToast('Quantity Updated'); })
+            .catch(err => setDialog({ open: true, message: err.response?.data?.error || 'Failed to report usage', showCancel: false }))
+            .finally(() => setActionLoading(false));
     };
 
     const handleMarkAsCompleted = () => {
-        setDialog({
-            open: true,
-            message: 'Are you sure you want to mark this request as completed? This will adjust inventory and log the transaction.',
-            showCancel: true,
-            onConfirm: () => {
-                setDialog({ open: false });
-                setActionLoading(true);
-                api.post(`stock_request/${id}/mark_as_completed/`)
-                    .then(() => { fetchRequest(); window.dispatchEvent(new CustomEvent('inventory-updated')); })
-                    .catch(err => setDialog({ open: true, message: err.response?.data?.error || 'Failed to complete request', showCancel: false }))
-                    .finally(() => setActionLoading(false));
-            }
-        });
+        setActionLoading(true);
+        api.post(`stock_request/${id}/mark_as_completed/`)
+            .then(() => { fetchRequest(); window.dispatchEvent(new CustomEvent('inventory-updated')); showToast('Request completed'); })
+            .catch(err => setDialog({ open: true, message: err.response?.data?.error || 'Failed to complete request', showCancel: false }))
+            .finally(() => setActionLoading(false));
     };
 
     const handleSend = () => {
@@ -374,6 +348,14 @@ function StockRequestDetail() {
                                 <div className="sd-meta-label"><FaCalendarAlt /> Date</div>
                                 <div className="sd-meta-value">{request.date ? new Date(request.date).toLocaleDateString() : new Date(request.created_at).toLocaleDateString()}</div>
                             </div>
+                            <div className="sd-meta-item">
+                                <div className="sd-meta-label">Day Order</div>
+                                <div className="sd-meta-value">{request.day_order || '-'}</div>
+                            </div>
+                            <div className="sd-meta-item">
+                                <div className="sd-meta-label">Hour</div>
+                                <div className="sd-meta-value">{request.hour?.length ? request.hour.sort((a,b)=>a-b).join(', ') : '-'}</div>
+                            </div>
                         </div>
                     </div>
 
@@ -387,7 +369,7 @@ function StockRequestDetail() {
                             {request.chemical_items?.map((item, idx) => (
                                 <div key={idx} className="sd-chem-row">
                                     <span className="sd-chem-name">{item.chemical_name}</span>
-                                    <span className="sd-chem-qty">{item.quantity}<span className="sd-chem-unit"> {item.unit || 'ml'}</span></span>
+                                    <span className="sd-chem-qty">{item.quantity}<span className="sd-chem-unit"> {item.unit}</span></span>
                                 </div>
                             ))}
                             {(!request.chemical_items || request.chemical_items.length === 0) && (
@@ -396,12 +378,25 @@ function StockRequestDetail() {
                         </div>
                     </div>
 
-                    {/* Purpose / Remarks Card */}
-                    {request.reason && (
+                    {/* Purpose Type Card */}
+                    {request.purpose_type && (
                         <div className="sd-card">
-                            <div className="sd-card-title">Purpose / Remarks</div>
+                            <div className="sd-card-title">
+                                {request.purpose_type === 'research_project' ? 'Research / Project' : 'Practical Lab'}
+                            </div>
                             <hr className="sd-divider" />
-                            <p className="sd-remarks-text">{request.reason}</p>
+                            <div className="sd-meta-grid">
+                                <div className="sd-meta-item" style={{ gridColumn: '1 / -1' }}>
+                                    <div className="sd-meta-label">Experiment Name(s)</div>
+                                    <div className="sd-meta-value">{request.experiment_name || '-'}</div>
+                                </div>
+                                {request.purpose_type === 'research_project' && (
+                                    <div className="sd-meta-item" style={{ gridColumn: '1 / -1' }}>
+                                        <div className="sd-meta-label">Student Name(s)</div>
+                                        <div className="sd-meta-value">{request.student_name || '-'}</div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     )}
 
@@ -444,7 +439,7 @@ function StockRequestDetail() {
                                 {request.chemical_items?.map(item => (
                                     <div key={item.id} className="sd-usage-row">
                                         <span className="sd-usage-name">{item.chemical_name}</span>
-                                        <span className="sd-usage-requested">{item.quantity} {item.unit || 'ml'}</span>
+                                        <span className="sd-usage-requested">{item.quantity} {item.unit}</span>
                                         <div className="sd-usage-input-wrap">
                                             <input
                                                 type="number"
@@ -455,7 +450,7 @@ function StockRequestDetail() {
                                                 className="sd-usage-input"
                                                 placeholder="0.00"
                                             />
-                                            <span className="sd-input-unit">{item.unit || 'ml'}</span>
+                                            <span className="sd-input-unit">{item.unit}</span>
                                         </div>
                                     </div>
                                 ))}
@@ -515,6 +510,7 @@ function StockRequestDetail() {
                     onConfirm={() => { if (dialog.onConfirm) dialog.onConfirm(); else setDialog({ open: false }); }}
                     onCancel={() => setDialog({ open: false })}
                 />
+                {toast && <div className="cr-toast cr-toast-visible">{toast}</div>}
             </div>
             </div>
         );
@@ -559,6 +555,14 @@ function StockRequestDetail() {
                             <div className="sd-meta-label"><FaCalendarAlt /> Date</div>
                             <div className="sd-meta-value">{request.date ? new Date(request.date).toLocaleDateString() : new Date(request.created_at).toLocaleDateString()}</div>
                         </div>
+                        <div className="sd-meta-item">
+                            <div className="sd-meta-label">Day Order</div>
+                            <div className="sd-meta-value">{request.day_order || '-'}</div>
+                        </div>
+                        <div className="sd-meta-item">
+                            <div className="sd-meta-label">Hour</div>
+                            <div className="sd-meta-value">{request.hour?.length ? request.hour.sort((a,b)=>a-b).join(', ') : '-'}</div>
+                        </div>
                     </div>
                 </div>
 
@@ -572,7 +576,7 @@ function StockRequestDetail() {
                         {request.chemical_items?.map((item, idx) => (
                             <div key={idx} className="sd-chem-row">
                                 <span className="sd-chem-name">{item.chemical_name}</span>
-                                <span className="sd-chem-qty">{item.quantity}<span className="sd-chem-unit"> {item.unit || 'ml'}</span></span>
+                                <span className="sd-chem-qty">{item.quantity}<span className="sd-chem-unit"> {item.unit}</span></span>
                             </div>
                         ))}
                         {(!request.chemical_items || request.chemical_items.length === 0) && (
@@ -581,12 +585,25 @@ function StockRequestDetail() {
                     </div>
                 </div>
 
-                {/* Purpose / Remarks Card */}
-                {request.reason && (
+                {/* Purpose Type Card */}
+                {request.purpose_type && (
                     <div className="sd-card">
-                        <div className="sd-card-title">Purpose / Remarks</div>
+                        <div className="sd-card-title">
+                            {request.purpose_type === 'research_project' ? 'Research / Project' : 'Practical Lab'}
+                        </div>
                         <hr className="sd-divider" />
-                        <p className="sd-remarks-text">{request.reason}</p>
+                        <div className="sd-meta-grid">
+                            <div className="sd-meta-item" style={{ gridColumn: '1 / -1' }}>
+                                <div className="sd-meta-label">Experiment Name(s)</div>
+                                <div className="sd-meta-value">{request.experiment_name || '-'}</div>
+                            </div>
+                            {request.purpose_type === 'research_project' && (
+                                <div className="sd-meta-item" style={{ gridColumn: '1 / -1' }}>
+                                    <div className="sd-meta-label">Student Name(s)</div>
+                                    <div className="sd-meta-value">{request.student_name || '-'}</div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 )}
 
@@ -645,10 +662,10 @@ function StockRequestDetail() {
                                         return (
                                             <tr key={item.id}>
                                                 <td className="item-name">{item.chemical_name}</td>
-                                                <td><span className="qty-badge muted">{req} {item.unit || 'ml'}</span></td>
-                                                <td><span className="qty-badge primary">{act} {item.unit || 'ml'}</span></td>
-                                                <td>{ret > 0 ? <span className="diff-badge positive"><FaArrowLeft /> {ret.toFixed(2)} {item.unit || 'ml'}</span> : <span className="diff-none">-</span>}</td>
-                                                <td>{add > 0 ? <span className="diff-badge negative"><FaArrowRight /> {add.toFixed(2)} {item.unit || 'ml'}</span> : <span className="diff-none">-</span>}</td>
+                                                <td><span className="qty-badge muted">{req} {item.unit}</span></td>
+                                                <td><span className="qty-badge primary">{act} {item.unit}</span></td>
+                                                <td>{ret > 0 ? <span className="diff-badge positive"><FaArrowLeft /> {ret.toFixed(2)} {item.unit}</span> : <span className="diff-none">-</span>}</td>
+                                                <td>{add > 0 ? <span className="diff-badge negative"><FaArrowRight /> {add.toFixed(2)} {item.unit}</span> : <span className="diff-none">-</span>}</td>
                                             </tr>
                                         );
                                     })}
@@ -670,7 +687,7 @@ function StockRequestDetail() {
                             {request.chemical_items?.map(item => (
                                 <div key={item.id} className="sd-chem-row">
                                     <span className="sd-chem-name">{item.chemical_name}</span>
-                                    <span className="sd-chem-qty">{item.actual_used_quantity}<span className="sd-chem-unit"> {item.unit || 'ml'}</span></span>
+                                    <span className="sd-chem-qty">{item.actual_used_quantity}<span className="sd-chem-unit"> {item.unit}</span></span>
                                 </div>
                             ))}
                         </div>
@@ -750,6 +767,7 @@ function StockRequestDetail() {
 
             <AddRequestModal isOpen={showEditModal} onClose={() => setShowEditModal(false)} onSuccess={fetchRequest} editData={request} hasActiveRequest={hasActiveRequest} />
             <ConfirmDialog open={dialog.open} message={dialog.message} showCancel={dialog.showCancel} confirmLabel="OK" cancelLabel="Cancel" variant={dialog.variant || 'confirm'} onConfirm={() => { if (dialog.onConfirm) dialog.onConfirm(); else setDialog({ open: false }); }} onCancel={() => setDialog({ open: false })} />
+            {toast && <div className="cr-toast cr-toast-visible">{toast}</div>}
         </div>
         </div>
     );

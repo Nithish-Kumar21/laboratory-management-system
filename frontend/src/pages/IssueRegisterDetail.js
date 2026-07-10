@@ -76,8 +76,37 @@ function IssueRegisterDetail() {
                 <div className="sd-meta-label">Date</div>
                 <div className="sd-meta-value">{formatDate(reg.date)}</div>
               </div>
+              <div className="sd-meta-item">
+                <div className="sd-meta-label">Day Order</div>
+                <div className="sd-meta-value">{reg.source_request?.day_order || '-'}</div>
+              </div>
+              <div className="sd-meta-item">
+                <div className="sd-meta-label">Hour</div>
+                <div className="sd-meta-value">{reg.source_request?.hour?.length ? [...reg.source_request.hour].sort((a,b)=>a-b).join(', ') : '-'}</div>
+              </div>
             </div>
           </div>
+
+          {reg.source_request?.purpose_type && (
+            <div className="sd-card">
+              <div className="sd-card-title">
+                {reg.source_request.purpose_type === 'research_project' ? 'Research / Project' : 'Practical Lab'}
+              </div>
+              <hr className="sd-divider" />
+              <div className="sd-meta-grid">
+                <div className="sd-meta-item" style={{ gridColumn: '1 / -1' }}>
+                  <div className="sd-meta-label">Experiment Name(s)</div>
+                  <div className="sd-meta-value">{reg.source_request.experiment_name || '-'}</div>
+                </div>
+                {reg.source_request.purpose_type === 'research_project' && (
+                  <div className="sd-meta-item" style={{ gridColumn: '1 / -1' }}>
+                    <div className="sd-meta-label">Student Name(s)</div>
+                    <div className="sd-meta-value">{reg.source_request.student_name || '-'}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {chemItems.length > 0 && (
             <div className="sd-card">
@@ -94,8 +123,8 @@ function IssueRegisterDetail() {
                 {chemItems.map((item, idx) => (
                   <div key={idx} className="sd-chem-row multi-col" style={{gridTemplateColumns: '1fr 100px 100px'}}>
                     <span className="sd-chem-name">{item.chemical_name}</span>
-                    <span className="sd-chem-qty">{item.issued_quantity}<span className="sd-chem-unit"> {item.unit || 'ml'}</span></span>
-                    <span className="sd-chem-qty">{item.actual_usage || '—'}<span className="sd-chem-unit"> {item.unit || 'ml'}</span></span>
+                    <span className="sd-chem-qty">{item.issued_quantity}<span className="sd-chem-unit"> {item.unit}</span></span>
+                    <span className="sd-chem-qty">{item.actual_usage || '—'}<span className="sd-chem-unit"> {item.unit}</span></span>
                   </div>
                 ))}
               </div>

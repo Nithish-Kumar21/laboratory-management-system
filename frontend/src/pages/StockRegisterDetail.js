@@ -81,6 +81,18 @@ function StockRegisterDetail() {
                 <div className="sd-meta-label">Supplier Name</div>
                 <div className="sd-meta-value">{stockRegister.supplier_name}</div>
               </div>
+              {stockRegister.supplier_contact_phone && (
+                <div className="sd-meta-item">
+                  <div className="sd-meta-label">Supplier Contact</div>
+                  <div className="sd-meta-value">{stockRegister.supplier_contact_country_code || ''} {stockRegister.supplier_contact_phone}</div>
+                </div>
+              )}
+              {stockRegister.supplier_email && (
+                <div className="sd-meta-item">
+                  <div className="sd-meta-label">Supplier Email</div>
+                  <div className="sd-meta-value">{stockRegister.supplier_email}</div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -92,11 +104,35 @@ function StockRegisterDetail() {
               <hr className="sd-divider" />
               <div className="sd-chem-list">
                 {chemItems.map(item => (
-                  <div key={item.id} className="sd-chem-row multi-col">
-                    <span className="sd-chem-name">{item.chemical_name}</span>
-                    <span className="sd-chem-qty">{item.quantity}<span className="sd-chem-unit"> {item.unit || 'ml'}</span></span>
-                    <span className="sd-chem-rate">₹{parseFloat(item.rate).toFixed(2)}</span>
-                    <span className="sd-chem-make">{item.make || '-'}</span>
+                  <div key={item.id} className="sd-chem-item">
+                    <div className="sd-item-row-1">
+                      <span className="sd-item-name">{item.chemical_name}</span>
+                      {item.total_price != null && (
+                        <span className="sd-item-total">₹{parseFloat(item.total_price).toFixed(2)}</span>
+                      )}
+                    </div>
+                    <div className="sd-item-metrics">
+                      <div className="sd-metric">
+                        <span className="sd-metric-label">Pack Size</span>
+                        <span className="sd-metric-value">{parseFloat(item.pack_size).toLocaleString()} {item.unit}</span>
+                      </div>
+                      <div className="sd-metric">
+                        <span className="sd-metric-label">No. of Packs</span>
+                        <span className="sd-metric-value">{item.no_of_packs}</span>
+                      </div>
+                      <div className="sd-metric">
+                        <span className="sd-metric-label">Rate/Pack</span>
+                        <span className="sd-metric-value">₹{parseFloat(item.rate).toFixed(2)}</span>
+                      </div>
+                      <div className="sd-metric">
+                        <span className="sd-metric-label">Total Qty</span>
+                        <span className="sd-metric-value">{parseFloat(item.total_quantity).toLocaleString()} {item.unit}</span>
+                      </div>
+                      <div className="sd-metric sd-metric-make">
+                        <span className="sd-metric-label">Make</span>
+                        <span className="sd-metric-value">{item.make || '-'}</span>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -111,11 +147,27 @@ function StockRegisterDetail() {
               <hr className="sd-divider" />
               <div className="sd-chem-list">
                 {appItems.map(item => (
-                  <div key={item.id} className="sd-chem-row multi-col">
-                    <span className="sd-chem-name">{item.apparatus_name}</span>
-                    <span className="sd-chem-qty">{item.quantity_pieces}<span className="sd-chem-unit"> pcs</span></span>
-                    <span className="sd-chem-rate">₹{parseFloat(item.rate).toFixed(2)}</span>
-                    <span className="sd-chem-make">{item.make || '-'}</span>
+                  <div key={item.id} className="sd-chem-item">
+                    <div className="sd-item-row-1">
+                      <span className="sd-item-name">{item.apparatus_name}</span>
+                      {item.total_price != null && (
+                        <span className="sd-item-total">₹{parseFloat(item.total_price).toFixed(2)}</span>
+                      )}
+                    </div>
+                    <div className="sd-item-metrics">
+                      <div className="sd-metric">
+                        <span className="sd-metric-label">Pieces</span>
+                        <span className="sd-metric-value">{item.quantity_pieces} pcs</span>
+                      </div>
+                      <div className="sd-metric">
+                        <span className="sd-metric-label">Rate/Piece</span>
+                        <span className="sd-metric-value">₹{parseFloat(item.rate).toFixed(2)}</span>
+                      </div>
+                      <div className="sd-metric sd-metric-make">
+                        <span className="sd-metric-label">Make</span>
+                        <span className="sd-metric-value">{item.make || '-'}</span>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>

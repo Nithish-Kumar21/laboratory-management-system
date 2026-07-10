@@ -22,6 +22,8 @@ import IssueRegister from './pages/IssueRegister';
 import IssueRegisterDetail from './pages/IssueRegisterDetail';
 import DamagedEntry from './pages/DamagedEntry';
 import DamagedEntryDetail from './pages/DamagedEntryDetail';
+import NewServiceEntry from './pages/NewServiceEntry';
+import ServiceEntryDetail from './pages/ServiceEntryDetail';
 import StockRequest from './pages/StockRequest';
 import StockRequestDetail from './pages/StockRequestDetail';
 import NewChemicalRequest from './pages/NewChemicalRequest';
@@ -104,6 +106,8 @@ function AppContent() {
                       <Route path="new-request" element={<NewChemicalRequest />} />
                       <Route path="new-stock-register" element={<NewStockRegister />} />
                       <Route path="new-damaged-entry" element={<NewDamagedEntry />} />
+                      <Route path="new-service-entry" element={<NewServiceEntry />} />
+                      <Route path="service-entry/:id" element={<ServiceEntryDetail />} />
                       <Route path="drafts" element={<StockRequest draftsOnly />} />
                       <Route path="reports/year-end" element={<YearEndReport />} />
 
@@ -139,14 +143,6 @@ function FabButton() {
   if (isStoreKeeper && location.pathname === '/stock-register') {
     return (
       <Link to="/new-stock-register" className="cr-fab">
-        <FaPlus />
-      </Link>
-    );
-  }
-
-  if (isStoreKeeper && location.pathname === '/damaged-entry') {
-    return (
-      <Link to="/new-damaged-entry" className="cr-fab">
         <FaPlus />
       </Link>
     );

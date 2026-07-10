@@ -55,19 +55,48 @@ class DamagedEntryPermission(permissions.BasePermission):
     def has_permission(self, request, view):
         if not request.user.is_authenticated:
             return False
-            
+
         role = request.user.role
-        
+
         if role == 'staff':
             return False
-            
+
         if role == 'hod':
             return request.method in permissions.SAFE_METHODS
-            
+
         if role == 'store_keeper':
             return True
-            
+
         if role == 'admin':
             return request.method != 'DELETE'
-            
+
+        return False
+
+
+class ServiceEntryPermission(permissions.BasePermission):
+    """
+    service entry module:
+    hod: view only
+    store keeper: full CRUD + action logging
+    staff: no access
+    admin: view and create only
+    """
+    def has_permission(self, request, view):
+        if not request.user.is_authenticated:
+            return False
+
+        role = request.user.role
+
+        if role == 'staff':
+            return False
+
+        if role == 'hod':
+            return request.method in permissions.SAFE_METHODS
+
+        if role == 'store_keeper':
+            return True
+
+        if role == 'admin':
+            return request.method != 'DELETE'
+
         return False

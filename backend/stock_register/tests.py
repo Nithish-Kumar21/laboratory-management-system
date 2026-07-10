@@ -33,8 +33,8 @@ class StockRegisterWorkflowTest(APITestCase):
         )
         self.today = timezone.now().date()
         self.valid_chemicals = [
-            {'chemical_name': 'Sulfuric Acid', 'make': 'Merck', 'quantity': '500.00', 'rate': '850.00'},
-            {'chemical_name': 'Hydrochloric Acid', 'make': 'SRL', 'quantity': '300.00', 'rate': '650.00'},
+            {'chemical_name': 'Sulfuric Acid', 'make': 'Merck', 'pack_size': '500.00', 'no_of_packs': 1, 'unit': 'ml', 'rate': '850.00'},
+            {'chemical_name': 'Hydrochloric Acid', 'make': 'SRL', 'pack_size': '300.00', 'no_of_packs': 1, 'unit': 'ml', 'rate': '650.00'},
         ]
         self.valid_apparatus = [
             {'apparatus_name': 'Beaker 250ml', 'make': 'Borosil', 'quantity_pieces': 10, 'rate': '150.00'},
@@ -128,24 +128,24 @@ class StockRegisterWorkflowTest(APITestCase):
         r = self._create_sr({'invoice_number': 'INV-005', 'date': future, 'supplier_name': 'S', 'chemical_items': self.valid_chemicals})
         self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_negative_quantity_error(self):
+    def test_negative_pack_size_error(self):
         self._login(self.store_keeper)
         r = self._create_sr({'invoice_number': 'INV-ERR', 'date': self.today.isoformat(), 'supplier_name': 'S',
-                             'chemical_items': [{'chemical_name': 'C', 'make': 'M', 'quantity': '-10', 'rate': '10'}]})
+                             'chemical_items': [{'chemical_name': 'C', 'make': 'M', 'pack_size': '-10', 'no_of_packs': 1, 'rate': '10'}]})
         self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_negative_rate_error(self):
         self._login(self.store_keeper)
         r = self._create_sr({'invoice_number': 'INV-ERR2', 'date': self.today.isoformat(), 'supplier_name': 'S',
-                             'chemical_items': [{'chemical_name': 'C', 'make': 'M', 'quantity': '10', 'rate': '-5'}]})
+                             'chemical_items': [{'chemical_name': 'C', 'make': 'M', 'pack_size': '10', 'no_of_packs': 1, 'rate': '-5'}]})
         self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_multiple_entries_accumulate(self):
         self._login(self.store_keeper)
         self._create_sr({'invoice_number': 'INV-A1', 'date': self.today.isoformat(), 'supplier_name': 'S',
-                         'chemical_items': [{'chemical_name': 'Ethanol', 'make': 'M1', 'quantity': '1000', 'rate': '100'}]})
+                         'chemical_items': [{'chemical_name': 'Ethanol', 'make': 'M1', 'pack_size': '500', 'no_of_packs': 2, 'rate': '100'}]})
         self._create_sr({'invoice_number': 'INV-A2', 'date': self.today.isoformat(), 'supplier_name': 'S',
-                         'chemical_items': [{'chemical_name': 'Ethanol', 'make': 'M1', 'quantity': '500', 'rate': '110'}]})
+                         'chemical_items': [{'chemical_name': 'Ethanol', 'make': 'M1', 'pack_size': '500', 'no_of_packs': 1, 'rate': '110'}]})
         self.assertEqual(AvailableChemical.objects.get(chemical_name='Ethanol').quantity, Decimal('1500.00'))
 
     def test_admin_can_create(self):
@@ -201,9 +201,9 @@ class StockRegisterWorkflowTest(APITestCase):
     def test_ordering_by_date(self):
         self._login(self.store_keeper)
         self._create_sr({'invoice_number': 'INV-O1', 'date': '2024-01-01', 'supplier_name': 'A',
-                         'chemical_items': [{'chemical_name': 'C1', 'make': 'M', 'quantity': '100', 'rate': '10'}]})
+                         'chemical_items': [{'chemical_name': 'C1', 'make': 'M', 'pack_size': '100', 'no_of_packs': 1, 'rate': '10'}]})
         self._create_sr({'invoice_number': 'INV-O2', 'date': '2024-06-01', 'supplier_name': 'B',
-                         'chemical_items': [{'chemical_name': 'C2', 'make': 'M', 'quantity': '200', 'rate': '20'}]})
+                         'chemical_items': [{'chemical_name': 'C2', 'make': 'M', 'pack_size': '200', 'no_of_packs': 1, 'rate': '20'}]})
         r = self.client.get('/api/stock_register/?ordering=date')
         self.assertEqual(r.status_code, status.HTTP_200_OK)
         dates = [e['date'] for e in self._get_results(r)]
@@ -268,6 +268,111 @@ class StockRegisterWorkflowTest(APITestCase):
         self._login(self.staff)
         self.assertEqual(self.client.delete(f'/api/stock_register/{sr_id}/').status_code, status.HTTP_403_FORBIDDEN)
 
+    # ── V2 FEATURES ─────────────────────────────────────────
+
+    def test_chemical_totals_single_pack(self):
+        """pack_size=500, no_of_packs=1, rate=100 => total_qty=500, total_price=100"""
+        self._login(self.store_keeper)
+        r = self._create_sr({'invoice_number': 'INV-CT1', 'date': self.today.isoformat(), 'supplier_name': 'S',
+                             'chemical_items': [{'chemical_name': 'ChemA', 'make': 'M', 'pack_size': '500',
+                                                  'no_of_packs': 1, 'rate': '100'}]})
+        self.assertEqual(r.status_code, status.HTTP_201_CREATED)
+        chem = ChemicalItem.objects.get(chemical_name='ChemA')
+        self.assertEqual(chem.pack_size, Decimal('500.00'))
+        self.assertEqual(chem.no_of_packs, 1)
+        self.assertEqual(chem.total_quantity, Decimal('500.00'))
+        self.assertEqual(chem.total_price, Decimal('100.00'))
+
+    def test_chemical_totals_multi_pack(self):
+        """pack_size=500, no_of_packs=2, rate=250 => total_qty=1000, total_price=500"""
+        self._login(self.store_keeper)
+        r = self._create_sr({'invoice_number': 'INV-CT2', 'date': self.today.isoformat(), 'supplier_name': 'S',
+                             'chemical_items': [{'chemical_name': 'ChemB', 'make': 'M', 'pack_size': '500',
+                                                  'no_of_packs': 2, 'rate': '250'}]})
+        self.assertEqual(r.status_code, status.HTTP_201_CREATED)
+        chem = ChemicalItem.objects.get(chemical_name='ChemB')
+        self.assertEqual(chem.pack_size, Decimal('500.00'))
+        self.assertEqual(chem.no_of_packs, 2)
+        self.assertEqual(chem.total_quantity, Decimal('1000.00'))
+        self.assertEqual(chem.total_price, Decimal('500.00'))
+
+    def test_apparatus_total_price(self):
+        self._login(self.store_keeper)
+        r = self._create_sr()
+        self.assertEqual(r.status_code, status.HTTP_201_CREATED)
+        app = ApparatusItem.objects.get(apparatus_name='Beaker 250ml')
+        self.assertEqual(app.total_price, Decimal('1500.00'))
+
+    def test_restock_level_creates_available_chemical(self):
+        self._login(self.store_keeper)
+        r = self._create_sr({'invoice_number': 'INV-RL', 'date': self.today.isoformat(), 'supplier_name': 'S',
+                             'chemical_items': [{'chemical_name': 'NewChem', 'make': 'M', 'pack_size': '100',
+                                                  'no_of_packs': 1, 'rate': '50', 'unit': 'ml', 'restock_level': '200'}]})
+        self.assertEqual(r.status_code, status.HTTP_201_CREATED)
+        ac = AvailableChemical.objects.get(chemical_name='NewChem')
+        self.assertEqual(ac.reorder_level, Decimal('200.00'))
+
+    def test_restock_level_updates_existing_chemical(self):
+        AvailableChemical.objects.create(chemical_name='Sulfuric Acid', quantity=Decimal('500.00'), unit='ml', last_updated=self.today)
+        self._login(self.store_keeper)
+        r = self._create_sr({'invoice_number': 'INV-RLU', 'date': self.today.isoformat(), 'supplier_name': 'S',
+                             'chemical_items': [{'chemical_name': 'Sulfuric Acid', 'make': 'M', 'pack_size': '100',
+                                                  'no_of_packs': 1, 'rate': '50', 'restock_level': '300'}]})
+        self.assertEqual(r.status_code, status.HTTP_201_CREATED)
+        ac = AvailableChemical.objects.get(chemical_name='Sulfuric Acid')
+        self.assertEqual(ac.reorder_level, Decimal('300.00'))
+
+    def test_restock_level_creates_available_apparatus(self):
+        self._login(self.store_keeper)
+        r = self._create_sr({'invoice_number': 'INV-RLA', 'date': self.today.isoformat(), 'supplier_name': 'S',
+                             'apparatus_items': [{'apparatus_name': 'NewApp', 'make': 'M', 'quantity_pieces': 5,
+                                                   'rate': '100', 'restock_level': 10}]})
+        self.assertEqual(r.status_code, status.HTTP_201_CREATED)
+        aa = AvailableApparatus.objects.get(apparatus_name='NewApp')
+        self.assertEqual(aa.reorder_level, 10)
+
+    def test_invalid_supplier_phone(self):
+        self._login(self.store_keeper)
+        r = self._create_sr({'invoice_number': 'INV-PH', 'date': self.today.isoformat(), 'supplier_name': 'S',
+                             'supplier_contact_country_code': '+91', 'supplier_contact_phone': 'abc',
+                             'chemical_items': self.valid_chemicals})
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_invalid_supplier_email(self):
+        self._login(self.store_keeper)
+        r = self._create_sr({'invoice_number': 'INV-EM', 'date': self.today.isoformat(), 'supplier_name': 'S',
+                             'supplier_email': 'not-an-email',
+                             'chemical_items': self.valid_chemicals})
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_chemical_names_return_reorder_level(self):
+        self._login(self.store_keeper)
+        self._create_sr({'invoice_number': 'INV-RLN', 'date': self.today.isoformat(), 'supplier_name': 'S',
+                         'chemical_items': [{'chemical_name': 'RL Chem', 'make': 'M', 'pack_size': '100',
+                                              'no_of_packs': 1, 'rate': '10', 'restock_level': '150'}]})
+        r = self.client.get('/api/stock_register/chemical_names/')
+        self.assertEqual(r.status_code, status.HTTP_200_OK)
+        for item in r.data:
+            if item['name'] == 'RL Chem':
+                self.assertEqual(item['reorder_level'], 150.0)
+                break
+        else:
+            self.fail('RL Chem not found in chemical_names')
+
+    def test_apparatus_names_return_reorder_level(self):
+        self._login(self.store_keeper)
+        self._create_sr({'invoice_number': 'INV-RLAN', 'date': self.today.isoformat(), 'supplier_name': 'S',
+                         'apparatus_items': [{'apparatus_name': 'RL App', 'make': 'M', 'quantity_pieces': 5,
+                                               'rate': '100', 'restock_level': 20}]})
+        r = self.client.get('/api/stock_register/apparatus_names/')
+        self.assertEqual(r.status_code, status.HTTP_200_OK)
+        for item in r.data:
+            if item['name'] == 'RL App':
+                self.assertEqual(item['reorder_level'], 20)
+                break
+        else:
+            self.fail('RL App not found in apparatus_names')
+
     # ── AUTOCOMPLETE ENDPOINTS ──────────────────────────────
 
     def test_chemical_names(self):
@@ -308,3 +413,136 @@ class StockRegisterWorkflowTest(APITestCase):
         r = self.client.get('/api/stock_register/apparatus_makes/')
         self.assertEqual(r.status_code, status.HTTP_200_OK)
         self.assertIn('Borosil', r.data)
+
+    # ── TRIGGER INTEGRATION (Part 0) ─────────────────────────
+
+    def test_trigger_increment_multi_pack(self):
+        """pack_size=500, no_of_packs=4 => available_chemicals.quantity += 2000 via trigger"""
+        self._login(self.store_keeper)
+        r = self._create_sr({'invoice_number': 'INV-TR1', 'date': self.today.isoformat(), 'supplier_name': 'S',
+                             'chemical_items': [{'chemical_name': 'TriggerTestChem', 'make': 'M',
+                                                  'pack_size': '500', 'no_of_packs': 4, 'rate': '100'}]})
+        self.assertEqual(r.status_code, status.HTTP_201_CREATED)
+        ac = AvailableChemical.objects.get(chemical_name='TriggerTestChem')
+        self.assertEqual(ac.quantity, Decimal('2000.00'))
+
+    def test_trigger_increment_single_pack(self):
+        """pack_size=500, no_of_packs=1 => available_chemicals.quantity += 500 (regression check)"""
+        self._login(self.store_keeper)
+        r = self._create_sr({'invoice_number': 'INV-TR2', 'date': self.today.isoformat(), 'supplier_name': 'S',
+                             'chemical_items': [{'chemical_name': 'TriggerTestChem2', 'make': 'M',
+                                                  'pack_size': '500', 'no_of_packs': 1, 'rate': '100'}]})
+        self.assertEqual(r.status_code, status.HTTP_201_CREATED)
+        ac = AvailableChemical.objects.get(chemical_name='TriggerTestChem2')
+        self.assertEqual(ac.quantity, Decimal('500.00'))
+
+    def test_trigger_apparatus_increment(self):
+        """apparatus trigger still works correctly after changes"""
+        self._login(self.store_keeper)
+        r = self._create_sr({'invoice_number': 'INV-TR3', 'date': self.today.isoformat(), 'supplier_name': 'S',
+                             'apparatus_items': [{'apparatus_name': 'TriggerTestApp', 'make': 'M',
+                                                   'quantity_pieces': 15, 'rate': '100'}]})
+        self.assertEqual(r.status_code, status.HTTP_201_CREATED)
+        aa = AvailableApparatus.objects.get(apparatus_name='TriggerTestApp')
+        self.assertEqual(aa.available_quantity_pieces, 15)
+
+    # ── 500 ERROR / ROBUSTNESS (Part 1) ─────────────────────
+
+    def test_reproduction_payload_success(self):
+        """Exact reproduction payload from the bug report must return 201"""
+        self._login(self.store_keeper)
+        payload = {
+            'invoice_number': 'DEMO-001',
+            'date': self.today.isoformat(),
+            'supplier_name': 'Demo Supplier, Singapore (+65)',
+            'supplier_contact_country_code': '+65',
+            'supplier_contact_phone': '9090909090',
+            'supplier_email': 'supplier@gmail.com',
+            'chemical_items': [{
+                'chemical_name': 'Demo Chemical 1',
+                'pack_size': '500',
+                'no_of_packs': 4,
+                'unit': 'ml',
+                'rate': '200',
+                'make': 'Demo Make',
+            }],
+        }
+        r = self.client.post('/api/stock_register/', payload, format='json')
+        self.assertEqual(r.status_code, status.HTTP_201_CREATED)
+
+    def test_bad_payload_zero_pack_size(self):
+        """zero pack_size should return clean 400 with field-level error, not 500"""
+        self._login(self.store_keeper)
+        payload = {
+            'invoice_number': 'INV-BAD1',
+            'date': self.today.isoformat(),
+            'supplier_name': 'S',
+            'chemical_items': [{
+                'chemical_name': 'BadChem',
+                'pack_size': '0',
+                'no_of_packs': 1,
+                'unit': 'ml',
+                'rate': '50',
+                'make': 'TestMake',
+            }],
+        }
+        r = self.client.post('/api/stock_register/', payload, format='json')
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('pack_size', str(r.data).lower())
+
+    def test_bad_payload_negative_rate(self):
+        """negative rate should return clean 400 with field-level error, not 500"""
+        self._login(self.store_keeper)
+        payload = {
+            'invoice_number': 'INV-BAD2',
+            'date': self.today.isoformat(),
+            'supplier_name': 'S',
+            'chemical_items': [{
+                'chemical_name': 'BadChem2',
+                'pack_size': '100',
+                'no_of_packs': 1,
+                'unit': 'ml',
+                'rate': '-50',
+                'make': 'TestMake',
+            }],
+        }
+        r = self.client.post('/api/stock_register/', payload, format='json')
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('rate', str(r.data).lower())
+
+    # ── PHONE VALIDATION (Part 1) ───────────────────────────
+
+    def test_phone_10_digits_accepted(self):
+        self._login(self.store_keeper)
+        r = self._create_sr({'invoice_number': 'INV-PH1', 'date': self.today.isoformat(), 'supplier_name': 'S',
+                             'supplier_contact_country_code': '+91', 'supplier_contact_phone': '9876543210',
+                             'chemical_items': [{'chemical_name': 'PhoneChem', 'make': 'M', 'pack_size': '100',
+                                                  'no_of_packs': 1, 'rate': '50'}]})
+        self.assertEqual(r.status_code, status.HTTP_201_CREATED)
+
+    def test_phone_9_digits_rejected(self):
+        self._login(self.store_keeper)
+        r = self._create_sr({'invoice_number': 'INV-PH2', 'date': self.today.isoformat(), 'supplier_name': 'S',
+                             'supplier_contact_country_code': '+91', 'supplier_contact_phone': '987654321',
+                             'chemical_items': [{'chemical_name': 'PhoneChem2', 'make': 'M', 'pack_size': '100',
+                                                  'no_of_packs': 1, 'rate': '50'}]})
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('exactly 10 digits', str(r.data).lower())
+
+    def test_phone_11_digits_rejected(self):
+        self._login(self.store_keeper)
+        r = self._create_sr({'invoice_number': 'INV-PH3', 'date': self.today.isoformat(), 'supplier_name': 'S',
+                             'supplier_contact_country_code': '+91', 'supplier_contact_phone': '98765432101',
+                             'chemical_items': [{'chemical_name': 'PhoneChem3', 'make': 'M', 'pack_size': '100',
+                                                  'no_of_packs': 1, 'rate': '50'}]})
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('exactly 10 digits', str(r.data).lower())
+
+    def test_phone_non_numeric_rejected(self):
+        self._login(self.store_keeper)
+        r = self._create_sr({'invoice_number': 'INV-PH4', 'date': self.today.isoformat(), 'supplier_name': 'S',
+                             'supplier_contact_country_code': '+91', 'supplier_contact_phone': 'abc123defg',
+                             'chemical_items': [{'chemical_name': 'PhoneChem4', 'make': 'M', 'pack_size': '100',
+                                                  'no_of_packs': 1, 'rate': '50'}]})
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('exactly 10 digits', str(r.data).lower())

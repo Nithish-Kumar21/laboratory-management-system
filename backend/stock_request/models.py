@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
+from django.contrib.postgres.fields import ArrayField
 from datetime import date
 
 
@@ -13,6 +14,7 @@ class StockRequest(models.Model):
         ('issued', 'Issued'),
         ('reported', 'Reported'),
         ('completed', 'Completed'),
+        ('cancelled', 'Cancelled'),
     ]
     
     CLASS_CHOICES = [
@@ -23,6 +25,20 @@ class StockRequest(models.Model):
         ('II M.Sc Chemistry', 'II M.Sc Chemistry'),
     ]
 
+    DAY_ORDER_CHOICES = [
+        ('I', 'I'),
+        ('II', 'II'),
+        ('III', 'III'),
+        ('IV', 'IV'),
+        ('V', 'V'),
+        ('VI', 'VI'),
+    ]
+
+    PURPOSE_TYPE_CHOICES = [
+        ('practical_lab', 'Practical Lab'),
+        ('research_project', 'Research/Project'),
+    ]
+
     request_id = models.CharField(max_length=20, unique=True, editable=False)
     requested_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -31,6 +47,11 @@ class StockRequest(models.Model):
     )
     class_name = models.CharField(max_length=50, choices=CLASS_CHOICES)
     date = models.DateField(default=date.today)
+    day_order = models.CharField(max_length=5, choices=DAY_ORDER_CHOICES)
+    hour = ArrayField(models.IntegerField())
+    purpose_type = models.CharField(max_length=20, choices=PURPOSE_TYPE_CHOICES)
+    experiment_name = models.TextField()
+    student_name = models.CharField(max_length=100, null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     reason = models.TextField(blank=True)
     rejection_reason = models.TextField(blank=True)
@@ -150,9 +171,15 @@ class IssueRegister(models.Model):
 
 
 class IssueChemicals(models.Model):
+    UNIT_CHOICES = [
+        ('ml', 'mL'),
+        ('g', 'g'),
+    ]
+
     ir = models.ForeignKey(IssueRegister, on_delete=models.CASCADE, related_name='chemicals')
     chemical_name = models.CharField(max_length=64)
     issued_quantity = models.DecimalField(max_digits=10, decimal_places=2)
+    unit = models.CharField(max_length=2, choices=UNIT_CHOICES, default='ml')
     actual_usage = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
 
     @property

@@ -1,6 +1,12 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.core.validators import RegexValidator
 from django.db import models
+
+DEGREE_CHOICES = [
+    ('bsc', 'B.Sc Chemistry'),
+    ('msc', 'M.Sc Chemistry'),
+    ('phd', 'PhD'),
+]
 from django.utils import timezone
 from datetime import timedelta, timezone as dt_tz
 import secrets
@@ -196,3 +202,18 @@ class PasswordResetToken(models.Model):
             token=token,
             expires_at=expires_at
         )
+
+
+class DegreeClass(models.Model):
+    degree = models.CharField(max_length=50, choices=DEGREE_CHOICES)
+    name = models.CharField(max_length=100)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = 'degree_class'
+        managed = True
+        unique_together = ('degree', 'name')
+        ordering = ['degree', 'name']
+
+    def __str__(self):
+        return self.name

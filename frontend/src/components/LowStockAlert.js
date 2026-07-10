@@ -22,12 +22,9 @@ function LowStockAlert({ activeTab }) {
     };
     window.addEventListener('storage', handleStorage);
 
-    const interval = setInterval(fetchLowStock, 3000);
-
     return () => {
       window.removeEventListener('inventory-updated', fetchLowStock);
       window.removeEventListener('storage', handleStorage);
-      clearInterval(interval);
     };
   }, []);
 
@@ -96,7 +93,7 @@ function LowStockAlert({ activeTab }) {
                 {activeTab === 'chemical' ? (
                   <>
                     <th>Chemical Name</th>
-                    <th>Stock (mL)</th>
+                    <th>Stock</th>
                     <th>Minimum</th>
                   </>
                 ) : (

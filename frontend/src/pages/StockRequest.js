@@ -31,6 +31,7 @@ const StockRequest = ({ draftsOnly = false }) => {
 
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
   const [toast, setToast] = useState(null);
   const [search, setSearch] = useState('');
   const [showFilters, setShowFilters] = useState(false);
@@ -65,8 +66,10 @@ const StockRequest = ({ draftsOnly = false }) => {
       }
 
       setRequests(data);
+      setFetchError(null);
     } catch (err) {
       console.error('Error fetching requests:', err);
+      setFetchError('Failed to load requests. Check your connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -105,6 +108,25 @@ const StockRequest = ({ draftsOnly = false }) => {
     return (
       <div className="cr-page animate-up">
         <div className="cr-loading"><div className="loading-spinner" /></div>
+      </div>
+    );
+  }
+
+  // ===== ERROR STATE =====
+  if (fetchError) {
+    return (
+      <div className="cr-page animate-up">
+        <div className="sr-title-row">
+          <h1 className="sr-title">Chemical Request</h1>
+        </div>
+        <div className="sr-empty">
+          <FaClipboardList className="sr-empty-icon" />
+          <div className="sr-empty-title">Something went wrong</div>
+          <div className="sr-empty-sub">{fetchError}</div>
+          <button className="sr-filter-btn" style={{ marginTop: '16px', padding: '8px 24px' }} onClick={fetchRequests}>
+            Try Again
+          </button>
+        </div>
       </div>
     );
   }
