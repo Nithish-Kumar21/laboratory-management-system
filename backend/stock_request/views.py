@@ -330,7 +330,40 @@ class StockRequestViewSet(viewsets.ModelViewSet):
                 raise ValidationError(
                     "You already have an active request. Complete your previous request first, or save this as a draft."
                 )
-        instance = serializer.save()
+
+        # Generate request_id inside the same atomic block to prevent
+        # concurrent requests from colliding on the manual sequence number.
+        # Lock the latest request for the current year to serialize ID assignment.
+        from django.utils import timezone
+        from django.db import IntegrityError
+        current_year = timezone.now().year
+        last_request = StockRequest.objects.select_for_update().filter(
+            created_at__year=current_year
+        ).order_by('-request_id').first()
+
+        if last_request and last_request.request_id:
+            try:
+                last_sequence = int(last_request.request_id.split('-')[-1])
+                sequence_number = last_sequence + 1
+            except (ValueError, IndexError):
+                sequence_number = StockRequest.objects.filter(
+                    created_at__year=current_year
+                ).count() + 1
+        else:
+            sequence_number = 1
+
+        request_id = f"REQ-{current_year}-{sequence_number:03d}"
+
+        # Pass generated ID to serializer so model.save() doesn't re-generate
+        try:
+            instance = serializer.save(request_id=request_id)
+        except IntegrityError:
+            # Fallback: unique constraint violation (extremely rare, e.g. if
+            # another transaction committed between our lock and insert).
+            raise ValidationError(
+                "A request is already in progress, please try again."
+            )
+
         AuditLogService.log(
             user=self.request.user,
             action='REQUEST_CREATED',
