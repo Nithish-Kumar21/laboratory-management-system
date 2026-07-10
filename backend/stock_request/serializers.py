@@ -87,17 +87,6 @@ class StockRequestCreateSerializer(serializers.ModelSerializer):
                 except AvailableChemical.DoesNotExist:
                     pass
 
-        status = data.get('status', 'pending')
-        if status == 'pending' and user.role == 'staff':
-            active_statuses = ['pending', 'accepted', 'issued', 'reported']
-            has_active = StockRequest.objects.filter(
-                requested_by=user,
-                status__in=active_statuses
-            ).exists()
-            if has_active:
-                raise serializers.ValidationError(
-                    "You already have an active request. Complete your previous request first, or save this as a draft."
-                )
         return data
 
     def create(self, validated_data):

@@ -1,5 +1,6 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from django.db import transaction
 from django.utils import timezone
@@ -314,7 +315,21 @@ class StockRequestViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(reviewed, many=True)
         return Response(serializer.data)
 
+    @transaction.atomic
     def perform_create(self, serializer):
+        user = self.request.user
+        # TOCTOU fix: lock active requests before creating to prevent
+        # two simultaneous creates from both passing the "no active request" check.
+        if user.role == 'staff':
+            active_statuses = ['pending', 'accepted', 'issued', 'reported']
+            active_requests = StockRequest.objects.select_for_update().filter(
+                requested_by=user,
+                status__in=active_statuses,
+            )
+            if active_requests.exists():
+                raise ValidationError(
+                    "You already have an active request. Complete your previous request first, or save this as a draft."
+                )
         instance = serializer.save()
         AuditLogService.log(
             user=self.request.user,
