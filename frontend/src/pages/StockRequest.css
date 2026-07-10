@@ -66,6 +66,16 @@
   color: #2E7D32;
 }
 
+.cr-count-red {
+  background: #FFEBEE;
+  color: #C62828;
+}
+
+.cr-count-gray {
+  background: #F3F4F6;
+  color: #6B7280;
+}
+
 /* ===== STAFF BANNER ===== */
 .cr-staff-banner {
   display: flex;
@@ -1120,6 +1130,19 @@
   border-left: 4px solid #9CA3AF !important;
 }
 
+/* ===== REJECTED CARD ===== */
+.sr-card-rejected {
+  border-left: 4px solid #C62828 !important;
+}
+
+.sr-card-rejected:hover {
+  border-left: 4px solid #B71C1C !important;
+}
+
+.sr-card-mobile-rejected {
+  border-left: 4px solid #C62828 !important;
+}
+
 :root.dark-mode .sr-card-draft {
   border-left-color: #6B7280 !important;
 }
@@ -1130,6 +1153,18 @@
 
 :root.dark-mode .sr-card-mobile-draft {
   border-left-color: #6B7280 !important;
+}
+
+:root.dark-mode .sr-card-rejected {
+  border-left-color: #EF5350 !important;
+}
+
+:root.dark-mode .sr-card-rejected:hover {
+  border-left-color: #C62828 !important;
+}
+
+:root.dark-mode .sr-card-mobile-rejected {
+  border-left-color: #EF5350 !important;
 }
 
 /* ===== INCREASED CARD SIZE ===== */
