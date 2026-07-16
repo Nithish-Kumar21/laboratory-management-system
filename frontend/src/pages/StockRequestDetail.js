@@ -114,7 +114,7 @@ function StockRequestDetail() {
 
     const handleReportUsage = () => {
         setActionLoading(true);
-        const items = Object.keys(usageReport).map(k => ({ id: parseInt(k), actual_used_quantity: parseFloat(usageReport[k]) }));
+        const items = Object.keys(usageReport).map(k => ({ id: parseInt(k) || 0, actual_used_quantity: parseFloat(usageReport[k]) || 0 }));
         api.post(`stock_request/${id}/report_usage/`, { items })
             .then(() => { fetchRequest(); window.dispatchEvent(new CustomEvent('inventory-updated')); showToast('Quantity Updated'); })
             .catch(err => setDialog({ open: true, message: err.response?.data?.error || 'Failed to report usage', showCancel: false }))
@@ -655,8 +655,8 @@ function StockRequestDetail() {
                                 </thead>
                                 <tbody>
                                     {request.chemical_items?.map(item => {
-                                        const req = parseFloat(item.quantity);
-                                        const act = parseFloat(item.actual_used_quantity || 0);
+                                        const req = parseFloat(item.quantity) || 0;
+                                        const act = parseFloat(item.actual_used_quantity) || 0;
                                         const ret = Math.max(0, req - act);
                                         const add = Math.max(0, act - req);
                                         return (

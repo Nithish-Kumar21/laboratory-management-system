@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaPlus, FaTrash, FaUserTie, FaPhone, FaEnvelope, FaCalendarAlt, FaTools, FaIdCard, FaUser } from 'react-icons/fa';
+import { FaArrowLeft, FaPlus, FaTrash, FaUserTie, FaPhone, FaEnvelope, FaCalendarAlt, FaTools, FaIdCard, FaUser, FaBuilding } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -36,6 +36,10 @@ function NewServiceEntry() {
     contact_number: '',
     email: '',
     deliver_by_date: '',
+    company_name: '',
+    company_address: '',
+    company_contact_country_code: '+91',
+    company_contact_number: '',
   });
   const [items, setItems] = useState([{ apparatus_name: '', quantity: '' }]);
   const [apparatusNames, setApparatusNames] = useState([]);
@@ -48,7 +52,7 @@ function NewServiceEntry() {
   const scrollRef = useRef(null);
 
   useEffect(() => {
-    api.get('available_apparatus/names/')
+    api.get('/available_apparatus/names/')
       .then(res => setApparatusNames(Array.isArray(res.data) ? res.data : []))
       .catch(err => console.error(err));
   }, []);
@@ -77,16 +81,28 @@ function NewServiceEntry() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (submitting) return;
+
+    // Validate numeric fields before submission
+    const errors = {};
+    items.forEach((it, i) => {
+      if (!it.apparatus_name) return;
+      if (it.quantity === '' || isNaN(parseInt(it.quantity))) errors[`item_${i}_qty`] = 'Required';
+    });
+    if (Object.keys(errors).length > 0) {
+      setAlertDialog({ open: true, message: 'Please fill in all quantity fields with valid numbers.' });
+      return;
+    }
+
     setSubmitting(true);
     try {
       const payload = {
         ...formData,
         items: items.filter(it => it.apparatus_name).map(it => ({
           apparatus_name: it.apparatus_name,
-          quantity: parseInt(it.quantity),
+          quantity: parseInt(it.quantity) || 0,
         })),
       };
-      await api.post('service-entries/', payload);
+      await api.post('/service-entries/', payload);
       navigate('/damaged-entry');
     } catch (err) {
       const serverErr = err.response?.data;
@@ -189,6 +205,52 @@ function NewServiceEntry() {
               <label className="nrf-field-label"><FaCalendarAlt /> Tentative Delivery Date</label>
               <input type="date" className="nrf-input" value={formData.deliver_by_date}
                 onChange={e => setFormData({ ...formData, deliver_by_date: e.target.value })} />
+            </div>
+          </div>
+
+          {/* Company / Vendor Information */}
+          <div className="nrf-section">
+            <div className="nrf-section-header">
+              <div className="nrf-section-title"><FaBuilding /> Company / Vendor Information</div>
+            </div>
+            <div className="nrf-auto-row">
+              <div className="nrf-field">
+                <label className="nrf-field-label">Company Name</label>
+                <input type="text" className="nrf-input" value={formData.company_name} placeholder="Name of company"
+                  onChange={e => setFormData({ ...formData, company_name: e.target.value })} />
+              </div>
+              <div className="nrf-field">
+                <label className="nrf-field-label">Company Contact</label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <select
+                    className="nrf-input"
+                    style={{ width: '120px', flexShrink: 0 }}
+                    value={formData.company_contact_country_code}
+                    onChange={e => setFormData({ ...formData, company_contact_country_code: e.target.value })}
+                  >
+                    {COUNTRY_CODES.map(c => (
+                      <option key={c.code} value={c.code}>{c.label}</option>
+                    ))}
+                  </select>
+                  <input
+                    type="text"
+                    className="nrf-input"
+                    placeholder="10-digit number"
+                    value={formData.company_contact_number}
+                    maxLength={10}
+                    pattern="[0-9]{10}"
+                    title="Exactly 10 digits"
+                    onChange={e => setFormData({ ...formData, company_contact_number: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="nrf-auto-row">
+              <div className="nrf-field" style={{ gridColumn: '1 / -1' }}>
+                <label className="nrf-field-label">Company Address</label>
+                <textarea className="nrf-textarea" value={formData.company_address} placeholder="Company address" rows={3}
+                  onChange={e => setFormData({ ...formData, company_address: e.target.value })} />
+              </div>
             </div>
           </div>
 

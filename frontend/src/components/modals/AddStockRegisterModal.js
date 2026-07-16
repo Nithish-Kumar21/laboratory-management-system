@@ -47,11 +47,11 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess, standalone }) {
       const fetchAll = async () => {
         try {
           const [chem, app, sup, cMake, aMake] = await Promise.all([
-            api.get('available_chemicals/names/').catch(() => ({ data: [] })),
-            api.get('available_apparatus/names/').catch(() => ({ data: [] })),
-            api.get('stock_register/supplier_names/').catch(() => ({ data: [] })),
-            api.get('stock_register/chemical_makes/').catch(() => ({ data: [] })),
-            api.get('stock_register/apparatus_makes/').catch(() => ({ data: [] }))
+            api.get('/available_chemicals/names/').catch(() => ({ data: [] })),
+            api.get('/available_apparatus/names/').catch(() => ({ data: [] })),
+            api.get('/stock_register/supplier_names/').catch(() => ({ data: [] })),
+            api.get('/stock_register/chemical_makes/').catch(() => ({ data: [] })),
+            api.get('/stock_register/apparatus_makes/').catch(() => ({ data: [] }))
           ]);
 
           const process = (res) => {
@@ -244,14 +244,30 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess, standalone }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (submitting) return;
+
+    // Validate numeric fields before submission
+    const errors = [];
+    chemicalItems.filter(it => it.chemical_name).forEach((it, i) => {
+      if (it.quantity === '' || isNaN(parseFloat(it.quantity))) errors.push(`Chemical ${i + 1}: invalid quantity`);
+      if (it.rate === '' || isNaN(parseFloat(it.rate))) errors.push(`Chemical ${i + 1}: invalid rate`);
+    });
+    apparatusItems.filter(it => it.apparatus_name).forEach((it, i) => {
+      if (it.quantity_pieces === '' || isNaN(parseInt(it.quantity_pieces))) errors.push(`Apparatus ${i + 1}: invalid quantity`);
+      if (it.rate === '' || isNaN(parseFloat(it.rate))) errors.push(`Apparatus ${i + 1}: invalid rate`);
+    });
+    if (errors.length > 0) {
+      setAlertDialog({ open: true, message: 'Please fill in all numeric fields:\n' + errors.join('\n') });
+      return;
+    }
+
     setSubmitting(true);
     try {
       const payload = {
         ...formData,
-        chemical_items: chemicalItems.filter(it => it.chemical_name).map(it => ({ ...it, quantity: parseFloat(it.quantity), rate: parseFloat(it.rate), make: it.make })),
-        apparatus_items: apparatusItems.filter(it => it.apparatus_name).map(it => ({ ...it, quantity_pieces: parseInt(it.quantity_pieces), rate: parseFloat(it.rate), make: it.make }))
+        chemical_items: chemicalItems.filter(it => it.chemical_name).map(it => ({ ...it, quantity: parseFloat(it.quantity) || 0, rate: parseFloat(it.rate) || 0, make: it.make })),
+        apparatus_items: apparatusItems.filter(it => it.apparatus_name).map(it => ({ ...it, quantity_pieces: parseInt(it.quantity_pieces) || 0, rate: parseFloat(it.rate) || 0, make: it.make }))
       };
-      await api.post('stock_register/', payload);
+      await api.post('/stock_register/', payload);
       window.dispatchEvent(new Event('inventory-updated'));
       onSuccess();
       if (standalone) {

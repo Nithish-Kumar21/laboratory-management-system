@@ -33,6 +33,7 @@ function NewStockRegister() {
   const [apparatusItems, setApparatusItems] = useState([{ apparatus_name: '', quantity_pieces: '', rate: '', make: '', restock_level: '' }]);
   const [submitting, setSubmitting] = useState(false);
   const [alertDialog, setAlertDialog] = useState({ open: false, message: '' });
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const [chemicalNames, setChemicalNames] = useState([]);
   const [apparatusNames, setApparatusNames] = useState([]);
@@ -55,11 +56,11 @@ function NewStockRegister() {
     const fetchAll = async () => {
       try {
         const [chem, app, sup, cMake, aMake] = await Promise.all([
-          api.get('available_chemicals/names/').catch(() => ({ data: [] })),
-          api.get('available_apparatus/names/').catch(() => ({ data: [] })),
-          api.get('stock_register/supplier_names/').catch(() => ({ data: [] })),
-          api.get('stock_register/chemical_makes/').catch(() => ({ data: [] })),
-          api.get('stock_register/apparatus_makes/').catch(() => ({ data: [] }))
+          api.get('/available_chemicals/names/').catch(() => ({ data: [] })),
+          api.get('/available_apparatus/names/').catch(() => ({ data: [] })),
+          api.get('/stock_register/supplier_names/').catch(() => ({ data: [] })),
+          api.get('/stock_register/chemical_makes/').catch(() => ({ data: [] })),
+          api.get('/stock_register/apparatus_makes/').catch(() => ({ data: [] }))
         ]);
         const process = (res) => {
           const d = res.data;
@@ -127,28 +128,52 @@ function NewStockRegister() {
       setSubmitting(false);
       return;
     }
+
+    // Validate all numeric fields before submission — block with inline errors
+    // instead of silently sending NaN to the backend.
+    const errors = {};
+    chemicalItems.forEach((it, i) => {
+      if (!it.chemical_name) return; // skip empty rows
+      if (it.pack_size === '' || isNaN(parseFloat(it.pack_size))) errors[`chem_${i}_pack_size`] = 'Required';
+      if (it.no_of_packs === '' || isNaN(parseInt(it.no_of_packs))) errors[`chem_${i}_no_of_packs`] = 'Required';
+      if (it.rate === '' || isNaN(parseFloat(it.rate))) errors[`chem_${i}_rate`] = 'Required';
+    });
+    apparatusItems.forEach((it, i) => {
+      if (!it.apparatus_name) return; // skip empty rows
+      if (it.quantity_pieces === '' || isNaN(parseInt(it.quantity_pieces))) errors[`app_${i}_quantity`] = 'Required';
+      if (it.rate === '' || isNaN(parseFloat(it.rate))) errors[`app_${i}_rate`] = 'Required';
+    });
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      setAlertDialog({ open: true, message: 'Please fill in all numeric fields with valid numbers.' });
+      setSubmitting(false);
+      return;
+    }
+    setFieldErrors({});
+
     setSubmitting(true);
     try {
       const payload = {
         ...formData,
         chemical_items: chemicalItems.filter(it => it.chemical_name).map(it => ({
           chemical_name: it.chemical_name,
-          pack_size: parseFloat(it.pack_size),
+          pack_size: parseFloat(it.pack_size) || 0,
           no_of_packs: parseInt(it.no_of_packs) || 1,
           unit: it.unit,
-          rate: parseFloat(it.rate),
+          rate: parseFloat(it.rate) || 0,
           make: it.make,
           restock_level: it.restock_level !== '' ? parseFloat(it.restock_level) : null,
         })),
         apparatus_items: apparatusItems.filter(it => it.apparatus_name).map(it => ({
           apparatus_name: it.apparatus_name,
-          quantity_pieces: parseInt(it.quantity_pieces),
-          rate: parseFloat(it.rate),
+          quantity_pieces: parseInt(it.quantity_pieces) || 0,
+          rate: parseFloat(it.rate) || 0,
           make: it.make,
           restock_level: it.restock_level !== '' ? parseInt(it.restock_level) : null,
         }))
       };
-      await api.post('stock_register/', payload);
+      await api.post('/stock_register/', payload);
       window.dispatchEvent(new Event('inventory-updated'));
       navigate('/stock-register');
     } catch (err) {
@@ -329,8 +354,8 @@ function NewStockRegister() {
                   </div>
                 </div>
                 <div className="nrf-chem-row-2">
-                  <input type="number" step="1" className="nrf-input" placeholder="Pack size" value={it.pack_size ?? ''} required
-                    onChange={e => { const next = [...chemicalItems]; next[i].pack_size = e.target.value; setChemicalItems(next); }} />
+                  <input type="number" step="1" className={`nrf-input${fieldErrors[`chem_${i}_pack_size`] ? ' nrf-input-error' : ''}`} placeholder="Pack size" value={it.pack_size ?? ''} required
+                    onChange={e => { const next = [...chemicalItems]; next[i].pack_size = e.target.value; setChemicalItems(next); setFieldErrors(prev => { const n = {...prev}; delete n[`chem_${i}_pack_size`]; return n; }); }} />
                   <div className="nrf-labeled-field">
                     <span className="nrf-inline-label">Unit</span>
                     <select value={it.unit} className="nrf-input" onChange={e => { const next = [...chemicalItems]; next[i].unit = e.target.value; setChemicalItems(next); }}>
@@ -338,10 +363,10 @@ function NewStockRegister() {
                       <option value="g">g</option>
                     </select>
                   </div>
-                  <input type="number" min="1" step="1" className="nrf-input" placeholder="No. of packs" value={it.no_of_packs ?? ''} required
-                    onChange={e => { const next = [...chemicalItems]; next[i].no_of_packs = e.target.value; setChemicalItems(next); }} />
-                  <input type="number" step="1" className="nrf-input" placeholder="Rate per pack (₹)" value={it.rate ?? ''} required
-                    onChange={e => { const next = [...chemicalItems]; next[i].rate = e.target.value; setChemicalItems(next); }} />
+                  <input type="number" min="1" step="1" className={`nrf-input${fieldErrors[`chem_${i}_no_of_packs`] ? ' nrf-input-error' : ''}`} placeholder="No. of packs" value={it.no_of_packs ?? ''} required
+                    onChange={e => { const next = [...chemicalItems]; next[i].no_of_packs = e.target.value; setChemicalItems(next); setFieldErrors(prev => { const n = {...prev}; delete n[`chem_${i}_no_of_packs`]; return n; }); }} />
+                  <input type="number" step="1" className={`nrf-input${fieldErrors[`chem_${i}_rate`] ? ' nrf-input-error' : ''}`} placeholder="Rate per pack (₹)" value={it.rate ?? ''} required
+                    onChange={e => { const next = [...chemicalItems]; next[i].rate = e.target.value; setChemicalItems(next); setFieldErrors(prev => { const n = {...prev}; delete n[`chem_${i}_rate`]; return n; }); }} />
                 </div>
                 <div className="nrf-chem-row-3">
                   <div className="nrf-autocomplete">
@@ -405,10 +430,10 @@ function NewStockRegister() {
                   </div>
                 </div>
                 <div className="nrf-app-row-2">
-                  <input type="number" step="1" className="nrf-input" placeholder="Qty (pcs)" value={it.quantity_pieces ?? ''} required
-                    onChange={e => { const next = [...apparatusItems]; next[i].quantity_pieces = e.target.value; setApparatusItems(next); }} />
-                  <input type="number" step="1" className="nrf-input" placeholder="Rate per piece (₹)" value={it.rate ?? ''} required
-                    onChange={e => { const next = [...apparatusItems]; next[i].rate = e.target.value; setApparatusItems(next); }} />
+                  <input type="number" step="1" className={`nrf-input${fieldErrors[`app_${i}_quantity`] ? ' nrf-input-error' : ''}`} placeholder="Qty (pcs)" value={it.quantity_pieces ?? ''} required
+                    onChange={e => { const next = [...apparatusItems]; next[i].quantity_pieces = e.target.value; setApparatusItems(next); setFieldErrors(prev => { const n = {...prev}; delete n[`app_${i}_quantity`]; return n; }); }} />
+                  <input type="number" step="1" className={`nrf-input${fieldErrors[`app_${i}_rate`] ? ' nrf-input-error' : ''}`} placeholder="Rate per piece (₹)" value={it.rate ?? ''} required
+                    onChange={e => { const next = [...apparatusItems]; next[i].rate = e.target.value; setApparatusItems(next); setFieldErrors(prev => { const n = {...prev}; delete n[`app_${i}_rate`]; return n; }); }} />
                   <div className="nrf-autocomplete">
                     <input type="text" className="nrf-input" placeholder="Make / Brand" value={it.make} required
                       onChange={e => { const next = [...apparatusItems]; next[i].make = e.target.value; setApparatusItems(next); setShowAppMakesSuggestions({ [i]: true }); setActiveSuggestionIndex(-1); }}

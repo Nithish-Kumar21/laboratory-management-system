@@ -61,7 +61,7 @@ function IssueRegister() {
       if (filters.staffName && !register.staff_name?.toLowerCase().includes(filters.staffName.toLowerCase())) return false;
       if (filters.chemicalName) {
         const has = register.chemicals?.some(c =>
-          c.chemical_name.toLowerCase().includes(filters.chemicalName.toLowerCase())
+          (c.chemical_name || '').toLowerCase().includes(filters.chemicalName.toLowerCase())
         );
         if (!has) return false;
       }

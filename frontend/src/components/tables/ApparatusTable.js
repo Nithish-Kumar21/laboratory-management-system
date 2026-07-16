@@ -13,7 +13,7 @@ function ApparatusTable({ showExtra = true, searchTerm = '', showOnlyLowStock = 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('available_apparatus/')
+    api.get('/available_apparatus/')
       .then((res) => {
         setApparatus(
           Array.isArray(res.data) ? res.data : res.data.results || []
@@ -27,7 +27,7 @@ function ApparatusTable({ showExtra = true, searchTerm = '', showOnlyLowStock = 
 
   const filtered = apparatus.filter((item) => {
     const term = searchTerm.toLowerCase();
-    if (term && !item.apparatus_name.toLowerCase().includes(term)) return false;
+    if (term && !(item.apparatus_name || '').toLowerCase().includes(term)) return false;
     if (showOnlyLowStock) {
       const qty = parseFloat(item.available_quantity_pieces);
       const reorder = parseFloat(item.reorder_level || 0);

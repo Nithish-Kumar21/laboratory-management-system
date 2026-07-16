@@ -42,7 +42,7 @@ function NewDamagedEntry() {
   const hourRef = useRef(null);
 
   useEffect(() => {
-    api.get('available_apparatus/names/')
+    api.get('/available_apparatus/names/')
       .then(res => setApparatusNames(Array.isArray(res.data) ? res.data : []))
       .catch(err => console.error(err));
   }, []);
@@ -81,17 +81,29 @@ function NewDamagedEntry() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (submitting) return;
+
+    // Validate numeric fields before submission
+    const errors = {};
+    damagedItems.forEach((it, i) => {
+      if (!it.apparatus_name) return;
+      if (it.quantity === '' || isNaN(parseInt(it.quantity))) errors[`item_${i}_qty`] = 'Required';
+    });
+    if (Object.keys(errors).length > 0) {
+      setAlertDialog({ open: true, message: 'Please fill in all quantity fields with valid numbers.' });
+      return;
+    }
+
     setSubmitting(true);
     try {
       const payload = {
         ...formData,
         damaged_items: damagedItems.filter(it => it.apparatus_name).map(it => ({
           apparatus_name: it.apparatus_name,
-          quantity: parseInt(it.quantity),
+          quantity: parseInt(it.quantity) || 0,
           caused_by: it.caused_by
         }))
       };
-      await api.post('damaged_entry/', payload);
+      await api.post('/damaged_entry/', payload);
       window.dispatchEvent(new Event('inventory-updated'));
       showToast('Damage report filed successfully');
       setTimeout(() => navigate('/damaged-entry'), 1500);

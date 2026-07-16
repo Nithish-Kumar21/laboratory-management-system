@@ -573,6 +573,7 @@
 @media (max-width: 768px) {
   .nrf-page {
     padding: 24px 12px;
+    padding-bottom: calc(24px + var(--bottomnav-height, 60px));
   }
 
   .nrf-card {

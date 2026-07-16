@@ -84,7 +84,13 @@ function Settings() {
                 api.get('/available_chemicals/').catch(() => ({ data: [] })),
                 api.get('/available_apparatus/').catch(() => ({ data: [] })),
             ]);
-            setConfig(configRes.data);
+            // Coerce numeric config values at fetch time — API may return strings
+            const raw = configRes.data;
+            setConfig({
+                ...raw,
+                common_chemical_reorder_level: parseFloat(raw.common_chemical_reorder_level) || 0,
+                common_apparatus_reorder_level: parseFloat(raw.common_apparatus_reorder_level) || 0,
+            });
             setChemicals(chemRes.data.results || chemRes.data);
             setApparatus(appRes.data.results || appRes.data);
         } catch (err) {
@@ -98,8 +104,8 @@ function Settings() {
         setLoading(true);
         try {
             const payload = type === 'chemical'
-                ? { common_chemical_reorder_level: config.common_chemical_reorder_level }
-                : { common_apparatus_reorder_level: config.common_apparatus_reorder_level };
+                ? { common_chemical_reorder_level: parseFloat(config.common_chemical_reorder_level) || 0 }
+                : { common_apparatus_reorder_level: parseFloat(config.common_apparatus_reorder_level) || 0 };
 
             await api.patch('/lab_configuration/1/', payload);
             setMessage(`Common ${type} reorder level updated!`);

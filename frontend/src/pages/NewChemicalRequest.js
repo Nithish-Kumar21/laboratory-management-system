@@ -38,7 +38,7 @@ function NewChemicalRequest() {
   const [loadingDraft, setLoadingDraft] = useState(!!editId);
 
   useEffect(() => {
-    api.get('available_chemicals/')
+    api.get('/available_chemicals/')
       .then((res) => {
         setAvailableChemicals(Array.isArray(res.data) ? res.data : res.data.results || []);
       })
@@ -140,9 +140,9 @@ function NewChemicalRequest() {
     };
     try {
       if (editId) {
-        await api.put(`stock_request/${editId}/`, payload);
+        await api.put(`/stock_request/${editId}/`, payload);
       } else {
-        await api.post('stock_request/', payload);
+        await api.post('/stock_request/', payload);
       }
       window.dispatchEvent(new CustomEvent('inventory-updated'));
       navigate('/requests');
