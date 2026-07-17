@@ -84,6 +84,10 @@ function IssueRegisterDetail() {
                 <div className="sd-meta-label">Hour</div>
                 <div className="sd-meta-value">{reg.source_request?.hour?.length ? [...reg.source_request.hour].sort((a,b)=>a-b).join(', ') : '-'}</div>
               </div>
+              <div className="sd-meta-item">
+                <div className="sd-meta-label">Venue</div>
+                <div className="sd-meta-value">{reg.venue || '—'}</div>
+              </div>
             </div>
           </div>
 
