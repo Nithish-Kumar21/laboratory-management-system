@@ -34,7 +34,7 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess, standalone }) {
     useEffect(() => {
         if (isOpen) {
             setPosition({ x: 0, y: 0 });
-            api.get('available_apparatus/names/')
+            api.get('/available_apparatus/names/')
                 .then(res => setApparatusNames(Array.isArray(res.data) ? res.data : []))
                 .catch(err => console.error(err));
         }
@@ -173,17 +173,28 @@ function AddDamagedEntryModal({ isOpen, onClose, onSuccess, standalone }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (submitting) return;
+
+        // Validate numeric fields before submission
+        const errors = [];
+        damagedItems.filter(it => it.apparatus_name).forEach((it, i) => {
+            if (it.quantity === '' || isNaN(parseInt(it.quantity))) errors.push(`Item ${i + 1}: invalid quantity`);
+        });
+        if (errors.length > 0) {
+            setAlertDialog({ open: true, message: 'Please fill in all quantity fields:\n' + errors.join('\n') });
+            return;
+        }
+
         setSubmitting(true);
         try {
             const payload = {
                 ...formData,
                 damaged_items: damagedItems.filter(it => it.apparatus_name).map(it => ({
                     apparatus_name: it.apparatus_name,
-                    quantity: parseInt(it.quantity),
+                    quantity: parseInt(it.quantity) || 0,
                     caused_by: it.caused_by
                 }))
             };
-      await api.post('damaged_entry/', payload);
+      await api.post('/damaged_entry/', payload);
       window.dispatchEvent(new Event('inventory-updated'));
       onSuccess();
       if (standalone) {

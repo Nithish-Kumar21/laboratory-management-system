@@ -167,7 +167,7 @@ function AddRequestModal({ isOpen, onClose, onSuccess, hasActiveRequest, editDat
       if (editData) {
         await api.put(`stock_request/${editData.id}/`, payload);
       } else {
-        await api.post('stock_request/', payload);
+        await api.post('/stock_request/', payload);
       }
       onSuccess();
       onClose();

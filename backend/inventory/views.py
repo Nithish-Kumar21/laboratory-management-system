@@ -95,6 +95,9 @@ class LabConfigurationViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
+        # Use fresh instance from DB after save
+        config = serializer.instance
+
         # If common reorder level is enabled, update all existing items
         if config.use_common_reorder_level:
             AvailableChemical.objects.all().update(reorder_level=config.common_chemical_reorder_level)

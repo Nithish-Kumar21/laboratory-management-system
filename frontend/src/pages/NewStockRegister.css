@@ -257,6 +257,42 @@
   align-items: start;
 }
 
+/* ── Damaged entry container ── */
+.nrf-dmg-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #F8F9FC;
+  border: 0.5px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 8px;
+}
+
+:root.dark-mode .nrf-dmg-entry {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+.nrf-dmg-entry .nrf-input {
+  height: 38px;
+  font-size: 13px;
+}
+
+.nrf-dmg-row-1 {
+  display: grid;
+  grid-template-columns: 1fr 36px;
+  gap: 8px;
+  align-items: start;
+}
+
+.nrf-dmg-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  align-items: start;
+}
+
 /* ── Inline labels ── */
 .nrf-labeled-field {
   display: flex;
@@ -573,6 +609,7 @@
 @media (max-width: 768px) {
   .nrf-page {
     padding: 24px 12px;
+    padding-bottom: calc(24px + var(--bottomnav-height, 60px));
   }
 
   .nrf-card {
@@ -605,7 +642,8 @@
 
   /* ===== Mobile: entry containers flex-wrap ===== */
   .nrf-chem-entry,
-  .nrf-app-entry {
+  .nrf-app-entry,
+  .nrf-dmg-entry {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
@@ -618,7 +656,8 @@
   }
 
   :root.dark-mode .nrf-chem-entry,
-  :root.dark-mode .nrf-app-entry {
+  :root.dark-mode .nrf-app-entry,
+  :root.dark-mode .nrf-dmg-entry {
     background: #0f172a;
     border-color: #334155;
   }
@@ -629,7 +668,9 @@
   .nrf-chem-row-3,
   .nrf-app-row-1,
   .nrf-app-row-2,
-  .nrf-app-row-3 {
+  .nrf-app-row-3,
+  .nrf-dmg-row-1,
+  .nrf-dmg-row-2 {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
@@ -638,7 +679,8 @@
 
   /* Name / autocomplete — full width in any row */
   .nrf-chem-entry .nrf-autocomplete,
-  .nrf-app-entry .nrf-autocomplete {
+  .nrf-app-entry .nrf-autocomplete,
+  .nrf-dmg-entry .nrf-autocomplete {
     width: 100%;
   }
 
@@ -646,26 +688,30 @@
   .nrf-chem-entry input,
   .nrf-chem-entry select,
   .nrf-app-entry input,
-  .nrf-app-entry select {
+  .nrf-app-entry select,
+  .nrf-dmg-entry input {
     flex: 1;
     min-width: 0;
   }
 
   .nrf-chem-entry .nrf-labeled-field,
-  .nrf-app-entry .nrf-labeled-field {
+  .nrf-app-entry .nrf-labeled-field,
+  .nrf-dmg-entry .nrf-labeled-field {
     flex: 1;
     min-width: 0;
   }
 
   .nrf-chem-entry .nrf-input,
-  .nrf-app-entry .nrf-input {
+  .nrf-app-entry .nrf-input,
+  .nrf-dmg-entry .nrf-input {
     height: 40px;
     font-size: 14px;
   }
 
   /* Delete button — full width at bottom */
   .nrf-chem-entry .nrf-del-btn,
-  .nrf-app-entry .nrf-del-btn {
+  .nrf-app-entry .nrf-del-btn,
+  .nrf-dmg-entry .nrf-del-btn {
     width: 100%;
     height: 40px;
     border-radius: 7px;

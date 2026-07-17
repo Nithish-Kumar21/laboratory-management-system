@@ -1,5 +1,6 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from django.db import transaction
 from django.utils import timezone
@@ -314,8 +315,55 @@ class StockRequestViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(reviewed, many=True)
         return Response(serializer.data)
 
+    @transaction.atomic
     def perform_create(self, serializer):
-        instance = serializer.save()
+        user = self.request.user
+        # TOCTOU fix: lock active requests before creating to prevent
+        # two simultaneous creates from both passing the "no active request" check.
+        if user.role == 'staff':
+            active_statuses = ['pending', 'accepted', 'issued', 'reported']
+            active_requests = StockRequest.objects.select_for_update().filter(
+                requested_by=user,
+                status__in=active_statuses,
+            )
+            if active_requests.exists():
+                raise ValidationError(
+                    "You already have an active request. Complete your previous request first, or save this as a draft."
+                )
+
+        # Generate request_id inside the same atomic block to prevent
+        # concurrent requests from colliding on the manual sequence number.
+        # Lock the latest request for the current year to serialize ID assignment.
+        from django.utils import timezone
+        from django.db import IntegrityError
+        current_year = timezone.now().year
+        last_request = StockRequest.objects.select_for_update().filter(
+            created_at__year=current_year
+        ).order_by('-request_id').first()
+
+        if last_request and last_request.request_id:
+            try:
+                last_sequence = int(last_request.request_id.split('-')[-1])
+                sequence_number = last_sequence + 1
+            except (ValueError, IndexError):
+                sequence_number = StockRequest.objects.filter(
+                    created_at__year=current_year
+                ).count() + 1
+        else:
+            sequence_number = 1
+
+        request_id = f"REQ-{current_year}-{sequence_number:03d}"
+
+        # Pass generated ID to serializer so model.save() doesn't re-generate
+        try:
+            instance = serializer.save(request_id=request_id)
+        except IntegrityError:
+            # Fallback: unique constraint violation (extremely rare, e.g. if
+            # another transaction committed between our lock and insert).
+            raise ValidationError(
+                "A request is already in progress, please try again."
+            )
+
         AuditLogService.log(
             user=self.request.user,
             action='REQUEST_CREATED',

@@ -863,7 +863,7 @@ body {
   cursor: pointer;
   box-shadow: 0 4px 16px rgba(26, 60, 110, 0.4);
   transition: background 0.2s, transform 0.2s;
-  z-index: 100;
+  z-index: 1001;
 }
 
 .cr-fab:hover {

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { FaArrowLeft, FaTools, FaCheck, FaUndo, FaTrash } from 'react-icons/fa';
+import { FaArrowLeft, FaTools, FaCheck, FaUndo, FaTrash, FaBuilding } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import './DamagedEntryDetail.css';
@@ -53,7 +53,7 @@ function ServiceEntryDetail() {
     try {
       const res = await api.post(`/service-entries/${id}/action_item/?item_id=${actionPopup.itemId}`, {
         action_type: actionPopup.actionType,
-        quantity: parseInt(actionPopup.quantity),
+        quantity: parseInt(actionPopup.quantity) || 0,
       });
       setEntry(res.data);
       setActionPopup({ open: false, itemId: null, actionType: '', quantity: '', error: '' });
@@ -122,6 +122,24 @@ function ServiceEntryDetail() {
                 <div className="sd-meta-label">Tentative Delivery</div>
                 <div className="sd-meta-value">{entry.deliver_by_date ? formatDate(entry.deliver_by_date) : '—'}</div>
               </div>
+              {entry.company_name && (
+                <div className="sd-meta-item">
+                  <div className="sd-meta-label"><FaBuilding /> Company</div>
+                  <div className="sd-meta-value">{entry.company_name}</div>
+                </div>
+              )}
+              {entry.company_address && (
+                <div className="sd-meta-item">
+                  <div className="sd-meta-label">Company Address</div>
+                  <div className="sd-meta-value">{entry.company_address}</div>
+                </div>
+              )}
+              {(entry.company_contact_country_code || entry.company_contact_number) && (
+                <div className="sd-meta-item">
+                  <div className="sd-meta-label">Company Contact</div>
+                  <div className="sd-meta-value">{entry.company_contact_country_code || ''} {entry.company_contact_number || '—'}</div>
+                </div>
+              )}
             </div>
             {entry.completed_at && (
               <p style={{ marginTop: '16px', fontSize: '13px', color: '#9AA3AF' }}>

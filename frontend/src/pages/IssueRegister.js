@@ -61,7 +61,7 @@ function IssueRegister() {
       if (filters.staffName && !register.staff_name?.toLowerCase().includes(filters.staffName.toLowerCase())) return false;
       if (filters.chemicalName) {
         const has = register.chemicals?.some(c =>
-          c.chemical_name.toLowerCase().includes(filters.chemicalName.toLowerCase())
+          (c.chemical_name || '').toLowerCase().includes(filters.chemicalName.toLowerCase())
         );
         if (!has) return false;
       }
@@ -187,6 +187,11 @@ function IssueRegister() {
                   <div className="ir-card-to">
                     Issued To: {register.staff_name}
                   </div>
+                  {register.venue && (
+                    <div className="ir-card-to">
+                      Venue: {register.venue}
+                    </div>
+                  )}
                   <div className="ir-card-count">
                     {items} Item{items !== 1 ? 's' : ''}
                   </div>
@@ -220,7 +225,7 @@ function IssueRegister() {
                   </span>
                   <div className="ir-mobile-by">Issued By: Storekeeper</div>
                   <div className="ir-mobile-meta">
-                    📅 {formatDate(register.date)} · Issued To: {register.staff_name} · {items} Item{items !== 1 ? 's' : ''}
+                    📅 {formatDate(register.date)} · Issued To: {register.staff_name} · {register.venue ? `${register.venue} · ` : ''}{items} Item{items !== 1 ? 's' : ''}
                   </div>
                 </div>
               );

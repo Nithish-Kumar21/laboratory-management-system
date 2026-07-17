@@ -42,7 +42,7 @@ function NewDamagedEntry() {
   const hourRef = useRef(null);
 
   useEffect(() => {
-    api.get('available_apparatus/names/')
+    api.get('/available_apparatus/names/')
       .then(res => setApparatusNames(Array.isArray(res.data) ? res.data : []))
       .catch(err => console.error(err));
   }, []);
@@ -81,17 +81,29 @@ function NewDamagedEntry() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (submitting) return;
+
+    // Validate numeric fields before submission
+    const errors = {};
+    damagedItems.forEach((it, i) => {
+      if (!it.apparatus_name) return;
+      if (it.quantity === '' || isNaN(parseInt(it.quantity))) errors[`item_${i}_qty`] = 'Required';
+    });
+    if (Object.keys(errors).length > 0) {
+      setAlertDialog({ open: true, message: 'Please fill in all quantity fields with valid numbers.' });
+      return;
+    }
+
     setSubmitting(true);
     try {
       const payload = {
         ...formData,
         damaged_items: damagedItems.filter(it => it.apparatus_name).map(it => ({
           apparatus_name: it.apparatus_name,
-          quantity: parseInt(it.quantity),
+          quantity: parseInt(it.quantity) || 0,
           caused_by: it.caused_by
         }))
       };
-      await api.post('damaged_entry/', payload);
+      await api.post('/damaged_entry/', payload);
       window.dispatchEvent(new Event('inventory-updated'));
       showToast('Damage report filed successfully');
       setTimeout(() => navigate('/damaged-entry'), 1500);
@@ -208,36 +220,40 @@ function NewDamagedEntry() {
               <div className="nrf-section-title"><FaTools /> Damaged Items List</div>
               <button type="button" className="nrf-add-btn" onClick={addRow}><FaPlus /> Add Line</button>
             </div>
-            <div className="nrf-grid-cols cols-3">
-              <span><FaTools /> Apparatus Name</span>
-              <span>Quantity Broken</span>
-              <span>Caused By</span>
-              <span></span>
-            </div>
             {damagedItems.map((it, i) => (
-              <div key={i} className="nrf-grid-row cols-3">
-                <div className="nrf-autocomplete">
-                  <input type="text" className="nrf-input" placeholder="Search apparatus..." value={it.apparatus_name} required autoComplete="off"
-                    onChange={e => { const next = [...damagedItems]; next[i].apparatus_name = e.target.value; setDamagedItems(next); setShowSuggestions({ [i]: true }); setActiveIndex(-1); }}
-                    onFocus={() => { setShowSuggestions({ [i]: true }); setActiveIndex(-1); }}
-                    onBlur={() => setTimeout(() => setShowSuggestions({}), 250)} />
-                  {showSuggestions[i] && it.apparatus_name && (
-                    <ul className="nrf-suggestions">
-                      {apparatusNames.filter(n => n.name.toLowerCase().startsWith(it.apparatus_name.toLowerCase())).slice(0, 6).map((n, idx) => (
-                        <li key={idx} className={`nrf-suggestion-item ${activeIndex === idx ? 'active' : ''}`}
-                          onMouseDown={() => selectApparatus(i, n.name)}>
-                          <span>{n.name}</span>
-                          <span className="nrf-stock">Stock: {n.available_quantity}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+              <div key={i} className="nrf-dmg-entry">
+                <div className="nrf-dmg-row-1">
+                  <div className="nrf-autocomplete">
+                    <input type="text" className="nrf-input" placeholder="Search apparatus..." value={it.apparatus_name} required autoComplete="off"
+                      onChange={e => { const next = [...damagedItems]; next[i].apparatus_name = e.target.value; setDamagedItems(next); setShowSuggestions({ [i]: true }); setActiveIndex(-1); }}
+                      onFocus={() => { setShowSuggestions({ [i]: true }); setActiveIndex(-1); }}
+                      onBlur={() => setTimeout(() => setShowSuggestions({}), 250)} />
+                    {showSuggestions[i] && it.apparatus_name && (
+                      <ul className="nrf-suggestions">
+                        {apparatusNames.filter(n => n.name.toLowerCase().startsWith(it.apparatus_name.toLowerCase())).slice(0, 6).map((n, idx) => (
+                          <li key={idx} className={`nrf-suggestion-item ${activeIndex === idx ? 'active' : ''}`}
+                            onMouseDown={() => selectApparatus(i, n.name)}>
+                            <span>{n.name}</span>
+                            <span className="nrf-stock">Stock: {n.available_quantity}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                  <button type="button" className="nrf-del-btn" onClick={() => setDamagedItems(damagedItems.filter((_, idx) => idx !== i))} title="Remove"><FaTrash /></button>
                 </div>
-                <input type="number" step="1" className="nrf-input" placeholder="Qty" value={it.quantity ?? ''} required
-                  onChange={e => { const next = [...damagedItems]; next[i].quantity = e.target.value; setDamagedItems(next); }} />
-                <input type="text" className="nrf-input" placeholder="Caused by..." value={it.caused_by} required
-                  onChange={e => { const next = [...damagedItems]; next[i].caused_by = e.target.value; setDamagedItems(next); }} />
-                <button type="button" className="nrf-del-btn" onClick={() => setDamagedItems(damagedItems.filter((_, idx) => idx !== i))} title="Remove"><FaTrash /></button>
+                <div className="nrf-dmg-row-2">
+                  <div className="nrf-labeled-field">
+                    <span className="nrf-inline-label">Qty Broken</span>
+                    <input type="number" step="1" className="nrf-input" placeholder="Qty" value={it.quantity ?? ''} required
+                      onChange={e => { const next = [...damagedItems]; next[i].quantity = e.target.value; setDamagedItems(next); }} />
+                  </div>
+                  <div className="nrf-labeled-field">
+                    <span className="nrf-inline-label">Caused By</span>
+                    <input type="text" className="nrf-input" placeholder="Caused by..." value={it.caused_by} required
+                      onChange={e => { const next = [...damagedItems]; next[i].caused_by = e.target.value; setDamagedItems(next); }} />
+                  </div>
+                </div>
               </div>
             ))}
           </div>

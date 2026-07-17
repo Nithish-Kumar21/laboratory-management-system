@@ -53,7 +53,7 @@ function DamagedEntry() {
   const fetchServiceEntries = async () => {
     setServiceLoading(true);
     try {
-      const res = await api.get('service-entries/?ordering=-date');
+      const res = await api.get('/service-entries/?ordering=-date');
       setServiceEntries(Array.isArray(res.data) ? res.data : res.data.results || []);
     } catch (err) {
       console.error('Error fetching service entries:', err);

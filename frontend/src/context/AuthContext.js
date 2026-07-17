@@ -34,7 +34,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = async (username, password) => {
-    const response = await api.post('users/login/', { username, password });
+    const response = await api.post('/users/login/', { username, password });
 
     if (response.data.first_login) {
       sessionStorage.setItem('temp_token', response.data.temp_token);
