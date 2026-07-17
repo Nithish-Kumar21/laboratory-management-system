@@ -93,6 +93,13 @@ function Settings() {
             });
             setChemicals(chemRes.data.results || chemRes.data);
             setApparatus(appRes.data.results || appRes.data);
+            if (raw.use_common_reorder_level) {
+                setChemicalMode('common');
+                setApparatusMode('common');
+            } else {
+                setChemicalMode('separate');
+                setApparatusMode('separate');
+            }
         } catch (err) {
             console.error('Error fetching settings:', err);
         } finally {
@@ -104,8 +111,8 @@ function Settings() {
         setLoading(true);
         try {
             const payload = type === 'chemical'
-                ? { common_chemical_reorder_level: parseFloat(config.common_chemical_reorder_level) || 0 }
-                : { common_apparatus_reorder_level: parseFloat(config.common_apparatus_reorder_level) || 0 };
+                ? { common_chemical_reorder_level: parseFloat(config.common_chemical_reorder_level) || 0, use_common_reorder_level: true }
+                : { common_apparatus_reorder_level: parseFloat(config.common_apparatus_reorder_level) || 0, use_common_reorder_level: true };
 
             await api.patch('/lab_configuration/1/', payload);
             setMessage(`Common ${type} reorder level updated!`);
@@ -116,6 +123,23 @@ function Settings() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const persistMode = async (mode) => {
+        try {
+            await api.patch('/lab_configuration/1/', { use_common_reorder_level: mode === 'common' });
+        } catch (err) {
+            console.error('Failed to persist mode:', err);
+        }
+    };
+
+    const handleModeToggle = (newMode) => {
+        if (activeSection === 'chem_levels') {
+            setChemicalMode(newMode);
+        } else {
+            setApparatusMode(newMode);
+        }
+        persistMode(newMode);
     };
 
     const handleIndividualUpdate = async (id, itemType) => {
@@ -480,9 +504,9 @@ function Settings() {
 
                         <div className="mode-toggle-box">
                             <button className={`toggle-btn ${(activeSection === 'chem_levels' ? chemicalMode : apparatusMode) === 'common' ? 'active' : ''}`}
-                                onClick={() => activeSection === 'chem_levels' ? setChemicalMode('common') : setApparatusMode('common')}>Common Level</button>
+                                onClick={() => handleModeToggle('common')}>Common Level</button>
                             <button className={`toggle-btn ${(activeSection === 'chem_levels' ? chemicalMode : apparatusMode) === 'separate' ? 'active' : ''}`}
-                                onClick={() => activeSection === 'chem_levels' ? setChemicalMode('separate') : setApparatusMode('separate')}>Individual Levels</button>
+                                onClick={() => handleModeToggle('separate')}>Individual Levels</button>
                         </div>
 
                         {((activeSection === 'chem_levels' ? chemicalMode : apparatusMode) === 'common') ? (

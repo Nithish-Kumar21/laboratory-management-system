@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.utils import timezone
 from .models import StockRegister, ChemicalItem, ApparatusItem
-from inventory.models import AvailableChemical, AvailableApparatus
+from inventory.models import AvailableChemical, AvailableApparatus, LabConfiguration
 import re
 
 
@@ -183,8 +183,15 @@ class StockRegisterCreateSerializer(serializers.ModelSerializer):
 
         stock_register = StockRegister.objects.create(**validated_data)
 
+        try:
+            config = LabConfiguration.objects.get(id=1)
+        except LabConfiguration.DoesNotExist:
+            config = None
+
         for item_data in chemical_items_data:
             restock_level = item_data.pop('restock_level', None)
+            if restock_level is None and config and config.use_common_reorder_level:
+                restock_level = config.common_chemical_reorder_level
             pack_size = item_data['pack_size']
             no_of_packs = item_data.get('no_of_packs', 1)
             item_data['total_quantity'] = pack_size * no_of_packs
@@ -208,6 +215,8 @@ class StockRegisterCreateSerializer(serializers.ModelSerializer):
 
         for item_data in apparatus_items_data:
             restock_level = item_data.pop('restock_level', None)
+            if restock_level is None and config and config.use_common_reorder_level:
+                restock_level = config.common_apparatus_reorder_level
             qty = item_data['quantity_pieces']
             item_data['total_price'] = qty * item_data['rate']
             app_item = ApparatusItem.objects.create(stock_register=stock_register, **item_data)
