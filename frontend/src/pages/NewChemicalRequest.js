@@ -24,6 +24,7 @@ function NewChemicalRequest() {
     date: new Date().toISOString().split('T')[0],
     day_order: 'I',
     hour: [],
+    venue: 'B.Sc Chemistry Laboratory',
     purpose_type: 'practical_lab',
     experiment_name: '',
     student_name: ''
@@ -56,6 +57,7 @@ function NewChemicalRequest() {
           date: data.date || new Date(data.created_at).toISOString().split('T')[0],
           day_order: data.day_order || 'I',
           hour: data.hour || [],
+          venue: data.venue || 'B.Sc Chemistry Laboratory',
           purpose_type: data.purpose_type || 'practical_lab',
           experiment_name: data.experiment_name || '',
           student_name: data.student_name || '',
@@ -129,6 +131,7 @@ function NewChemicalRequest() {
       date: formData.date,
       day_order: formData.day_order,
       hour: formData.hour,
+      venue: formData.venue,
       purpose_type: formData.purpose_type,
       experiment_name: formData.experiment_name,
       student_name: formData.purpose_type === 'practical_lab' ? '' : formData.student_name,
@@ -280,6 +283,23 @@ function NewChemicalRequest() {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+
+        <div className="nrf-field" style={{ marginTop: 12 }}>
+          <label className="nrf-field-label">Venue</label>
+          <div className="nrf-field-control">
+            <select
+              value={formData.venue}
+              onChange={(e) => setFormData({ ...formData, venue: e.target.value })}
+              className="nrf-select"
+            >
+              <option value="B.Sc Chemistry Laboratory">B.Sc Chemistry Laboratory</option>
+              <option value="M.Sc Chemistry Laboratory">M.Sc Chemistry Laboratory</option>
+              <option value="Research Lab - Chemistry Dept">Research Lab - Chemistry Dept</option>
+              <option value="Allied Laboratory">Allied Laboratory</option>
+            </select>
+            <FaChevronDown className="nrf-chevron" />
           </div>
         </div>
 

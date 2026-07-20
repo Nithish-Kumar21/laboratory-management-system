@@ -177,7 +177,32 @@ function NewStockRegister() {
       window.dispatchEvent(new Event('inventory-updated'));
       navigate('/stock-register');
     } catch (err) {
-      setAlertDialog({ open: true, message: 'Error: ' + (err.response?.data?.error || 'Validation failed') });
+      const data = err.response?.data;
+      let msg = 'Validation failed';
+      if (data) {
+        if (data.error) {
+          msg = data.error;
+        } else if (typeof data === 'object') {
+          const parts = [];
+          Object.entries(data).forEach(([key, val]) => {
+            if (key === 'non_field_errors') {
+              (Array.isArray(val) ? val : [val]).forEach(m => parts.push(m));
+            } else if (Array.isArray(val) && typeof val[0] === 'object') {
+              val.forEach((item, idx) => {
+                Object.entries(item).forEach(([subKey, subVal]) => {
+                  const errMsg = Array.isArray(subVal) ? subVal.join(', ') : subVal;
+                  parts.push(`${key} #${idx + 1} — ${subKey}: ${errMsg}`);
+                });
+              });
+            } else {
+              const errMsg = Array.isArray(val) ? val.join(', ') : val;
+              parts.push(`${key}: ${errMsg}`);
+            }
+          });
+          if (parts.length) msg = parts.join('\n');
+        }
+      }
+      setAlertDialog({ open: true, message: 'Error: ' + msg });
     } finally {
       setSubmitting(false);
     }
@@ -369,6 +394,11 @@ function NewStockRegister() {
                       </select>
                     </div>
                   </div>
+                  <div className="nrf-chem-field">
+                    <span className="nrf-chem-label">NO. OF PACKS</span>
+                    <input type="number" step="1" className={`nrf-input${fieldErrors[`chem_${i}_no_of_packs`] ? ' nrf-input-error' : ''}`} placeholder="No. of packs" value={it.no_of_packs ?? ''} required min="1"
+                      onChange={e => { const next = [...chemicalItems]; next[i].no_of_packs = e.target.value; setChemicalItems(next); setFieldErrors(prev => { const n = {...prev}; delete n[`chem_${i}_no_of_packs`]; return n; }); }} />
+                  </div>
                 </div>
 
                 {/* Row 2: Rate + Restock + Make */}
@@ -453,7 +483,7 @@ function NewStockRegister() {
                   </div>
                 </div>
 
-                {/* Row 2: Rate + Restock + Make */}
+                {/* Row 2: Rate + Restock */}
                 <div className="nrf-app-row nrf-app-row-2">
                   <div className="nrf-app-field">
                     <span className="nrf-app-label">RATE PER PIECE</span>
@@ -465,6 +495,10 @@ function NewStockRegister() {
                     <input type="number" step="1" className="nrf-input" placeholder="Restock" value={it.restock_level ?? ''}
                       onChange={e => { const next = [...apparatusItems]; next[i].restock_level = e.target.value; setApparatusItems(next); }} />
                   </div>
+                </div>
+
+                {/* Row 3: Make + Total Price + Delete */}
+                <div className="nrf-app-row nrf-app-row-3">
                   <div className="nrf-app-field nrf-autocomplete">
                     <span className="nrf-app-label">MAKE / BRAND</span>
                     <input type="text" className="nrf-input" placeholder="Make / Brand" value={it.make} required
@@ -480,10 +514,6 @@ function NewStockRegister() {
                       </ul>
                     )}
                   </div>
-                </div>
-
-                {/* Row 3: Total Price + Delete */}
-                <div className="nrf-app-row nrf-app-row-3">
                   <div className="nrf-app-field">
                     <span className="nrf-app-label">TOTAL PRICE</span>
                     <input type="text" className="nrf-input nrf-readonly" value={calcApparatusTotalPrice(it) ? '₹' + calcApparatusTotalPrice(it).toFixed(2) : ''} readOnly placeholder="₹0.00" />

@@ -151,7 +151,12 @@ function NewServiceEntry() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} onKeyDown={handleKeyDown}>
+        <div className="nrf-divider" style={{ marginTop: 16, marginBottom: 8 }}></div>
+        <div className="nrf-section" style={{ marginBottom: 12 }}>
+          <div className="nrf-section-title"><FaUserTie /> Service Person Details</div>
+        </div>
+
+        <form className="nrf-service-form" onSubmit={handleSubmit} onKeyDown={handleKeyDown}>
         <div className="nrf-card">
           <div className="flex flex-col gap-3 md:grid md:grid-cols-2 md:gap-4">
             <div className="nrf-field">

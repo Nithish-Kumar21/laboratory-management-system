@@ -211,7 +211,7 @@
 }
 
 .nrf-chem-row-1 {
-  grid-template-columns: 2fr 1fr;
+  grid-template-columns: 2fr 1fr 1fr;
 }
 
 .nrf-chem-row-2 {
@@ -245,6 +245,38 @@
   margin-bottom: 8px;
 }
 
+/* Desktop: apparatus items in a single horizontal row (service entry only) */
+@media (min-width: 769px) {
+  .nrf-app-entry {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .nrf-app-entry .nrf-autocomplete {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .nrf-app-entry .nrf-labeled-field {
+    width: 80px;
+    flex-shrink: 0;
+  }
+
+  .nrf-app-entry .nrf-del-btn {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+  }
+
+  /* Stock register keeps vertical stacking for its multi-row grid layout */
+  .nrf-stock-form .nrf-app-entry {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+}
+
 :root.dark-mode .nrf-app-entry {
   background: #0f172a;
   border-color: #334155;
@@ -266,11 +298,11 @@
 }
 
 .nrf-app-row-2 {
-  grid-template-columns: 1fr 1fr 2fr;
+  grid-template-columns: 1fr 1fr;
 }
 
 .nrf-app-row-3 {
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 2fr 1fr auto;
   align-items: end;
 }
 
@@ -377,7 +409,7 @@
   cursor: pointer;
   appearance: auto;
   font-size: 13px;
-  width: 82px;
+  width: 84px;
   flex-shrink: 0;
 }
 
@@ -781,14 +813,23 @@
   }
 
   .nrf-app-row-3 {
-    grid-template-columns: 1fr auto;
-    align-items: end;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* Make/Brand — full row width on mobile */
+  .nrf-app-row-3 > .nrf-autocomplete {
+    grid-column: 1 / -1;
   }
 
   /* Make field — full row width on mobile */
   .nrf-chem-row-2 .nrf-autocomplete,
   .nrf-app-row-2 .nrf-autocomplete {
     grid-column: 1 / -1;
+  }
+
+  /* Make/Brand (4th child) — third row on mobile */
+  .nrf-chem-row-2 > .nrf-chem-field.nrf-autocomplete {
+    grid-row: 3;
   }
 
   /* Show labels on mobile */
@@ -815,7 +856,7 @@
   }
 
   .nrf-composite select.nrf-input {
-    width: 72px;
+    width: 74px;
     font-size: 12px;
   }
 
@@ -859,5 +900,24 @@
 
   .nrf-dmg-form .nrf-spacer {
     display: none;
+  }
+
+  /* Service entry — cancel + submit same row on mobile */
+  .nrf-service-form .nrf-action-row {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 12px;
+  }
+
+  .nrf-service-form .nrf-spacer {
+    display: none;
+  }
+
+  .nrf-service-form .nrf-btn {
+    flex: 1;
+    min-width: 0;
+    width: auto;
+    padding: 0 14px;
+    font-size: 13px;
   }
 }
