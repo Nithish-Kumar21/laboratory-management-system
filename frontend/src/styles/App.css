@@ -212,12 +212,18 @@ body {
 
 .page-container {
   flex: 1;
-  padding: 40px;
+  padding: 16px;
   max-width: 1600px;
   margin: 0 auto;
   width: 100%;
   display: flex;
   flex-direction: column;
+}
+
+@media (min-width: 769px) {
+  .page-container {
+    padding: 24px 40px;
+  }
 }
 
 /* Animations */

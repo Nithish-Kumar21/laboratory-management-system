@@ -6,7 +6,7 @@ Then log in with employee ID and password below.
 import os
 import django
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings.dev')
 django.setup()
 
 from django.contrib.auth import get_user_model
@@ -19,7 +19,7 @@ users_to_create = [
         'full_name': 'Admin User',
         'email': 'admin@test.com',
         'password': 'admin@123456',
-        'role': 'admin',
+        'role': 'hod',
         'phone': '+910000000000',
         'designation': 'Administrator',
         'department': 'B.Sc Chemistry',

@@ -4,6 +4,7 @@
   align-items: center;
   min-height: calc(100vh - var(--header-height, 60px));
   padding: 40px 16px;
+  overflow-x: hidden;
 }
 
 .nrf-form-container {
@@ -27,18 +28,24 @@
 }
 
 .nrf-card {
-  background: #fff;
-  border-radius: 12px;
-  border: 0.5px solid #e2e8f0;
-  padding: 28px;
   display: flex;
   flex-direction: column;
   gap: 22px;
 }
 
 :root.dark-mode .nrf-card {
-  background: #1e293b;
-  border-color: #334155;
+  /* Card styling removed — form sits on page background */
+}
+
+.nrf-divider {
+  width: 100%;
+  height: 1px;
+  background: #e2e8f0;
+  margin: 4px 0;
+}
+
+:root.dark-mode .nrf-divider {
+  background: #334155;
 }
 
 .nrf-input-error {
@@ -197,23 +204,33 @@
   font-size: 13px;
 }
 
-.nrf-chem-row-1 {
+.nrf-chem-row {
   display: grid;
-  grid-template-columns: 1fr;
+  gap: 8px;
+  align-items: start;
+}
+
+.nrf-chem-row-1 {
+  grid-template-columns: 2fr 1fr;
 }
 
 .nrf-chem-row-2 {
-  display: grid;
-  grid-template-columns: 1fr 80px 80px 1fr;
-  gap: 8px;
-  align-items: start;
+  grid-template-columns: 1fr 1fr 2fr;
 }
 
 .nrf-chem-row-3 {
-  display: grid;
-  grid-template-columns: 1fr 80px 80px 100px 38px;
-  gap: 8px;
-  align-items: start;
+  grid-template-columns: 1fr 1fr auto;
+  align-items: end;
+}
+
+.nrf-chem-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nrf-chem-label {
+  display: none;
 }
 
 /* ── App entry container ── */
@@ -238,30 +255,40 @@
   font-size: 13px;
 }
 
-.nrf-app-row-1 {
+.nrf-app-row {
   display: grid;
-  grid-template-columns: 1fr;
+  gap: 8px;
+  align-items: start;
+}
+
+.nrf-app-row-1 {
+  grid-template-columns: 2fr 1fr;
 }
 
 .nrf-app-row-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 8px;
-  align-items: center;
+  grid-template-columns: 1fr 1fr 2fr;
 }
 
 .nrf-app-row-3 {
-  display: grid;
-  grid-template-columns: 80px 100px 38px;
-  gap: 8px;
-  align-items: start;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+}
+
+.nrf-app-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nrf-app-label {
+  display: none;
 }
 
 /* ── Damaged entry container ── */
 .nrf-dmg-entry {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   background: #F8F9FC;
   border: 0.5px solid #e2e8f0;
   border-radius: 10px;
@@ -279,18 +306,32 @@
   font-size: 13px;
 }
 
-.nrf-dmg-row-1 {
-  display: grid;
-  grid-template-columns: 1fr 36px;
-  gap: 8px;
-  align-items: start;
+.nrf-dmg-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.nrf-dmg-row-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+.nrf-dmg-field-row {
+  display: flex;
+  align-items: flex-end;
   gap: 8px;
-  align-items: start;
+}
+
+.nrf-dmg-field-row .nrf-dmg-field {
+  flex: 1;
+  min-width: 0;
+}
+
+.nrf-dmg-label {
+  display: block;
+}
+
+.nrf-dmg-entry .nrf-del-btn {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  align-self: flex-end;
 }
 
 /* ── Inline labels ── */
@@ -309,6 +350,45 @@
   white-space: nowrap;
 }
 
+/* Composite field — two controls in one bordered container */
+.nrf-composite {
+  display: flex;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  overflow: hidden;
+  height: 42px;
+}
+
+.nrf-composite .nrf-input {
+  border: none;
+  border-radius: 0;
+  height: 100%;
+}
+
+.nrf-composite .nrf-input:focus {
+  box-shadow: none;
+}
+
+.nrf-composite select.nrf-input {
+  border: none;
+  border-right: 1px solid #d1d5db;
+  border-radius: 0;
+  padding: 0 6px;
+  cursor: pointer;
+  appearance: auto;
+  font-size: 13px;
+  width: 82px;
+  flex-shrink: 0;
+}
+
+:root.dark-mode .nrf-composite {
+  border-color: #4B5563;
+}
+
+:root.dark-mode .nrf-composite select.nrf-input {
+  border-color: #4B5563;
+}
+
 /* Autocomplete */
 .nrf-autocomplete {
   position: relative;
@@ -320,7 +400,7 @@
   top: 100%;
   left: 0;
   width: 100%;
-  min-width: 240px;
+  min-width: 0;
   background: #fff;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
@@ -368,7 +448,7 @@
 /* Supplier Details Row */
 .nrf-supplier-row {
   display: grid;
-  grid-template-columns: 1fr 140px 1fr 1fr;
+  grid-template-columns: 1fr auto 1fr;
   gap: 10px;
   align-items: start;
 }
@@ -613,7 +693,6 @@
   }
 
   .nrf-card {
-    padding: 18px;
     gap: 18px;
   }
 
@@ -640,82 +719,114 @@
     display: none;
   }
 
-  /* ===== Mobile: entry containers flex-wrap ===== */
+  /* Stock form — cancel + submit same row on mobile */
+  .nrf-stock-form .nrf-action-row {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 12px;
+  }
+
+  .nrf-stock-form .nrf-spacer {
+    display: none;
+  }
+
+  .nrf-stock-form .nrf-btn {
+    flex: 1;
+    min-width: 0;
+    width: auto;
+    padding: 0 14px;
+    font-size: 13px;
+  }
+
+  /* ===== Mobile: entry containers ===== */
   .nrf-chem-entry,
-  .nrf-app-entry,
-  .nrf-dmg-entry {
+  .nrf-app-entry {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     gap: 8px;
     background: #F8F9FC;
     border: 0.5px solid #e2e8f0;
     border-radius: 10px;
     padding: 12px;
     margin-bottom: 8px;
-    align-items: start;
+    align-items: stretch;
   }
 
   :root.dark-mode .nrf-chem-entry,
-  :root.dark-mode .nrf-app-entry,
-  :root.dark-mode .nrf-dmg-entry {
+  :root.dark-mode .nrf-app-entry {
     background: #0f172a;
     border-color: #334155;
   }
 
-  /* Override grid layouts on mobile — use flex */
-  .nrf-chem-row-1,
-  .nrf-chem-row-2,
-  .nrf-chem-row-3,
-  .nrf-app-row-1,
-  .nrf-app-row-2,
-  .nrf-app-row-3,
-  .nrf-dmg-row-1,
-  .nrf-dmg-row-2 {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    width: 100%;
+  /* Chem rows on mobile */
+  .nrf-chem-row-1 {
+    grid-template-columns: 1fr;
   }
 
-  /* Name / autocomplete — full width in any row */
+  .nrf-chem-row-2 {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .nrf-chem-row-3 {
+    grid-template-columns: 1fr 1fr auto;
+  }
+
+  /* App rows on mobile */
+  .nrf-app-row-1 {
+    grid-template-columns: 1fr;
+  }
+
+  .nrf-app-row-2 {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .nrf-app-row-3 {
+    grid-template-columns: 1fr auto;
+    align-items: end;
+  }
+
+  /* Make field — full row width on mobile */
+  .nrf-chem-row-2 .nrf-autocomplete,
+  .nrf-app-row-2 .nrf-autocomplete {
+    grid-column: 1 / -1;
+  }
+
+  /* Show labels on mobile */
+  .nrf-chem-label,
+  .nrf-app-label {
+    display: block;
+  }
+
+  /* Autocomplete — full width on mobile */
   .nrf-chem-entry .nrf-autocomplete,
-  .nrf-app-entry .nrf-autocomplete,
-  .nrf-dmg-entry .nrf-autocomplete {
+  .nrf-app-entry .nrf-autocomplete {
     width: 100%;
-  }
-
-  /* Inputs side by side */
-  .nrf-chem-entry input,
-  .nrf-chem-entry select,
-  .nrf-app-entry input,
-  .nrf-app-entry select,
-  .nrf-dmg-entry input {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .nrf-chem-entry .nrf-labeled-field,
-  .nrf-app-entry .nrf-labeled-field,
-  .nrf-dmg-entry .nrf-labeled-field {
-    flex: 1;
-    min-width: 0;
   }
 
   .nrf-chem-entry .nrf-input,
-  .nrf-app-entry .nrf-input,
-  .nrf-dmg-entry .nrf-input {
+  .nrf-app-entry .nrf-input {
     height: 40px;
     font-size: 14px;
   }
 
-  /* Delete button — full width at bottom */
-  .nrf-chem-entry .nrf-del-btn,
-  .nrf-app-entry .nrf-del-btn,
-  .nrf-dmg-entry .nrf-del-btn {
-    width: 100%;
+  /* Composite on mobile */
+  .nrf-composite {
     height: 40px;
+  }
+
+  .nrf-composite select.nrf-input {
+    width: 72px;
+    font-size: 12px;
+  }
+
+  /* Delete button — compact on mobile, sits in same row as total price */
+  .nrf-chem-entry .nrf-del-btn,
+  .nrf-app-entry .nrf-del-btn {
+    width: 36px;
+    height: 36px;
     border-radius: 7px;
-    margin-top: 2px;
+    flex-shrink: 0;
+    align-self: flex-end;
   }
 
   .nrf-incident-row {
@@ -723,10 +834,30 @@
   }
 
   .nrf-suggestions {
-    min-width: 200px;
-    position: fixed;
-    left: 12px !important;
-    right: 12px !important;
+    min-width: 0;
+  }
+
+  .nrf-dmg-entry .nrf-input {
+    height: 40px;
+    font-size: 14px;
+  }
+
+  /* Damaged entry action row — side by side on mobile */
+  .nrf-dmg-form .nrf-action-row {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 12px;
+  }
+
+  .nrf-dmg-form .nrf-btn {
+    flex: 1;
+    min-width: 0;
     width: auto;
+    padding: 0 14px;
+    font-size: 13px;
+  }
+
+  .nrf-dmg-form .nrf-spacer {
+    display: none;
   }
 }

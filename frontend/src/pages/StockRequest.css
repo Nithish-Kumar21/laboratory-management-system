@@ -3,7 +3,6 @@
   font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
   background: #F4F6F9;
   min-height: 100%;
-  padding: 16px;
   padding-bottom: 76px;
   position: relative;
 }
@@ -1238,18 +1237,24 @@
 }
 
 .nrf-card {
-  background: #fff;
-  border-radius: 12px;
-  border: 0.5px solid #e2e8f0;
-  padding: 28px;
   display: flex;
   flex-direction: column;
   gap: 22px;
 }
 
 :root.dark-mode .nrf-card {
-  background: #1e293b;
-  border-color: #334155;
+  /* Card styling removed — form sits on page background */
+}
+
+.nrf-divider {
+  width: 100%;
+  height: 1px;
+  background: #e2e8f0;
+  margin: 4px 0;
+}
+
+:root.dark-mode .nrf-divider {
+  background: #334155;
 }
 
 /* Auto row */
@@ -1593,10 +1598,9 @@
 }
 
 .nrf-chem-cols {
-  display: grid;
-  grid-template-columns: 1fr 140px 36px;
+  display: flex;
+  align-items: flex-end;
   gap: 8px;
-  align-items: center;
   padding: 0 2px;
 }
 
@@ -1608,11 +1612,35 @@
   text-transform: uppercase;
 }
 
-.nrf-chem-row {
-  display: grid;
-  grid-template-columns: 1fr 140px 36px;
+.cr-page .nrf-chem-row {
+  display: flex;
+  align-items: center;
   gap: 8px;
-  align-items: start;
+}
+
+.cr-page .nrf-chem-field {
+  flex: 2;
+}
+
+.cr-page .nrf-chem-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.cr-page .nrf-chem-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.nrf-qty-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .nrf-chem-select {
@@ -1646,6 +1674,8 @@
 }
 
 .nrf-qty-wrap {
+  flex: 1;
+  min-width: 0;
   height: 40px;
   border: 1px solid #d1d5db;
   border-radius: 7px;
@@ -1880,7 +1910,6 @@
 /* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
   .nrf-card {
-    padding: 16px;
     gap: 16px;
   }
 
@@ -1888,22 +1917,26 @@
     grid-template-columns: 1fr;
   }
 
-  .nrf-chem-cols {
-    grid-template-columns: 1fr 110px 36px;
-    gap: 6px;
+  .cr-page .nrf-chem-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
   }
 
-  .nrf-chem-row {
-    grid-template-columns: 1fr 110px 36px;
-    gap: 6px;
+  .cr-page .nrf-chem-field {
+    flex: none;
   }
 
-  .nrf-chem-input {
+  .cr-page .nrf-chem-actions {
+    flex: none;
+  }
+
+  .cr-page .nrf-chem-input {
     font-size: 12px;
   }
 
   .nrf-action-row {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
   }
 
   .nrf-btn {
