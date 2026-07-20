@@ -1594,7 +1594,7 @@
 
 .nrf-chem-cols {
   display: grid;
-  grid-template-columns: 1fr 140px 36px;
+  grid-template-columns: 1fr 100px 70px 36px;
   gap: 8px;
   align-items: center;
   padding: 0 2px;
@@ -1610,7 +1610,7 @@
 
 .nrf-chem-row {
   display: grid;
-  grid-template-columns: 1fr 140px 36px;
+  grid-template-columns: 1fr 100px 70px 36px;
   gap: 8px;
   align-items: start;
 }
@@ -1681,6 +1681,24 @@
 
 :root.dark-mode .nrf-qty-unit {
   border-color: #4B5563;
+}
+
+.nrf-unit-select {
+  height: 40px;
+  border: 1px solid #d1d5db;
+  border-radius: 7px;
+  padding: 0 6px;
+  font-size: 13px;
+  color: var(--text-main);
+  background: #fff;
+  outline: none;
+  cursor: pointer;
+}
+
+:root.dark-mode .nrf-unit-select {
+  background: #1e293b;
+  border-color: #4B5563;
+  color: var(--text-main);
 }
 
 .nrf-del-btn {
@@ -1889,13 +1907,19 @@
   }
 
   .nrf-chem-cols {
-    grid-template-columns: 1fr 110px 36px;
+    grid-template-columns: 1fr 80px 60px 32px;
     gap: 6px;
   }
 
   .nrf-chem-row {
-    grid-template-columns: 1fr 110px 36px;
+    grid-template-columns: 1fr 80px 60px 32px;
     gap: 6px;
+  }
+
+  .nrf-unit-select {
+    height: 36px;
+    font-size: 12px;
+    padding: 0 4px;
   }
 
   .nrf-chem-input {

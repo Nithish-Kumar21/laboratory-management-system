@@ -7,6 +7,7 @@ from inventory.models import AvailableChemical
 class ChemicalItemWriteSerializer(serializers.Serializer):
     chemical_name = serializers.CharField(max_length=64)
     quantity = serializers.DecimalField(max_digits=10, decimal_places=2)
+    unit = serializers.CharField(max_length=2, required=False, default='ml')
 
     def validate_quantity(self, value):
         if value <= 0:
@@ -36,7 +37,7 @@ class StockRequestCreateSerializer(serializers.ModelSerializer):
         model = StockRequest
         fields = [
             'id', 'request_id', 'class_name', 'reason', 'date',
-            'day_order', 'hour', 'purpose_type', 'experiment_name', 'student_name',
+            'day_order', 'hour', 'purpose_type', 'venue', 'experiment_name', 'student_name',
             'chemical_items', 'status', 'created_at'
         ]
         read_only_fields = ['id', 'request_id', 'created_at']
@@ -96,11 +97,12 @@ class StockRequestCreateSerializer(serializers.ModelSerializer):
 
         for item_data in chemical_items_data:
             chem_name = item_data.get('chemical_name')
-            try:
-                chem = AvailableChemical.objects.get(chemical_name=chem_name)
-                item_data['unit'] = chem.unit
-            except AvailableChemical.DoesNotExist:
-                pass
+            if not item_data.get('unit'):
+                try:
+                    chem = AvailableChemical.objects.get(chemical_name=chem_name)
+                    item_data['unit'] = chem.unit
+                except AvailableChemical.DoesNotExist:
+                    item_data['unit'] = 'ml'
             StockRequestChemicalItem.objects.create(stock_request=stock_request, **item_data)
 
         return stock_request
@@ -129,11 +131,12 @@ class StockRequestUpdateSerializer(StockRequestCreateSerializer):
             # Create new items
             for item_data in chemical_items_data:
                 chem_name = item_data.get('chemical_name')
-                try:
-                    chem = AvailableChemical.objects.get(chemical_name=chem_name)
-                    item_data['unit'] = chem.unit
-                except AvailableChemical.DoesNotExist:
-                    pass
+                if not item_data.get('unit'):
+                    try:
+                        chem = AvailableChemical.objects.get(chemical_name=chem_name)
+                        item_data['unit'] = chem.unit
+                    except AvailableChemical.DoesNotExist:
+                        item_data['unit'] = 'ml'
                 StockRequestChemicalItem.objects.create(stock_request=instance, **item_data)
 
         return instance
@@ -148,7 +151,7 @@ class StockRequestListSerializer(serializers.ModelSerializer):
         model = StockRequest
         fields = [
             'id', 'request_id', 'class_name', 'status', 'reason', 'date', 'created_at',
-            'day_order', 'hour', 'purpose_type', 'experiment_name', 'student_name',
+            'day_order', 'hour', 'purpose_type', 'venue', 'experiment_name', 'student_name',
             'requested_by_name', 'requested_by_id',
             'chemical_items',
             'issued_at', 'reported_at', 'completed_at',
@@ -170,7 +173,7 @@ class StockRequestDetailSerializer(serializers.ModelSerializer):
         model = StockRequest
         fields = [
             'id', 'request_id', 'class_name', 'status', 'reason', 'rejection_reason', 'created_at', 'date',
-            'day_order', 'hour', 'purpose_type', 'experiment_name', 'student_name',
+            'day_order', 'hour', 'purpose_type', 'venue', 'experiment_name', 'student_name',
             'requested_by_name', 'requested_by_id', 'requested_by',
             'chemical_items',
             'reviewed_at', 'reviewed_by_name',
@@ -219,7 +222,7 @@ class IssueRegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = IssueRegister
-        fields = ['ir_id', 'request_code', 'stock_request_db_id', 'staff_name', 'class_field', 'date', 'status', 'chemicals', 'source_request']
+        fields = ['ir_id', 'request_code', 'stock_request_db_id', 'staff_name', 'class_field', 'date', 'status', 'venue', 'chemicals', 'source_request']
 
     def get_source_request(self, obj):
         if not obj.stock_request_db_id:
@@ -230,6 +233,7 @@ class IssueRegisterSerializer(serializers.ModelSerializer):
                 'day_order': sr.day_order,
                 'hour': sr.hour,
                 'purpose_type': sr.purpose_type,
+                'venue': sr.venue,
                 'experiment_name': sr.experiment_name,
                 'student_name': sr.student_name,
             }

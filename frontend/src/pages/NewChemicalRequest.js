@@ -12,6 +12,13 @@ const ALL_CLASS_OPTIONS = [
   'II M.Sc Chemistry'
 ];
 
+const VENUE_OPTIONS = [
+  'B.Sc Chemistry Laboratory',
+  'M.Sc Chemistry Laboratory',
+  'Research Lab - Chemistry Dept',
+  'Allied Laboratory'
+];
+
 function NewChemicalRequest() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -25,12 +32,13 @@ function NewChemicalRequest() {
     day_order: 'I',
     hour: [],
     purpose_type: 'practical_lab',
+    venue: VENUE_OPTIONS[0],
     experiment_name: '',
     student_name: ''
   });
   const [hourOpen, setHourOpen] = useState(false);
   const hourRef = useRef(null);
-  const [chemicalItems, setChemicalItems] = useState([{ chemical_name: '', quantity: '' }]);
+  const [chemicalItems, setChemicalItems] = useState([{ chemical_name: '', quantity: '', unit: 'ml' }]);
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [availableChemicals, setAvailableChemicals] = useState([]);
@@ -57,6 +65,7 @@ function NewChemicalRequest() {
           day_order: data.day_order || 'I',
           hour: data.hour || [],
           purpose_type: data.purpose_type || 'practical_lab',
+          venue: data.venue || VENUE_OPTIONS[0],
           experiment_name: data.experiment_name || '',
           student_name: data.student_name || '',
         });
@@ -64,6 +73,7 @@ function NewChemicalRequest() {
           setChemicalItems(data.chemical_items.map(item => ({
             chemical_name: item.chemical_name,
             quantity: item.quantity,
+            unit: item.unit || 'ml',
           })));
         }
       })
@@ -82,7 +92,7 @@ function NewChemicalRequest() {
   }, []);
 
   const addChemicalRow = () => {
-    setChemicalItems([...chemicalItems, { chemical_name: '', quantity: '' }]);
+    setChemicalItems([...chemicalItems, { chemical_name: '', quantity: '', unit: 'ml' }]);
   };
 
   const removeChemicalRow = (i) => {
@@ -103,6 +113,7 @@ function NewChemicalRequest() {
     if (formData.date < today) newErrors.date = 'Date cannot be in the past.';
     if (!formData.day_order) newErrors.day_order = 'Required';
     if (!formData.hour.length) newErrors.hour = 'Select at least one hour';
+    if (!formData.venue) newErrors.venue = 'Required';
     if (!formData.purpose_type) newErrors.purpose_type = 'Select a purpose type';
     if (formData.purpose_type && !formData.experiment_name?.trim()) newErrors.experiment_name = 'Required';
     if (formData.purpose_type === 'research_project' && !formData.student_name?.trim()) newErrors.student_name = 'Required';
@@ -130,12 +141,14 @@ function NewChemicalRequest() {
       day_order: formData.day_order,
       hour: formData.hour,
       purpose_type: formData.purpose_type,
+      venue: formData.venue,
       experiment_name: formData.experiment_name,
       student_name: formData.purpose_type === 'practical_lab' ? '' : formData.student_name,
       status: directSubmit ? 'pending' : 'draft',
       chemical_items: chemicalItems.map(item => ({
         chemical_name: item.chemical_name.trim(),
         quantity: parseFloat(item.quantity),
+        unit: item.unit || 'ml',
       })),
     };
     try {
@@ -281,6 +294,23 @@ function NewChemicalRequest() {
           </div>
         </div>
 
+        <div className="nrf-field">
+          <label className="nrf-field-label">Venue</label>
+          <div className="nrf-field-control">
+            <select
+              value={formData.venue}
+              onChange={(e) => setFormData({ ...formData, venue: e.target.value })}
+              className={`nrf-select ${errors.venue ? 'nrf-error' : ''}`}
+            >
+              {VENUE_OPTIONS.map(opt => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
+            <FaChevronDown className="nrf-chevron" />
+          </div>
+          {errors.venue && <span className="nrf-field-err">{errors.venue}</span>}
+        </div>
+
         <div className="nrf-chem-section">
           <div className="nrf-chem-header">
             <div className="nrf-chem-title">
@@ -294,6 +324,7 @@ function NewChemicalRequest() {
           <div className="nrf-chem-cols">
             <span>Chemical</span>
             <span>QTY</span>
+            <span>Unit</span>
             <span></span>
           </div>
 
@@ -324,7 +355,7 @@ function NewChemicalRequest() {
                         <li
                           key={idx}
                           className="nrf-suggestion-item"
-                          onMouseDown={() => { updateChemicalItem(i, 'chemical_name', c.chemical_name); setShowSuggestions({}); }}
+                          onMouseDown={() => { updateChemicalItem(i, 'chemical_name', c.chemical_name); updateChemicalItem(i, 'unit', c.unit || 'ml'); setShowSuggestions({}); }}
                         >
                           <span>{c.chemical_name}</span>
                           <span className="nrf-stock">Stock: {c.quantity} {c.unit}</span>
@@ -346,8 +377,15 @@ function NewChemicalRequest() {
                     updateChemicalItem(i, 'quantity', v === '' ? '' : v);
                   }}
                 />
-                <span className="nrf-qty-unit">{availableChemicals.find(c => c.chemical_name === item.chemical_name)?.unit}</span>
               </div>
+              <select
+                className="nrf-unit-select"
+                value={item.unit || 'ml'}
+                onChange={(e) => updateChemicalItem(i, 'unit', e.target.value)}
+              >
+                <option value="ml">mL</option>
+                <option value="g">g</option>
+              </select>
               <button
                 type="button"
                 className="nrf-del-btn"

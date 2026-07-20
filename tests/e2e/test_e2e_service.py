@@ -7,6 +7,8 @@ Covers:
   - Storekeeper explicitly completes an entry
   - Complete rejected when items still have remaining quantity
   - HOD read-only visibility
+  - Company/Vendor fields visibility and submission
+  - Inventory stock changes after service entry create + action lifecycle
 
 Requires:
   - Django backend running on http://localhost:8000
@@ -95,6 +97,22 @@ def _action_item(entry_id, item_id, action_type, quantity, token=None):
     return r.json()
 
 
+def _get_inventory_count(apparatus_name, token=None):
+    """Return current available_quantity_pieces for a given apparatus."""
+    if token is None:
+        token = get_token("storekeeper")
+    headers = {"Authorization": f"Bearer {token}"}
+    r = requests.get(
+        f"{BASE_API}/available_apparatus/", headers=headers
+    )
+    assert r.status_code == 200
+    data = r.json()
+    apps = data if isinstance(data, list) else data.get("results", [])
+    match = next((a for a in apps if a["apparatus_name"] == apparatus_name), None)
+    assert match is not None, f"Apparatus '{apparatus_name}' not found in inventory"
+    return int(match["available_quantity_pieces"])
+
+
 # ── Test: Form renders correctly ──
 
 async def test_service_entry_form_visible(async_page):
@@ -119,10 +137,17 @@ async def test_service_entry_form_visible(async_page):
 
     # Card 2 — Editable fields present
     assert await async_page.get_by_placeholder("Name of service person").is_visible()
-    assert await async_page.get_by_placeholder("10-digit number").is_visible()
+    # Service Person contact (first "10-digit number" — inside the service person section)
+    assert await async_page.get_by_placeholder("10-digit number").first.is_visible()
     assert await async_page.get_by_placeholder("service@example.com").is_visible()
     assert await async_page.get_by_placeholder("Search apparatus...").is_visible()
     assert await async_page.get_by_role("button", name="Send for Service").is_visible()
+
+    # Company / Vendor Information section — all optional fields present
+    assert await async_page.get_by_placeholder("Name of company").is_visible()
+    # Company contact (second "10-digit number")
+    assert await async_page.get_by_placeholder("10-digit number").nth(1).is_visible()
+    assert await async_page.get_by_placeholder("Company address").is_visible()
 
 
 # ── Test: Create service entry — happy path ──
@@ -138,7 +163,7 @@ async def test_service_entry_create_happy_path(async_page):
 
     # Fill Card 2 fields
     await async_page.get_by_placeholder("Name of service person").fill("E2E Happy Path")
-    await async_page.get_by_placeholder("10-digit number").fill("9988776655")
+    await async_page.get_by_placeholder("10-digit number").first.fill("9988776655")
     await async_page.get_by_placeholder("service@example.com").fill("happy@e2e.test")
 
     # Tentative Delivery Date (second type=date input)
@@ -214,7 +239,7 @@ async def test_service_entry_validation_contact(async_page):
     await async_page.get_by_placeholder("Name of service person").fill("E2E Validation Contact")
 
     # Enter fewer than 10 digits — the input has pattern="[0-9]{10}" + required
-    await async_page.get_by_placeholder("10-digit number").fill("12345")
+    await async_page.get_by_placeholder("10-digit number").first.fill("12345")
 
     # Submit
     submit_btn = async_page.get_by_role("button", name="Send for Service")
@@ -250,7 +275,7 @@ async def test_service_entry_validation_quantity(async_page):
     await async_page.wait_for_load_state("networkidle")
 
     await async_page.get_by_placeholder("Name of service person").fill("E2E Validation Qty")
-    await async_page.get_by_placeholder("10-digit number").fill("9988776655")
+    await async_page.get_by_placeholder("10-digit number").first.fill("9988776655")
 
     # Add apparatus with quantity > available stock
     app_input = async_page.locator("input[placeholder='Search apparatus...']").first
@@ -343,7 +368,14 @@ async def test_service_entry_complete(async_page):
     # Create entry with 1 item qty=3
     entry = _create_service_entry([(apps[0], 3)])
     entry_id = entry["id"]
-    item_id = entry["items"][0]["id"]
+
+    # Fetch detail to get item IDs (create response doesn't include them)
+    token = get_token("storekeeper")
+    headers = {"Authorization": f"Bearer {token}"}
+    r = requests.get(f"{BASE_API}/service-entries/{entry_id}/", headers=headers)
+    assert r.status_code == 200
+    detail = r.json()
+    item_id = detail["items"][0]["id"]
 
     # Action the full quantity so remaining = 0
     _action_item(entry_id, item_id, "repaired", 3)
@@ -389,7 +421,13 @@ async def test_service_entry_complete_rejects_partial(async_page):
     # Create entry with 2 items, each qty=2
     entry = _create_service_entry([(apps[0], 2), (apps[1], 2)])
     entry_id = entry["id"]
-    items = entry["items"]
+
+    # Fetch detail to get item IDs
+    token = get_token("storekeeper")
+    headers = {"Authorization": f"Bearer {token}"}
+    r = requests.get(f"{BASE_API}/service-entries/{entry_id}/", headers=headers)
+    assert r.status_code == 200
+    items = r.json()["items"]
 
     # Action only the first item to zero; leave second with qty_remaining=2
     _action_item(entry_id, items[0]["id"], "repaired", 2)
@@ -434,7 +472,7 @@ async def test_service_entry_hod_read_only(async_page):
     await async_page.wait_for_timeout(1000)
 
     # HOD sees detail card with service code
-    assert await async_page.locator(".sd-card").is_visible()
+    assert await async_page.locator(".sd-card").first.is_visible()
     assert await async_page.locator(f"text={entry['service_code']}").is_visible()
 
     # HOD has no action buttons
@@ -473,3 +511,145 @@ async def test_service_entry_hod_read_only(async_page):
     entries = data if isinstance(data, list) else data.get("results", [])
     ids = [e["id"] for e in entries]
     assert entry_id in ids, "HOD cannot see service entries in list"
+
+
+# ── Test: Company/Vendor fields — submit with company info via API ──
+
+async def test_service_entry_with_company_fields(async_page):
+    apps = _get_apparatus(min_stock=5, min_count=1)
+    if not apps:
+        pytest.skip("Need at least 1 apparatus with stock >= 5")
+
+    token = get_token("storekeeper")
+    headers = {"Authorization": f"Bearer {token}"}
+    payload = {
+        "service_person_name": "E2E Company Test",
+        "contact_country_code": "+91",
+        "contact_number": "9988776655",
+        "email": "company@e2e.test",
+        "deliver_by_date": "2026-07-25",
+        "company_name": "Acme Corp",
+        "company_address": "123 Industrial Area, Chennai",
+        "company_contact_country_code": "+91",
+        "company_contact_number": "1122334455",
+        "items": [{"apparatus_name": apps[0], "quantity": 2}],
+    }
+    r = requests.post(f"{BASE_API}/service-entries/", json=payload, headers=headers)
+    assert r.status_code == 201, f"Create with company fields failed: {r.text}"
+    entry = r.json()
+    assert entry["company_name"] == "Acme Corp"
+    assert entry["company_address"] == "123 Industrial Area, Chennai"
+    assert entry["company_contact_country_code"] == "+91"
+    assert entry["company_contact_number"] == "1122334455"
+
+    # Verify detail endpoint returns company fields
+    r = requests.get(f"{BASE_API}/service-entries/{entry['id']}/", headers=headers)
+    assert r.status_code == 200
+    detail = r.json()
+    assert detail["company_name"] == "Acme Corp"
+    assert detail["company_contact_number"] == "1122334455"
+
+    # Verify the form renders company fields on the detail page
+    await login_as(async_page, "storekeeper")
+    await async_page.goto(f"{BASE_URL}/service-entry/{entry['id']}")
+    await async_page.wait_for_load_state("networkidle")
+    await async_page.wait_for_timeout(1000)
+    assert await async_page.locator("text=Acme Corp").is_visible()
+    assert await async_page.locator("text=123 Industrial Area, Chennai").is_visible()
+
+
+# ── Test: Company fields — submit without company info still works ──
+
+async def test_service_entry_without_company_fields(async_page):
+    apps = _get_apparatus(min_stock=5, min_count=1)
+    if not apps:
+        pytest.skip("Need at least 1 apparatus with stock >= 5")
+
+    token = get_token("storekeeper")
+    headers = {"Authorization": f"Bearer {token}"}
+    payload = {
+        "service_person_name": "E2E No Company",
+        "contact_country_code": "+91",
+        "contact_number": "9988776655",
+        "items": [{"apparatus_name": apps[0], "quantity": 1}],
+    }
+    r = requests.post(f"{BASE_API}/service-entries/", json=payload, headers=headers)
+    assert r.status_code == 201, f"Create without company fields failed: {r.text}"
+    entry = r.json()
+    assert entry["company_name"] is None
+    assert entry["company_address"] is None
+    assert entry["company_contact_number"] is None
+
+
+# ── Test: Company contact validation — 10-digit rule enforced ──
+
+async def test_service_entry_company_contact_validation(async_page):
+    apps = _get_apparatus(min_stock=5, min_count=1)
+    if not apps:
+        pytest.skip("Need at least 1 apparatus with stock >= 5")
+
+    token = get_token("storekeeper")
+    headers = {"Authorization": f"Bearer {token}"}
+    payload = {
+        "service_person_name": "E2E Company Validation",
+        "contact_country_code": "+91",
+        "contact_number": "9988776655",
+        "company_name": "Bad Corp",
+        "company_contact_country_code": "+91",
+        "company_contact_number": "12345",  # only 5 digits — should fail
+        "items": [{"apparatus_name": apps[0], "quantity": 1}],
+    }
+    r = requests.post(f"{BASE_API}/service-entries/", json=payload, headers=headers)
+    assert r.status_code == 400, f"Expected 400 for invalid company contact, got {r.status_code}"
+    assert "company_contact_number" in r.json() or "error" in r.json()
+
+
+# ── Test: Inventory changes — create decrements stock, repair restores, damage does not ──
+
+async def test_service_entry_inventory_changes():
+    apps = _get_apparatus(min_stock=10, min_count=1)
+    if not apps:
+        pytest.skip("Need at least 1 apparatus with stock >= 10")
+
+    app_name = apps[0]
+    qty_sent = 4
+    qty_repaired = 3
+    qty_damaged = 1
+
+    token = get_token("storekeeper")
+    stock_before = _get_inventory_count(app_name, token)
+
+    # Create service entry — should decrement inventory by qty_sent
+    entry = _create_service_entry([(app_name, qty_sent)], token)
+    entry_id = entry["id"]
+
+    # Fetch detail to get item IDs
+    headers = {"Authorization": f"Bearer {token}"}
+    r = requests.get(f"{BASE_API}/service-entries/{entry_id}/", headers=headers)
+    assert r.status_code == 200
+    item_id = r.json()["items"][0]["id"]
+
+    stock_after_create = _get_inventory_count(app_name, token)
+    assert stock_after_create == stock_before - qty_sent, (
+        f"After create: expected {stock_before - qty_sent}, got {stock_after_create}"
+    )
+
+    # Action: repair 3 items — should restore 3 to available stock
+    _action_item(entry_id, item_id, "repaired", qty_repaired, token)
+    stock_after_repair = _get_inventory_count(app_name, token)
+    assert stock_after_repair == stock_after_create + qty_repaired, (
+        f"After repair: expected {stock_after_create + qty_repaired}, got {stock_after_repair}"
+    )
+
+    # Action: damage 1 item — should NOT change available stock
+    _action_item(entry_id, item_id, "damaged", qty_damaged, token)
+    stock_after_damage = _get_inventory_count(app_name, token)
+    assert stock_after_damage == stock_after_repair, (
+        f"After damage: expected {stock_after_repair} (unchanged), got {stock_after_damage}"
+    )
+
+    # Verify final stock matches expectation
+    expected_final = stock_before - qty_sent + qty_repaired
+    assert stock_after_damage == expected_final, (
+        f"Final stock: expected {expected_final}, got {stock_after_damage}"
+    )

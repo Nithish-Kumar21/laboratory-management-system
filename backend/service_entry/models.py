@@ -12,6 +12,10 @@ class ServiceEntry(models.Model):
     date = models.DateField()
     status = models.CharField(max_length=20)
     completed_at = models.DateTimeField(blank=True, null=True)
+    company_name = models.CharField(max_length=128, null=True, blank=True)
+    company_address = models.TextField(null=True, blank=True)
+    company_contact_country_code = models.CharField(max_length=5, null=True, blank=True)
+    company_contact_number = models.CharField(max_length=10, null=True, blank=True)
 
     class Meta:
         app_label = 'service_entry'

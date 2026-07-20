@@ -39,6 +39,13 @@ class StockRequest(models.Model):
         ('research_project', 'Research/Project'),
     ]
 
+    VENUE_CHOICES = [
+        ('B.Sc Chemistry Laboratory', 'B.Sc Chemistry Laboratory'),
+        ('M.Sc Chemistry Laboratory', 'M.Sc Chemistry Laboratory'),
+        ('Research Lab - Chemistry Dept', 'Research Lab - Chemistry Dept'),
+        ('Allied Laboratory', 'Allied Laboratory'),
+    ]
+
     request_id = models.CharField(max_length=20, unique=True, editable=False)
     requested_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -50,6 +57,7 @@ class StockRequest(models.Model):
     day_order = models.CharField(max_length=5, choices=DAY_ORDER_CHOICES)
     hour = ArrayField(models.IntegerField())
     purpose_type = models.CharField(max_length=20, choices=PURPOSE_TYPE_CHOICES)
+    venue = models.CharField(max_length=50, choices=VENUE_CHOICES)
     experiment_name = models.TextField()
     student_name = models.CharField(max_length=100, null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
@@ -161,6 +169,7 @@ class IssueRegister(models.Model):
     class_field = models.CharField(db_column='class', max_length=50)
     date = models.DateField()
     status = models.CharField(max_length=20)
+    venue = models.CharField(max_length=50, null=True, blank=True)
 
     class Meta:
         managed = False

@@ -33,6 +33,8 @@ class ServiceEntryDetailSerializer(serializers.ModelSerializer):
             'id', 'service_code', 'storekeeper', 'service_person_name',
             'contact_country_code', 'contact_number', 'email',
             'deliver_by_date', 'date', 'status', 'completed_at', 'items',
+            'company_name', 'company_address',
+            'company_contact_country_code', 'company_contact_number',
         ]
 
 
@@ -71,19 +73,37 @@ class ServiceEntryCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = ServiceEntry
         fields = [
-            'service_person_name', 'contact_country_code', 'contact_number',
-            'email', 'deliver_by_date', 'items',
+            'id', 'service_code', 'service_person_name', 'contact_country_code',
+            'contact_number', 'email', 'deliver_by_date', 'items',
+            'company_name', 'company_address',
+            'company_contact_country_code', 'company_contact_number',
         ]
+        read_only_fields = ['id', 'service_code']
 
     def validate_contact_number(self, value):
         if not value.isdigit() or len(value) != 10:
             raise serializers.ValidationError("Contact number must be exactly 10 digits")
         return value
 
+    def validate_company_contact_number(self, value):
+        if value and (not value.isdigit() or len(value) != 10):
+            raise serializers.ValidationError("Company contact number must be exactly 10 digits")
+        return value
+
     def validate(self, data):
         items = data.get('items', [])
         if not items:
             raise serializers.ValidationError("At least one apparatus item must be added")
+        company_number = data.get('company_contact_number')
+        company_code = data.get('company_contact_country_code')
+        if company_number and not company_code:
+            raise serializers.ValidationError(
+                {"company_contact_country_code": "Country code is required when company contact number is provided"}
+            )
+        if company_code and not company_number:
+            raise serializers.ValidationError(
+                {"company_contact_number": "Contact number is required when company country code is provided"}
+            )
         return data
 
     def create(self, validated_data):

@@ -356,6 +356,10 @@ function StockRequestDetail() {
                                 <div className="sd-meta-label">Hour</div>
                                 <div className="sd-meta-value">{request.hour?.length ? request.hour.sort((a,b)=>a-b).join(', ') : '-'}</div>
                             </div>
+                            <div className="sd-meta-item">
+                                <div className="sd-meta-label">Venue</div>
+                                <div className="sd-meta-value">{request.venue || '-'}</div>
+                            </div>
                         </div>
                     </div>
 
@@ -562,6 +566,10 @@ function StockRequestDetail() {
                         <div className="sd-meta-item">
                             <div className="sd-meta-label">Hour</div>
                             <div className="sd-meta-value">{request.hour?.length ? request.hour.sort((a,b)=>a-b).join(', ') : '-'}</div>
+                        </div>
+                        <div className="sd-meta-item">
+                            <div className="sd-meta-label">Venue</div>
+                            <div className="sd-meta-value">{request.venue || '-'}</div>
                         </div>
                     </div>
                 </div>
