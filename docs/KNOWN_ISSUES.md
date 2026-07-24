@@ -30,3 +30,19 @@
 
 - HOD-created user accounts have no forced password reset on first login
 - Flag for Phase 2 security hardening
+
+## 6. Permission Dialog False-Positive on Reject Request (FIXED)
+
+**Root cause**: Stale frontend user state — role stored in localStorage at login was never refreshed against the backend.
+
+**Mechanism**:
+- Frontend `AuthContext.checkAuth()` reads user role from `localStorage` (set at login) and never verifies it against the DB
+- `isHOD` derives from the stored `user.role` field: `user?.role === 'hod'`
+- If a user's role changes in the DB after login (e.g., HOD → staff), the frontend still shows `isHOD: true`, renders the Reject button, but the backend reads the current role from the DB and returns 403 "Only HOD can reject requests"
+- The 403 error is displayed in the ConfirmDialog, giving a false-positive permission error
+
+**Scope**: This same stale-state issue affected ALL role-gated backend actions (accept, reject, mark_as_issued, complete), not just reject. The reject action was the most visible because HODs are the primary reviewers.
+
+**Fix**: `AuthContext.checkAuth()` now calls `GET /users/me/` on app load and syncs the role if it differs from localStorage. See `frontend/src/context/AuthContext.js:30-41`.
+
+**Architecture note**: Roles are checked inline in each backend action method (`views.py:135,240,443,475`), not via a shared permission class. The `StockRequestPermission` class only enforces HTTP method per role, not action-level restrictions. This is a "duplicated" pattern — each action re-checks the role independently. A shared permission class could consolidate this, but the current approach is explicit and correct.

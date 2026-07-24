@@ -52,6 +52,7 @@ class StockRequest(models.Model):
     purpose_type = models.CharField(max_length=20, choices=PURPOSE_TYPE_CHOICES)
     experiment_name = models.TextField()
     student_name = models.CharField(max_length=100, null=True, blank=True)
+    venue = models.CharField(max_length=100, blank=True, default='B.Sc Chemistry Laboratory')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     reason = models.TextField(blank=True)
     rejection_reason = models.TextField(blank=True)

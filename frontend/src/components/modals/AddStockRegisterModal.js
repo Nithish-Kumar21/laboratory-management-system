@@ -14,8 +14,8 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess, standalone }) {
     remarks: '',
   });
 
-  const [chemicalItems, setChemicalItems] = useState([{ chemical_name: '', quantity: '', unit: 'ml', rate: '', make: '' }]);
-  const [apparatusItems, setApparatusItems] = useState([{ apparatus_name: '', quantity_pieces: '', rate: '', make: '' }]);
+  const [chemicalItems, setChemicalItems] = useState([]);
+  const [apparatusItems, setApparatusItems] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
   const [alertDialog, setAlertDialog] = useState({ open: false, message: '' });
@@ -126,8 +126,8 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess, standalone }) {
 
   const resetForm = () => {
     setFormData({ invoice_number: '', date: new Date().toISOString().split('T')[0], supplier_name: '', remarks: '' });
-    setChemicalItems([{ chemical_name: '', quantity: '', unit: 'ml', rate: '', make: '' }]);
-    setApparatusItems([{ apparatus_name: '', quantity_pieces: '', rate: '', make: '' }]);
+    setChemicalItems([]);
+    setApparatusItems([]);
     setErrors({});
   };
 
@@ -275,8 +275,8 @@ function AddStockRegisterModal({ isOpen, onClose, onSuccess, standalone }) {
       } else {
         onClose();
       }
-    setChemicalItems([{ chemical_name: '', quantity: '', unit: 'ml', rate: '', make: '' }]);
-      setApparatusItems([{ apparatus_name: '', quantity_pieces: '', rate: '', make: '' }]);
+    setChemicalItems([]);
+      setApparatusItems([]);
       setFormData({ invoice_number: '', date: new Date().toISOString().split('T')[0], supplier_name: '', remarks: '' });
     } catch (err) {
       setAlertDialog({ open: true, message: 'Error: ' + (err.response?.data?.error || 'Validation failed') });

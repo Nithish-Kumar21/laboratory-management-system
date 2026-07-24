@@ -2,8 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { FaArrowLeft, FaFlask, FaPrint } from 'react-icons/fa';
 import api from '../utils/api';
-import './StockRegisterDetail.css';
-import './IssueRegisterDetail.css';
+import './StockRequestDetail.css';
 
 function formatDate(dateStr) {
   if (!dateStr) return '';
@@ -36,22 +35,28 @@ function IssueRegisterDetail() {
       <div className="staff-detail-page animate-up">
         <div className="staff-detail-inner">
 
-          <div className="sd-back-row" onClick={() => navigate('/issue-register')}>
-            <FaArrowLeft />
-            <span>Issue Register Details</span>
+          {/* Header */}
+          <div className="srq-header">
+            <div className="srq-header-left">
+              <div className="sd-back-row" onClick={() => navigate('/issue-register')}>
+                <FaArrowLeft />
+                <span>Issue Register Details</span>
+              </div>
+            </div>
+            <div className="srq-header-actions">
+              <button className="sd-action-icon-btn" onClick={() => window.print()} title="Print">
+                <FaPrint />
+              </button>
+            </div>
           </div>
 
+          {/* Info Card */}
           <div className="sd-card">
             <div className="sd-card-header">
               <span className="sd-req-id">{issId}</span>
-              <div className="sd-header-right">
-                <button className="sd-action-icon-btn" onClick={() => window.print()} title="Print">
-                  <FaPrint />
-                </button>
-              </div>
             </div>
             <hr className="sd-divider" />
-            <div className="sd-meta-grid">
+            <div className="srq-meta-grid">
               <div className="sd-meta-item">
                 <div className="sd-meta-label">Issue ID</div>
                 <div className="sd-meta-value">{issId}</div>
@@ -91,19 +96,20 @@ function IssueRegisterDetail() {
             </div>
           </div>
 
+          {/* Purpose Type Card */}
           {reg.source_request?.purpose_type && (
             <div className="sd-card">
               <div className="sd-card-title">
                 {reg.source_request.purpose_type === 'research_project' ? 'Research / Project' : 'Practical Lab'}
               </div>
               <hr className="sd-divider" />
-              <div className="sd-meta-grid">
-                <div className="sd-meta-item" style={{ gridColumn: '1 / -1' }}>
+              <div className="srq-meta-grid">
+                <div className="sd-meta-item">
                   <div className="sd-meta-label">Experiment Name(s)</div>
                   <div className="sd-meta-value">{reg.source_request.experiment_name || '-'}</div>
                 </div>
                 {reg.source_request.purpose_type === 'research_project' && (
-                  <div className="sd-meta-item" style={{ gridColumn: '1 / -1' }}>
+                  <div className="sd-meta-item">
                     <div className="sd-meta-label">Student Name(s)</div>
                     <div className="sd-meta-value">{reg.source_request.student_name || '-'}</div>
                   </div>
@@ -112,23 +118,26 @@ function IssueRegisterDetail() {
             </div>
           )}
 
+          {/* Chemical Usage Card */}
           {chemItems.length > 0 && (
             <div className="sd-card">
               <div className="sd-card-title">
                 <FaFlask /> Chemical Usage
               </div>
               <hr className="sd-divider" />
-              <div className="sd-chem-list">
-                <div className="sd-chem-row multi-col" style={{gridTemplateColumns: '1fr 100px 100px', color: '#9AA3AF', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em', paddingBottom: 8, borderBottom: '0.5px solid #e2e8f0'}}>
-                  <span>Chemical</span>
-                  <span style={{textAlign: 'right'}}>Requested</span>
-                  <span style={{textAlign: 'right'}}>Actual</span>
-                </div>
+              <div className="srq-chem-list">
                 {chemItems.map((item, idx) => (
-                  <div key={idx} className="sd-chem-row multi-col" style={{gridTemplateColumns: '1fr 100px 100px'}}>
-                    <span className="sd-chem-name">{item.chemical_name}</span>
-                    <span className="sd-chem-qty">{item.issued_quantity}<span className="sd-chem-unit"> {item.unit}</span></span>
-                    <span className="sd-chem-qty">{item.actual_usage || '—'}<span className="sd-chem-unit"> {item.unit}</span></span>
+                  <div key={idx} className="srq-chem-card">
+                    <div className="srq-chem-top">
+                      <span className="srq-chem-name">{item.chemical_name}</span>
+                      <span className="srq-chem-qty">{item.issued_quantity}<span className="srq-chem-unit"> {item.unit}</span></span>
+                    </div>
+                    {item.actual_usage && (
+                      <div className="srq-chem-top" style={{ marginTop: 4 }}>
+                        <span className="srq-chem-name" style={{ fontWeight: 400, fontSize: 13, color: 'var(--text-muted)' }}>Actual</span>
+                        <span className="srq-chem-qty" style={{ fontSize: 13, fontWeight: 600 }}>{item.actual_usage}<span className="srq-chem-unit"> {item.unit}</span></span>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

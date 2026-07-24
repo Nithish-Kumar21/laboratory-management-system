@@ -1,0 +1,275 @@
+/* ===== SERVICE ENTRY DETAIL — PAGE-SPECIFIC STYLES ===== */
+
+/* Header */
+.sed-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.sed-header .sd-back-row {
+  margin-bottom: 0;
+}
+
+.sed-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sed-desktop-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sed-mobile-menu {
+  position: relative;
+  display: none;
+}
+
+/* Dropdown */
+.sed-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  min-width: 160px;
+  z-index: 100;
+  padding: 6px 0;
+  overflow: hidden;
+}
+
+:root.dark-mode .sed-dropdown {
+  background: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+
+.sed-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  background: none;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-main);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.sed-dropdown-item:hover:not(:disabled) {
+  background: #f1f5f9;
+}
+
+:root.dark-mode .sed-dropdown-item:hover:not(:disabled) {
+  background: #334155;
+}
+
+.sed-dropdown-item:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.sed-dropdown-item svg {
+  font-size: 14px;
+  width: 16px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* Summary Line */
+.sed-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Metadata Grid: 3-column on desktop */
+.sed-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 14px 24px;
+}
+
+/* Address block (full-width, below the 2-col grid) */
+.sed-address-block {
+  margin-top: 14px;
+}
+
+.sed-address-block .sd-meta-label {
+  margin-bottom: 4px;
+}
+
+/* ===== ITEM CARDS ===== */
+.sed-item-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sed-item-card {
+  background: #F8FAFC;
+  border: 1px solid #f1f5f9;
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+:root.dark-mode .sed-item-card {
+  background: #1a2332;
+  border-color: #334155;
+}
+
+.sed-item-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sed-item-name {
+  font-size: 15px;
+  color: var(--text-main);
+  font-weight: 600;
+  flex: 1;
+  min-width: 0;
+}
+
+.sed-item-qty {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1A3C6E;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.sed-item-unit {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-muted);
+  margin-left: 2px;
+}
+
+.sed-item-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+/* ===== COMPLETE ENTRY ===== */
+.sed-complete-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sed-complete-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  background: #1A3C6E;
+  color: #fff;
+  transition: all 0.2s;
+}
+
+.sed-complete-btn:hover:not(:disabled) {
+  background: #14305a;
+  transform: translateY(-1px);
+}
+
+.sed-complete-btn:disabled {
+  background: #E0E0E0;
+  color: #9AA3AF;
+  cursor: not-allowed;
+}
+
+:root.dark-mode .sed-complete-btn {
+  background: #4A90D9;
+}
+
+:root.dark-mode .sed-complete-btn:hover:not(:disabled) {
+  background: #357ABD;
+}
+
+:root.dark-mode .sed-complete-btn:disabled {
+  background: #334155;
+  color: #64748B;
+}
+
+.sed-complete-btn svg {
+  font-size: 14px;
+}
+
+.sed-complete-error {
+  font-size: 13px;
+  color: #EF4444;
+}
+
+/* ===== RESPONSIVE (768px) ===== */
+@media (max-width: 768px) {
+  .sed-desktop-actions {
+    display: none;
+  }
+
+  .sed-mobile-menu {
+    display: block;
+  }
+
+  .sed-summary {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .sed-meta-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 16px;
+  }
+
+  .sed-item-actions {
+    justify-content: flex-start;
+  }
+}
+
+/* ===== RESPONSIVE (480px) ===== */
+@media (max-width: 480px) {
+  .sed-meta-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .sed-item-top {
+    flex-wrap: wrap;
+  }
+
+  .sed-item-name {
+    font-size: 14px;
+  }
+
+  .sed-item-qty {
+    font-size: 14px;
+  }
+
+  .sed-item-actions {
+    flex-wrap: wrap;
+  }
+}

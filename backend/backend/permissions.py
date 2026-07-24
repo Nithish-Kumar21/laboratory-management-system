@@ -23,25 +23,29 @@ class StockRegisterPermission(permissions.BasePermission):
     store keeper: add new stocks, view, AND delete
     staff: no access
     admin: view and add only (delete restricted to store keeper)
+    superuser: full access
     """
     def has_permission(self, request, view):
         if not request.user.is_authenticated:
             return False
-            
+
+        if request.user.is_superuser:
+            return True
+
         role = request.user.role
-        
+
         if role == 'staff':
             return False
-            
+
         if role == 'hod':
             return request.method in permissions.SAFE_METHODS
-            
+
         if role == 'store_keeper':
             return True
-            
+
         if role == 'admin':
             return request.method != 'DELETE'
-            
+
         return False
 
 class DamagedEntryPermission(permissions.BasePermission):
@@ -51,10 +55,14 @@ class DamagedEntryPermission(permissions.BasePermission):
     store keeper: add record, view, AND delete
     staff: no access
     admin: view and add only (delete restricted to store keeper)
+    superuser: full access
     """
     def has_permission(self, request, view):
         if not request.user.is_authenticated:
             return False
+
+        if request.user.is_superuser:
+            return True
 
         role = request.user.role
 
@@ -80,10 +88,14 @@ class ServiceEntryPermission(permissions.BasePermission):
     store keeper: full CRUD + action logging
     staff: no access
     admin: view and create only
+    superuser: full access
     """
     def has_permission(self, request, view):
         if not request.user.is_authenticated:
             return False
+
+        if request.user.is_superuser:
+            return True
 
         role = request.user.role
 

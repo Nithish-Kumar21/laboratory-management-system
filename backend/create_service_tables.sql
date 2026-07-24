@@ -132,3 +132,12 @@ CREATE TRIGGER trg_service_entry_complete
 AFTER UPDATE ON service_entry_items
 FOR EACH ROW
 EXECUTE FUNCTION fn_service_entry_check_complete();
+
+-- ============================================================
+-- Migration: Add company/vendor fields to service_entry
+-- Safe to re-run (uses IF NOT EXISTS)
+-- ============================================================
+ALTER TABLE service_entry ADD COLUMN IF NOT EXISTS company_name VARCHAR(128);
+ALTER TABLE service_entry ADD COLUMN IF NOT EXISTS company_address TEXT;
+ALTER TABLE service_entry ADD COLUMN IF NOT EXISTS company_contact_country_code VARCHAR(5);
+ALTER TABLE service_entry ADD COLUMN IF NOT EXISTS company_contact_number VARCHAR(10);

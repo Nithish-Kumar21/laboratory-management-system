@@ -26,6 +26,19 @@ export const AuthProvider = ({ children }) => {
       try {
         const parsedUser = JSON.parse(storedUser);
         setUser(parsedUser);
+
+        // Verify role against backend to prevent stale localStorage state
+        try {
+          const res = await api.get('users/me/');
+          const fresh = res.data;
+          if (fresh.role && fresh.role !== parsedUser.role) {
+            const synced = { ...parsedUser, role: fresh.role };
+            localStorage.setItem('user', JSON.stringify(synced));
+            setUser(synced);
+          }
+        } catch {
+          // Network or auth error — ignore, stale state is better than logout
+        }
       } catch (error) {
         logout();
       }

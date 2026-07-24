@@ -36,7 +36,7 @@ class StockRequestCreateSerializer(serializers.ModelSerializer):
         model = StockRequest
         fields = [
             'id', 'request_id', 'class_name', 'reason', 'date',
-            'day_order', 'hour', 'purpose_type', 'experiment_name', 'student_name',
+            'day_order', 'hour', 'purpose_type', 'experiment_name', 'student_name', 'venue',
             'chemical_items', 'status', 'created_at'
         ]
         read_only_fields = ['id', 'request_id', 'created_at']
@@ -148,7 +148,7 @@ class StockRequestListSerializer(serializers.ModelSerializer):
         model = StockRequest
         fields = [
             'id', 'request_id', 'class_name', 'status', 'reason', 'date', 'created_at',
-            'day_order', 'hour', 'purpose_type', 'experiment_name', 'student_name',
+            'day_order', 'hour', 'purpose_type', 'experiment_name', 'student_name', 'venue',
             'requested_by_name', 'requested_by_id',
             'chemical_items',
             'issued_at', 'reported_at', 'completed_at',
@@ -170,7 +170,7 @@ class StockRequestDetailSerializer(serializers.ModelSerializer):
         model = StockRequest
         fields = [
             'id', 'request_id', 'class_name', 'status', 'reason', 'rejection_reason', 'created_at', 'date',
-            'day_order', 'hour', 'purpose_type', 'experiment_name', 'student_name',
+            'day_order', 'hour', 'purpose_type', 'experiment_name', 'student_name', 'venue',
             'requested_by_name', 'requested_by_id', 'requested_by',
             'chemical_items',
             'reviewed_at', 'reviewed_by_name',
@@ -232,6 +232,7 @@ class IssueRegisterSerializer(serializers.ModelSerializer):
                 'purpose_type': sr.purpose_type,
                 'experiment_name': sr.experiment_name,
                 'student_name': sr.student_name,
+                'venue': sr.venue,
             }
         except StockRequest.DoesNotExist:
             return None

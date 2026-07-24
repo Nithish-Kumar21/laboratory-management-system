@@ -166,17 +166,6 @@ class StockRegisterCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Enter a valid email address")
         return value
 
-    def validate(self, data):
-        chemicals = data.get('chemical_items', [])
-        apparatus = data.get('apparatus_items', [])
-
-        if not chemicals and not apparatus:
-            raise serializers.ValidationError(
-                "At least one chemical or apparatus item must be added"
-            )
-
-        return data
-
     def create(self, validated_data):
         chemical_items_data = validated_data.pop('chemical_items', [])
         apparatus_items_data = validated_data.pop('apparatus_items', [])

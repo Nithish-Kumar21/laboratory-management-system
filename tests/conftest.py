@@ -164,6 +164,23 @@ def existing_apparatus(db):
     return app
 
 
+@pytest.fixture(autouse=True)
+def _ensure_venue_column(db):
+    """Ensure the venue column exists on the stock_request table (managed=False model)."""
+    from django.db import connection
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            DO $$ BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name='stock_request' AND column_name='venue'
+                ) THEN
+                    ALTER TABLE stock_request ADD COLUMN venue varchar(100) NULL DEFAULT 'B.Sc Chemistry Laboratory';
+                END IF;
+            END $$;
+        """)
+
+
 @pytest.fixture
 def today():
     return timezone.now().date()

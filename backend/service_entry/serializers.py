@@ -32,7 +32,9 @@ class ServiceEntryDetailSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'service_code', 'storekeeper', 'service_person_name',
             'contact_country_code', 'contact_number', 'email',
-            'deliver_by_date', 'date', 'status', 'completed_at', 'items',
+            'deliver_by_date', 'company_name', 'company_address',
+            'company_contact_country_code', 'company_contact_number',
+            'date', 'status', 'completed_at', 'items',
         ]
 
 
@@ -72,7 +74,8 @@ class ServiceEntryCreateSerializer(serializers.ModelSerializer):
         model = ServiceEntry
         fields = [
             'service_person_name', 'contact_country_code', 'contact_number',
-            'email', 'deliver_by_date', 'items',
+            'email', 'deliver_by_date', 'company_name', 'company_address',
+            'company_contact_country_code', 'company_contact_number', 'items',
         ]
 
     def validate_contact_number(self, value):

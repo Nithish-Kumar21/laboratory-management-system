@@ -110,8 +110,10 @@ class StockRequestViewSet(viewsets.ModelViewSet):
                     return qs.filter(issued_by=self.request.user).exclude(status__in=['draft', 'completed'])
                 
                 if status_filter in ('accepted', None):
-                    # Default: All approved requests waiting to be issued or completed
-                    return qs.filter(status__in=['accepted', 'reported'])
+                    # Default: All approved/issued requests — accepted waiting to be
+                    # issued, issued waiting for usage report, and reported waiting
+                    # for completion.
+                    return qs.filter(status__in=['accepted', 'issued', 'reported'])
                 
                 # If they explicitly filter by history (issued/reported/completed), show only theirs
                 if status_filter in ('issued', 'reported', 'completed'):
@@ -318,9 +320,12 @@ class StockRequestViewSet(viewsets.ModelViewSet):
     @transaction.atomic
     def perform_create(self, serializer):
         user = self.request.user
+        requested_status = serializer.validated_data.get('status', 'draft')
         # TOCTOU fix: lock active requests before creating to prevent
         # two simultaneous creates from both passing the "no active request" check.
-        if user.role == 'staff':
+        # Drafts are always allowed — staff should be able to work on a new draft
+        # even while an active request is in progress.
+        if user.role == 'staff' and requested_status != 'draft':
             active_statuses = ['pending', 'accepted', 'issued', 'reported']
             active_requests = StockRequest.objects.select_for_update().filter(
                 requested_by=user,

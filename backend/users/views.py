@@ -392,7 +392,7 @@ class UserRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         return user
 
     def perform_update(self, serializer):
-        instance = self.get_object()
+        instance = serializer.instance
         old_active = instance.is_active
         if self.request.user.role != 'hod':
             serializer.save(

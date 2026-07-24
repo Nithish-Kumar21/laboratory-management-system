@@ -111,10 +111,12 @@ class StockRegisterWorkflowTest(APITestCase):
         self.assertEqual(r.status_code, status.HTTP_201_CREATED)
         self.assertEqual(StockRegister.objects.first().chemical_items.count(), 2)
 
-    def test_create_no_items_error(self):
+    def test_create_no_items_succeeds(self):
         self._login(self.store_keeper)
         r = self._create_sr({'invoice_number': 'INV-004', 'date': self.today.isoformat(), 'supplier_name': 'S'})
-        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(r.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(StockRegister.objects.first().chemical_items.count(), 0)
+        self.assertEqual(StockRegister.objects.first().apparatus_items.count(), 0)
 
     def test_create_duplicate_invoice_error(self):
         self._login(self.store_keeper)

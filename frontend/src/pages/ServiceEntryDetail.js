@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { FaArrowLeft, FaTools, FaCheck, FaUndo, FaTrash, FaBuilding } from 'react-icons/fa';
+import { FaArrowLeft, FaTools, FaCheck, FaUndo, FaTrash, FaBuilding, FaPrint, FaEdit, FaEllipsisV } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
+import ConfirmDialog from '../components/ConfirmDialog';
 import './DamagedEntryDetail.css';
+import './ServiceEntryDetail.css';
 
 function formatDate(dateStr) {
   if (!dateStr) return '';
@@ -31,6 +33,9 @@ function ServiceEntryDetail() {
   const [actionLoading, setActionLoading] = useState(false);
   const [completing, setCompleting] = useState(false);
   const [completeError, setCompleteError] = useState('');
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+  const [completeDialog, setCompleteDialog] = useState(false);
 
   const fetchEntry = () => {
     api.get(`/service-entries/${id}/`)
@@ -42,6 +47,14 @@ function ServiceEntryDetail() {
     if (isStaff) { navigate('/'); return; }
     fetchEntry();
   }, [id, isStaff, navigate]);
+
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
 
   const openActionPopup = (itemId, actionType) => {
     setActionPopup({ open: true, itemId, actionType, quantity: '', error: '' });
@@ -66,6 +79,20 @@ function ServiceEntryDetail() {
     }
   };
 
+  const runComplete = async () => {
+    setCompleting(true);
+    setCompleteError('');
+    try {
+      await api.post(`/service-entries/${id}/complete/`);
+      navigate('/damaged-entry');
+    } catch (err) {
+      const serverErr = err.response?.data;
+      const msg = serverErr?.error || (typeof serverErr === 'object' && serverErr !== null ? extractErrorMessages(serverErr).join('; ') : '') || 'Failed to complete';
+      setCompleteError(msg);
+      setCompleting(false);
+    }
+  };
+
   const allComplete = entry?.items?.every(it => it.quantity_remaining === 0);
 
   if (loading) return <div className="loading-spinner" />;
@@ -78,26 +105,57 @@ function ServiceEntryDetail() {
     return { label: 'Damaged', value: item.quantity_damaged };
   };
 
+  const hasCompany = entry.company_name || entry.company_address || entry.company_contact_number;
+
   return (
     <div className="staff-detail-wrapper">
       <div className="staff-detail-page animate-up">
         <div className="staff-detail-inner">
 
-          <div className="sd-back-row" onClick={() => navigate('/damaged-entry')}>
-            <FaArrowLeft />
-            <span>Service Entry Details</span>
+          {/* Header */}
+          <div className="sed-header">
+            <div className="sd-back-row" onClick={() => navigate('/damaged-entry')}>
+              <FaArrowLeft />
+              <span>Service Entry Details</span>
+            </div>
+            <div className="sed-header-right">
+              <div className="sed-desktop-actions">
+                <button className="sd-action-icon-btn" onClick={() => window.print()} title="Print">
+                  <FaPrint />
+                </button>
+                <button className="sd-action-icon-btn" title="Edit (coming soon)" disabled style={{ opacity: 0.4 }}>
+                  <FaEdit />
+                </button>
+              </div>
+              <div className="sed-mobile-menu" ref={menuRef}>
+                <button className="sd-action-icon-btn" onClick={() => setMenuOpen(!menuOpen)} title="More actions">
+                  <FaEllipsisV />
+                </button>
+                {menuOpen && (
+                  <div className="sed-dropdown">
+                    <button className="sed-dropdown-item" onClick={() => { setMenuOpen(false); window.print(); }}>
+                      <FaPrint /> Print
+                    </button>
+                    <button className="sed-dropdown-item" disabled style={{ opacity: 0.4 }}>
+                      <FaEdit /> Edit
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
-          {/* Card 1: Header Summary */}
+          {/* Summary Line */}
+          <div className="sed-summary">
+            <span className="sd-req-id">REF: {entry.service_code}</span>
+            <span className={`status-badge-modern ${entry.status === 'completed' ? 'status-completed' : 'status-warning'}`}>
+              {entry.status === 'completed' ? 'Completed' : 'In Service'}
+            </span>
+          </div>
+
+          {/* Metadata Section */}
           <div className="sd-card">
-            <div className="sd-card-header">
-              <span className="sd-req-id">REF: {entry.service_code}</span>
-              <span className={`status-badge-modern ${entry.status === 'completed' ? 'status-completed' : 'status-warning'}`}>
-                {entry.status === 'completed' ? 'Completed' : 'In Service'}
-              </span>
-            </div>
-            <hr className="sd-divider" />
-            <div className="sd-meta-grid">
+            <div className="sed-meta-grid">
               <div className="sd-meta-item">
                 <div className="sd-meta-label">Date</div>
                 <div className="sd-meta-value">{formatDate(entry.date)}</div>
@@ -122,24 +180,6 @@ function ServiceEntryDetail() {
                 <div className="sd-meta-label">Tentative Delivery</div>
                 <div className="sd-meta-value">{entry.deliver_by_date ? formatDate(entry.deliver_by_date) : '—'}</div>
               </div>
-              {entry.company_name && (
-                <div className="sd-meta-item">
-                  <div className="sd-meta-label"><FaBuilding /> Company</div>
-                  <div className="sd-meta-value">{entry.company_name}</div>
-                </div>
-              )}
-              {entry.company_address && (
-                <div className="sd-meta-item">
-                  <div className="sd-meta-label">Company Address</div>
-                  <div className="sd-meta-value">{entry.company_address}</div>
-                </div>
-              )}
-              {(entry.company_contact_country_code || entry.company_contact_number) && (
-                <div className="sd-meta-item">
-                  <div className="sd-meta-label">Company Contact</div>
-                  <div className="sd-meta-value">{entry.company_contact_country_code || ''} {entry.company_contact_number || '—'}</div>
-                </div>
-              )}
             </div>
             {entry.completed_at && (
               <p style={{ marginTop: '16px', fontSize: '13px', color: '#9AA3AF' }}>
@@ -148,12 +188,38 @@ function ServiceEntryDetail() {
             )}
           </div>
 
-          {/* Card 2: Apparatus Status with radio tabs */}
+          {/* Company / Vendor Information */}
+          {hasCompany && (
+            <div className="sd-card">
+              <div className="sd-card-title"><FaBuilding /> Company / Vendor Information</div>
+              <div className="sed-meta-grid">
+                {entry.company_name && (
+                  <div className="sd-meta-item">
+                    <div className="sd-meta-label">Company Name</div>
+                    <div className="sd-meta-value">{entry.company_name}</div>
+                  </div>
+                )}
+                {(entry.company_contact_country_code || entry.company_contact_number) && (
+                  <div className="sd-meta-item">
+                    <div className="sd-meta-label">Company Contact</div>
+                    <div className="sd-meta-value">{entry.company_contact_country_code || ''} {entry.company_contact_number || '—'}</div>
+                  </div>
+                )}
+              </div>
+              {entry.company_address && (
+                <div className="sed-address-block">
+                  <div className="sd-meta-label">Company Address</div>
+                  <div className="sd-meta-value">{entry.company_address}</div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Apparatus Status */}
           <div className="sd-card">
             <div className="sd-card-title"><FaTools /> Apparatus Status</div>
-            <hr className="sd-divider" />
 
-            {/* Radio-style tabs */}
+            {/* Tabs */}
             <div className="de-tabs" style={{ marginBottom: '16px' }}>
               <button
                 className={`de-tab ${detailTab === 'service' ? 'active' : ''}`}
@@ -175,15 +241,18 @@ function ServiceEntryDetail() {
               </button>
             </div>
 
-            <div className="sd-chem-list">
+            {/* Item Cards */}
+            <div className="sed-item-list">
               {entry.items.map(item => {
                 const qf = getQuantityField(item);
                 return (
-                  <div key={item.id} className="sd-chem-row multi-col">
-                    <span className="sd-chem-name">{item.apparatus_name}</span>
-                    <span className="sd-chem-qty">{qf.value}<span className="sd-chem-unit"> pcs</span></span>
+                  <div key={item.id} className="sed-item-card">
+                    <div className="sed-item-top">
+                      <span className="sed-item-name">{item.apparatus_name}</span>
+                      <span className="sed-item-qty">{qf.value}<span className="sed-item-unit"> pcs</span></span>
+                    </div>
                     {detailTab === 'service' && isStoreKeeper && entry.status === 'in_service' && (
-                      <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                      <div className="sed-item-actions">
                         <button
                           className="sd-action-btn repaired-btn"
                           onClick={() => openActionPopup(item.id, 'repaired')}
@@ -208,31 +277,19 @@ function ServiceEntryDetail() {
             </div>
           </div>
 
-          {/* Complete button */}
+          {/* Complete Entry */}
           {isStoreKeeper && entry.status === 'in_service' && (
-            <div className="sd-actions">
+            <div className="sed-complete-row">
               <button
-                className="sd-btn sd-complete-btn"
+                className="sed-complete-btn"
                 disabled={!allComplete || completing}
-                onClick={async () => {
-                  setCompleting(true);
-                  setCompleteError('');
-                  try {
-                    await api.post(`/service-entries/${id}/complete/`);
-                    navigate('/damaged-entry');
-                  } catch (err) {
-                    const serverErr = err.response?.data;
-                    const msg = serverErr?.error || (typeof serverErr === 'object' && serverErr !== null ? extractErrorMessages(serverErr).join('; ') : '') || 'Failed to complete';
-                    setCompleteError(msg);
-                    setCompleting(false);
-                  }
-                }}
+                onClick={() => setCompleteDialog(true)}
                 title={!allComplete ? 'All items must reach zero remaining' : 'Complete this service entry'}
               >
                 <FaCheck /> {completing ? 'Completing...' : 'Complete Entry'}
               </button>
               {completeError && (
-                <p style={{ marginTop: '8px', fontSize: '13px', color: '#EF4444' }}>{completeError}</p>
+                <p className="sed-complete-error">{completeError}</p>
               )}
             </div>
           )}
@@ -274,6 +331,18 @@ function ServiceEntryDetail() {
           </div>
         </div>
       )}
+
+      {/* Complete Entry Confirmation */}
+      <ConfirmDialog
+        open={completeDialog}
+        message="Complete this service entry? All items should be fully processed."
+        showCancel={true}
+        confirmLabel="Complete"
+        cancelLabel="Cancel"
+        variant="danger"
+        onConfirm={() => { setCompleteDialog(false); runComplete(); }}
+        onCancel={() => setCompleteDialog(false)}
+      />
     </div>
   );
 }

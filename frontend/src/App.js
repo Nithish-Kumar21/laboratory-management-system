@@ -13,6 +13,8 @@ import ChangePassword from './components/ChangePassword';
 import ForgotPassword from './components/ForgotPassword';
 import ResetPassword from './components/ResetPassword';
 import UserManagement from './components/UserManagement';
+import EditUserPage from './components/EditUserPage';
+import CreateUserPage from './components/CreateUserPage';
 import UserProfile from './components/UserProfile';
 
 import Inventory from './pages/Inventory';
@@ -87,6 +89,22 @@ function AppContent() {
                         element={
                           <ProtectedRoute adminOnly>
                             <UserManagement />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="users/edit/:employeeId"
+                        element={
+                          <ProtectedRoute adminOnly>
+                            <EditUserPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="users/create"
+                        element={
+                          <ProtectedRoute adminOnly>
+                            <CreateUserPage />
                           </ProtectedRoute>
                         }
                       />

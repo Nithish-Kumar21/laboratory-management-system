@@ -1,33 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import {
-    FaPalette,
-    FaDatabase,
     FaCheckCircle,
-    FaSun,
-    FaMoon,
-    FaDesktop,
-    FaCog,
-    FaFlask,
-    FaBoxes,
-    FaLock,
     FaExclamationTriangle
 } from 'react-icons/fa';
-import { TbEye, TbEyeOff } from 'react-icons/tb';
+import {
+    TbEye, TbEyeOff, TbSun, TbMoon, TbDeviceDesktop,
+    TbPencil, TbTrash, TbPlus
+} from 'react-icons/tb';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../utils/api';
 import ConfirmDialog from './ConfirmDialog';
-import CreateUserModal from './CreateUserModal';
-import EditUserModal from './EditUserModal';
 import './Settings.css';
 
 function Settings() {
     const { isStoreKeeper, isAdmin } = useAuth();
     const { themeMode, setThemeMode } = useTheme();
     const navigate = useNavigate();
+    const location = useLocation();
 
-    const [activeSection, setActiveSection] = useState('appearance');
+    const [activeSection, setActiveSection] = useState(
+        location.state?.activeSection || 'appearance'
+    );
     const [message, setMessage] = useState('');
     const [loading, setLoading] = useState(false);
     const [alertDialog, setAlertDialog] = useState({ open: false, message: '' });
@@ -47,9 +42,6 @@ function Settings() {
     const [users, setUsers] = useState([]);
     const [usersLoading, setUsersLoading] = useState(false);
     const [usersError, setUsersError] = useState('');
-    const [showCreateModal, setShowCreateModal] = useState(false);
-    const [showEditModal, setShowEditModal] = useState(false);
-    const [selectedUser, setSelectedUser] = useState(null);
     const [deleteDialog, setDeleteDialog] = useState({ open: false, message: '', userId: null });
 
     // Reorder level state
@@ -235,6 +227,14 @@ function Settings() {
         }
     }, [isAdmin, activeSection]);
 
+    // Refetch users when window regains focus (handles back navigation from /users/create)
+    useEffect(() => {
+        if (!isAdmin || activeSection !== 'user_management') return;
+        const handleFocus = () => fetchUsers();
+        window.addEventListener('focus', handleFocus);
+        return () => window.removeEventListener('focus', handleFocus);
+    }, [isAdmin, activeSection]);
+
     const getRoleStyles = (role) => {
         switch (role) {
             case 'admin': return { backgroundColor: '#eff6ff', color: '#1e40af' };
@@ -256,8 +256,7 @@ function Settings() {
     };
 
     const handleEditUser = (user) => {
-        setSelectedUser(user);
-        setShowEditModal(true);
+        navigate(`/users/edit/${user.employee_id}`);
     };
 
     const handleDeleteClick = (userId) => {
@@ -309,152 +308,146 @@ function Settings() {
                 {message && <div className="settings-toast success animate-fade"><FaCheckCircle /> {message}</div>}
 
                 {activeSection === 'appearance' && (
-                    <div className="space-y-6">
-                        {/* Appearance */}
-                        <div className="bg-[var(--bg-surface)] rounded-xl border border-[var(--border)] overflow-hidden shadow-sm">
-                            <div className="px-6 py-5 border-b border-[var(--border)]">
-                                <h2 className="text-lg font-bold text-[var(--text-main)] m-0">Theme Preference</h2>
-                            </div>
-                            <div className="p-6">
-                                <div className="theme-selector-grid">
-                                    {['light', 'dark', 'system'].map(mode => (
-                                        <div key={mode} className={`theme-card ${themeMode === mode ? 'active' : ''}`} onClick={() => setThemeMode(mode)}>
-                                            <div className={`theme-preview ${mode === 'system' ? 'system' : mode}`}>
-                                                {mode === 'system' && <><div className="preview-half light" /><div className="preview-half dark" /></>}
-                                            </div>
-                                            <span className="theme-label">
-                                                {mode === 'light' && <FaSun />}
-                                                {mode === 'dark' && <FaMoon />}
-                                                {mode === 'system' && <FaDesktop />}
-                                                {mode.charAt(0).toUpperCase() + mode.slice(1)}
-                                            </span>
-                                        </div>
-                                    ))}
-                                </div>
+                    <div className="space-y-8">
+                        <div>
+                            <h3 className="text-lg font-bold text-[var(--text-main)] mb-2">Theme Preference</h3>
+                            <div className="border-b border-[var(--border)] mb-5" />
+                            <div className="flex gap-4">
+                                {[
+                                    { mode: 'light', Icon: TbSun, label: 'Light' },
+                                    { mode: 'dark', Icon: TbMoon, label: 'Dark' },
+                                    { mode: 'system', Icon: TbDeviceDesktop, label: 'System' },
+                                ].map(({ mode, Icon, label }) => (
+                                    <button
+                                        key={mode}
+                                        onClick={() => setThemeMode(mode)}
+                                        className={`settings-theme-btn ${themeMode === mode ? 'active' : ''}`}
+                                        type="button"
+                                    >
+                                        <span className="settings-theme-icon"><Icon size={22} /></span>
+                                        <span className="settings-theme-label">{label}</span>
+                                    </button>
+                                ))}
                             </div>
                         </div>
 
-                        {/* About / Help */}
-                        <div className="bg-[var(--bg-surface)] rounded-xl border border-[var(--border)] overflow-hidden shadow-sm">
-                            <div className="px-6 py-5 border-b border-[var(--border)]">
-                                <h2 className="text-lg font-bold text-[var(--text-main)] m-0">About / Help</h2>
-                            </div>
-                            <div className="p-6">
-                                <p className="text-[var(--text-muted)] m-0">Will update soon.</p>
-                            </div>
+                        <div>
+                            <h3 className="text-lg font-bold text-[var(--text-main)] mb-2">About / Help</h3>
+                            <div className="border-b border-[var(--border)] mb-5" />
+                            <p className="text-[var(--text-muted)] text-sm">Will update soon.</p>
                         </div>
                     </div>
                 )}
 
                 {activeSection === 'security' && (
-                    <div className="bg-[var(--bg-surface)] rounded-xl border border-[var(--border)] overflow-hidden shadow-sm">
-                        <div className="px-6 py-5 border-b border-[var(--border)]">
-                            <h2 className="text-lg font-bold text-[var(--text-main)] m-0">Security</h2>
-                        </div>
-                        <div className="p-6">
-                            <form onSubmit={handlePasswordChange}>
-                                {pwError && (
-                                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm font-medium flex items-center gap-2">
-                                        <FaExclamationTriangle /> {pwError}
-                                    </div>
-                                )}
-                                {pwSuccess && (
-                                    <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm font-medium flex items-center gap-2">
-                                        <FaCheckCircle /> {pwSuccess}
-                                    </div>
-                                )}
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-bold text-[var(--text-main)] mb-2">Current Password</label>
-                                        <div className="relative">
-                                            <input
-                                                type={showOld ? 'text' : 'password'}
-                                                value={oldPassword}
-                                                onChange={(e) => setOldPassword(e.target.value)}
-                                                required
-                                                placeholder="Enter current password"
-                                                disabled={pwLoading}
-                                                className="w-full px-4 py-3 bg-[var(--bg-main)] border border-[var(--border)] rounded-lg text-[var(--text-main)] text-sm outline-none focus:border-[#4f46e5] focus:shadow-[0_0_0_4px_rgba(79,70,229,0.1)] transition-all"
-                                            />
-                                            <button type="button" onClick={() => setShowOld(!showOld)} tabIndex={-1} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-main)] bg-transparent border-none cursor-pointer p-0">
-                                                {showOld ? <TbEyeOff size={18} /> : <TbEye size={18} />}
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-bold text-[var(--text-main)] mb-2">New Password</label>
-                                        <div className="relative">
-                                            <input
-                                                type={showNew ? 'text' : 'password'}
-                                                value={newPassword}
-                                                onChange={(e) => setNewPassword(e.target.value)}
-                                                required
-                                                placeholder="At least 8 characters"
-                                                disabled={pwLoading}
-                                                minLength={8}
-                                                className="w-full px-4 py-3 bg-[var(--bg-main)] border border-[var(--border)] rounded-lg text-[var(--text-main)] text-sm outline-none focus:border-[#4f46e5] focus:shadow-[0_0_0_4px_rgba(79,70,229,0.1)] transition-all"
-                                            />
-                                            <button type="button" onClick={() => setShowNew(!showNew)} tabIndex={-1} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-main)] bg-transparent border-none cursor-pointer p-0">
-                                                {showNew ? <TbEyeOff size={18} /> : <TbEye size={18} />}
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-bold text-[var(--text-main)] mb-2">Confirm New Password</label>
-                                        <div className="relative">
-                                            <input
-                                                type={showConfirm ? 'text' : 'password'}
-                                                value={confirmPassword}
-                                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                                required
-                                                placeholder="Repeat new password"
-                                                disabled={pwLoading}
-                                                minLength={8}
-                                                className="w-full px-4 py-3 bg-[var(--bg-main)] border border-[var(--border)] rounded-lg text-[var(--text-main)] text-sm outline-none focus:border-[#4f46e5] focus:shadow-[0_0_0_4px_rgba(79,70,229,0.1)] transition-all"
-                                            />
-                                            <button type="button" onClick={() => setShowConfirm(!showConfirm)} tabIndex={-1} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-main)] bg-transparent border-none cursor-pointer p-0">
-                                                {showConfirm ? <TbEyeOff size={18} /> : <TbEye size={18} />}
-                                            </button>
-                                        </div>
+                    <div>
+                        <h3 className="text-lg font-bold text-[var(--text-main)] mb-2">Security</h3>
+                        <div className="border-b border-[var(--border)] mb-5" />
+                        <form onSubmit={handlePasswordChange}>
+                            {pwError && (
+                                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm font-medium flex items-center gap-2">
+                                    <FaExclamationTriangle /> {pwError}
+                                </div>
+                            )}
+                            {pwSuccess && (
+                                <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm font-medium flex items-center gap-2">
+                                    <FaCheckCircle /> {pwSuccess}
+                                </div>
+                            )}
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-bold text-[var(--text-main)] mb-2">Current Password</label>
+                                    <div className="relative">
+                                        <input
+                                            type={showOld ? 'text' : 'password'}
+                                            value={oldPassword}
+                                            onChange={(e) => setOldPassword(e.target.value)}
+                                            required
+                                            placeholder="Enter current password"
+                                            disabled={pwLoading}
+                                            className="w-full px-4 py-3 bg-[var(--bg-main)] border border-[var(--border)] rounded-lg text-[var(--text-main)] text-sm outline-none focus:border-[#4f46e5] focus:shadow-[0_0_0_4px_rgba(79,70,229,0.1)] transition-all"
+                                        />
+                                        <button type="button" onClick={() => setShowOld(!showOld)} tabIndex={-1} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-main)] bg-transparent border-none cursor-pointer p-0">
+                                            {showOld ? <TbEyeOff size={18} /> : <TbEye size={18} />}
+                                        </button>
                                     </div>
                                 </div>
-                                <div className="flex gap-3 mt-6">
-                                    <button type="submit" disabled={pwLoading} className="bg-[#6366f1] text-white px-7 py-3 rounded-lg font-semibold border-none cursor-pointer transition-all hover:bg-[#4f46e5] hover:-translate-y-px disabled:opacity-50">
-                                        {pwLoading ? 'Updating...' : 'Update Password'}
-                                    </button>
-                                    <button type="button" onClick={resetPasswordForm} className="px-7 py-3 border border-[var(--border)] bg-transparent text-[var(--text-main)] rounded-lg font-semibold cursor-pointer transition-all hover:bg-[rgba(100,116,139,0.05)]">
-                                        Cancel
-                                    </button>
+                                <div>
+                                    <label className="block text-sm font-bold text-[var(--text-main)] mb-2">New Password</label>
+                                    <div className="relative">
+                                        <input
+                                            type={showNew ? 'text' : 'password'}
+                                            value={newPassword}
+                                            onChange={(e) => setNewPassword(e.target.value)}
+                                            required
+                                            placeholder="At least 8 characters"
+                                            disabled={pwLoading}
+                                            minLength={8}
+                                            className="w-full px-4 py-3 bg-[var(--bg-main)] border border-[var(--border)] rounded-lg text-[var(--text-main)] text-sm outline-none focus:border-[#4f46e5] focus:shadow-[0_0_0_4px_rgba(79,70,229,0.1)] transition-all"
+                                        />
+                                        <button type="button" onClick={() => setShowNew(!showNew)} tabIndex={-1} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-main)] bg-transparent border-none cursor-pointer p-0">
+                                            {showNew ? <TbEyeOff size={18} /> : <TbEye size={18} />}
+                                        </button>
+                                    </div>
                                 </div>
-                            </form>
-                        </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-[var(--text-main)] mb-2">Confirm New Password</label>
+                                    <div className="relative">
+                                        <input
+                                            type={showConfirm ? 'text' : 'password'}
+                                            value={confirmPassword}
+                                            onChange={(e) => setConfirmPassword(e.target.value)}
+                                            required
+                                            placeholder="Repeat new password"
+                                            disabled={pwLoading}
+                                            minLength={8}
+                                            className="w-full px-4 py-3 bg-[var(--bg-main)] border border-[var(--border)] rounded-lg text-[var(--text-main)] text-sm outline-none focus:border-[#4f46e5] focus:shadow-[0_0_0_4px_rgba(79,70,229,0.1)] transition-all"
+                                        />
+                                        <button type="button" onClick={() => setShowConfirm(!showConfirm)} tabIndex={-1} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-main)] bg-transparent border-none cursor-pointer p-0">
+                                            {showConfirm ? <TbEyeOff size={18} /> : <TbEye size={18} />}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex gap-3 mt-6">
+                                <button type="submit" disabled={pwLoading} className="bg-[#6366f1] text-white px-7 py-3 rounded-lg font-semibold border-none cursor-pointer transition-all hover:bg-[#4f46e5] hover:-translate-y-px disabled:opacity-50">
+                                    {pwLoading ? 'Updating...' : 'Update Password'}
+                                </button>
+                                <button type="button" onClick={resetPasswordForm} className="px-7 py-3 border border-[var(--border)] bg-transparent text-[var(--text-main)] rounded-lg font-semibold cursor-pointer transition-all hover:bg-[rgba(100,116,139,0.05)]">
+                                    Cancel
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 )}
 
                 {activeSection === 'user_management' && isAdmin && (
-                    <div className="bg-[var(--bg-surface)] rounded-xl border border-[var(--border)] overflow-hidden shadow-sm">
-                        <div className="px-5 py-4 md:px-6 md:py-5 border-b border-[var(--border)] flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
-                            <h2 className="text-base md:text-lg font-bold text-[var(--text-main)] m-0">User Management</h2>
-                            <button onClick={() => setShowCreateModal(true)} className="bg-[#1A3C6E] text-white px-4 py-2 rounded-lg text-sm font-semibold border-none cursor-pointer hover:bg-[#15315a] transition-all w-full md:w-auto text-center">
-                                + Create User
+                    <div>
+                        <div className="flex items-center justify-between mb-2">
+                            <h3 className="text-lg font-bold text-[var(--text-main)]">User Management</h3>
+                            <button onClick={() => navigate('/users/create')} className="settings-create-btn">
+                                <span className="hidden md:inline">+ Create User</span>
+                                <span className="md:hidden"><TbPlus size={20} /></span>
                             </button>
                         </div>
-                        <div className="p-4 md:p-6">
-                            {usersLoading ? (
-                                <div className="text-center py-8 text-sm text-[var(--text-muted)]">Loading users...</div>
-                            ) : usersError ? (
-                                <div className="text-center py-8 text-sm text-red-500">{usersError}</div>
-                            ) : (
-                                <div className="overflow-x-auto">
+                        <div className="border-b border-[var(--border)] mb-5" />
+                        {usersLoading ? (
+                            <div className="text-center py-8 text-sm text-[var(--text-muted)]">Loading users...</div>
+                        ) : usersError ? (
+                            <div className="text-center py-8 text-sm text-red-500">{usersError}</div>
+                        ) : (
+                            <>
+                                {/* Desktop table */}
+                                <div className="hidden md:block overflow-x-auto">
                                     <table className="w-full border-collapse">
                                         <thead>
                                             <tr className="border-b border-[var(--border)]">
-                                                <th className="text-left px-2 md:px-4 py-2 md:py-3 text-xs font-bold text-[#fff] bg-[#1A3C6E] uppercase tracking-wider whitespace-nowrap">Employee ID</th>
-                                                <th className="text-left px-2 md:px-4 py-2 md:py-3 text-xs font-bold text-[#fff] bg-[#1A3C6E] uppercase tracking-wider whitespace-nowrap">Name</th>
-                                                <th className="text-left px-2 md:px-4 py-2 md:py-3 text-xs font-bold text-[#fff] bg-[#1A3C6E] uppercase tracking-wider whitespace-nowrap hidden md:table-cell">Email</th>
-                                                <th className="text-left px-2 md:px-4 py-2 md:py-3 text-xs font-bold text-[#fff] bg-[#1A3C6E] uppercase tracking-wider whitespace-nowrap">Role</th>
-                                                <th className="text-left px-2 md:px-4 py-2 md:py-3 text-xs font-bold text-[#fff] bg-[#1A3C6E] uppercase tracking-wider whitespace-nowrap">Status</th>
-                                                <th className="text-left px-2 md:px-4 py-2 md:py-3 text-xs font-bold text-[#fff] bg-[#1A3C6E] uppercase tracking-wider whitespace-nowrap">Actions</th>
+                                                <th className="text-left px-4 py-3 text-xs font-bold text-[#fff] bg-[#1A3C6E] uppercase tracking-wider whitespace-nowrap">Employee ID</th>
+                                                <th className="text-left px-4 py-3 text-xs font-bold text-[#fff] bg-[#1A3C6E] uppercase tracking-wider whitespace-nowrap">Name</th>
+                                                <th className="text-left px-4 py-3 text-xs font-bold text-[#fff] bg-[#1A3C6E] uppercase tracking-wider whitespace-nowrap">Email</th>
+                                                <th className="text-left px-4 py-3 text-xs font-bold text-[#fff] bg-[#1A3C6E] uppercase tracking-wider whitespace-nowrap">Role</th>
+                                                <th className="text-left px-4 py-3 text-xs font-bold text-[#fff] bg-[#1A3C6E] uppercase tracking-wider whitespace-nowrap">Status</th>
+                                                <th className="text-left px-4 py-3 text-xs font-bold text-[#fff] bg-[#1A3C6E] uppercase tracking-wider whitespace-nowrap">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -462,25 +455,25 @@ function Settings() {
                                                 <tr><td colSpan={6} className="text-center py-8 text-sm text-[var(--text-muted)]">No users found.</td></tr>
                                             ) : users.map((user) => (
                                                 <tr key={user.id} className="border-b border-[var(--border)] hover:bg-[var(--bg-main)] transition-colors">
-                                                    <td className="px-2 md:px-4 py-2 md:py-3 text-sm text-[var(--text-main)] whitespace-nowrap">{user.employee_id || '-'}</td>
-                                                    <td className="px-2 md:px-4 py-2 md:py-3 text-sm text-[var(--text-main)] font-medium whitespace-nowrap">{user.full_name || '-'}</td>
-                                                    <td className="px-2 md:px-4 py-2 md:py-3 text-sm text-[var(--text-muted)] hidden md:table-cell">{user.email || '-'}</td>
-                                                    <td className="px-2 md:px-4 py-2 md:py-3 whitespace-nowrap">
-                                                        <span className="inline-flex px-2 md:px-3 py-1 rounded-full text-xs font-bold" style={getRoleStyles(user.role)}>
+                                                    <td className="px-4 py-3 text-sm text-[var(--text-main)] whitespace-nowrap">{user.employee_id || '-'}</td>
+                                                    <td className="px-4 py-3 text-sm text-[var(--text-main)] font-medium whitespace-nowrap">{user.full_name || '-'}</td>
+                                                    <td className="px-4 py-3 text-sm text-[var(--text-muted)]">{user.email || '-'}</td>
+                                                    <td className="px-4 py-3 whitespace-nowrap">
+                                                        <span className="inline-flex px-3 py-1 rounded-full text-xs font-bold" style={getRoleStyles(user.role)}>
                                                             {getRoleDisplay(user.role)}
                                                         </span>
                                                     </td>
-                                                    <td className="px-2 md:px-4 py-2 md:py-3 whitespace-nowrap">
-                                                        <span className={`inline-flex px-2 md:px-3 py-1 rounded-full text-xs font-bold ${user.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                    <td className="px-4 py-3 whitespace-nowrap">
+                                                        <span className={`inline-flex px-3 py-1 rounded-full text-xs font-bold ${user.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                                                             {user.is_active ? 'Active' : 'Inactive'}
                                                         </span>
                                                     </td>
-                                                    <td className="px-2 md:px-4 py-2 md:py-3">
-                                                        <div className="flex gap-1.5 md:gap-2">
-                                                            <button onClick={() => handleEditUser(user)} className="px-2 md:px-3 py-1 md:py-1.5 text-xs font-semibold rounded-md border border-[var(--border)] bg-transparent text-[var(--text-main)] cursor-pointer hover:bg-[var(--bg-main)] transition-colors whitespace-nowrap">
+                                                    <td className="px-4 py-3">
+                                                        <div className="flex gap-2">
+                                                            <button onClick={() => handleEditUser(user)} className="px-3 py-1.5 text-xs font-semibold rounded-md border border-[var(--border)] bg-transparent text-[var(--text-main)] cursor-pointer hover:bg-[var(--bg-main)] transition-colors whitespace-nowrap">
                                                                 Edit
                                                             </button>
-                                                            <button onClick={() => handleDeleteClick(user.id)} className="px-2 md:px-3 py-1 md:py-1.5 text-xs font-semibold rounded-md border border-red-200 bg-transparent text-red-600 cursor-pointer hover:bg-red-50 transition-colors whitespace-nowrap">
+                                                            <button onClick={() => handleDeleteClick(user.id)} className="px-3 py-1.5 text-xs font-semibold rounded-md border border-red-200 bg-transparent text-red-600 cursor-pointer hover:bg-red-50 transition-colors whitespace-nowrap">
                                                                 Delete
                                                             </button>
                                                         </div>
@@ -490,17 +483,50 @@ function Settings() {
                                         </tbody>
                                     </table>
                                 </div>
-                            )}
-                        </div>
+
+                                {/* Mobile compact list */}
+                                <div className="md:hidden">
+                                    {users.length === 0 ? (
+                                        <div className="text-center py-8 text-sm text-[var(--text-muted)]">No users found.</div>
+                                    ) : (
+                                        <div className="divide-y divide-[var(--border)]">
+                                            {users.map((user) => {
+                                                const initials = (user.full_name || '??').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+                                                return (
+                                                    <div key={user.id} className="settings-user-row">
+                                                        <div className="settings-user-avatar">{initials}</div>
+                                                        <div className="settings-user-info">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="font-medium text-sm text-[var(--text-main)]">{user.full_name || '-'}</span>
+                                                                <span className="settings-user-role-pill" style={getRoleStyles(user.role)}>
+                                                                    {getRoleDisplay(user.role)}
+                                                                </span>
+                                                            </div>
+                                                            <span className="text-xs text-[var(--text-muted)] truncate block max-w-full">{user.email || '-'}</span>
+                                                        </div>
+                                                        <div className="settings-user-actions">
+                                                            <button onClick={() => handleEditUser(user)} className="settings-action-icon" title="Edit">
+                                                                <TbPencil size={16} />
+                                                            </button>
+                                                            <button onClick={() => handleDeleteClick(user.id)} className="settings-action-icon settings-action-danger" title="Delete">
+                                                                <TbTrash size={16} />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+                            </>
+                        )}
                     </div>
                 )}
 
                 {(activeSection === 'chem_levels' || activeSection === 'app_levels') && (
-                    <div className="bg-[var(--bg-surface)] rounded-xl border border-[var(--border)] overflow-hidden shadow-sm">
-                        <div className="px-6 py-5 border-b border-[var(--border)]">
-                            <h2 className="text-lg font-bold text-[var(--text-main)] m-0">{activeSection === 'chem_levels' ? 'Chemical Reorder Levels' : 'Apparatus Reorder Levels'}</h2>
-                        </div>
-                        <div className="p-6">
+                    <div>
+                        <h3 className="text-lg font-bold text-[var(--text-main)] mb-2">{activeSection === 'chem_levels' ? 'Chemical Reorder Levels' : 'Apparatus Reorder Levels'}</h3>
+                        <div className="border-b border-[var(--border)] mb-5" />
 
                         <div className="mode-toggle-box">
                             <button className={`toggle-btn ${(activeSection === 'chem_levels' ? chemicalMode : apparatusMode) === 'common' ? 'active' : ''}`}
@@ -561,32 +587,10 @@ function Settings() {
                                 </table>
                             </div>
                         )}
-                        </div>
                     </div>
                 )}
             </div>
             <ConfirmDialog open={alertDialog.open} message={alertDialog.message} showCancel={false} confirmLabel="OK" onConfirm={() => setAlertDialog({ open: false })} />
-
-            {showCreateModal && (
-                <CreateUserModal
-                    onClose={() => setShowCreateModal(false)}
-                    onSuccess={() => {
-                        setShowCreateModal(false);
-                        fetchUsers();
-                    }}
-                />
-            )}
-
-            {showEditModal && selectedUser && (
-                <EditUserModal
-                    user={selectedUser}
-                    onClose={() => setShowEditModal(false)}
-                    onSuccess={() => {
-                        setShowEditModal(false);
-                        fetchUsers();
-                    }}
-                />
-            )}
 
             <ConfirmDialog
                 open={deleteDialog.open}

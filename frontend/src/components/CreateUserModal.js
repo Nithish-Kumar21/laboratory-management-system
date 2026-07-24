@@ -269,12 +269,13 @@ const styles = {
   formGrid: {
     padding: '24px',
     display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
+    gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
     gap: '16px',
   },
   formGroup: {
     display: 'flex',
     flexDirection: 'column',
+    minWidth: 0,
   },
   label: {
     marginBottom: '8px',
@@ -288,6 +289,9 @@ const styles = {
     borderRadius: '4px',
     fontSize: '14px',
     outline: 'none',
+    width: '100%',
+    minWidth: 0,
+    boxSizing: 'border-box',
   },
   checkboxLabel: {
     display: 'flex',

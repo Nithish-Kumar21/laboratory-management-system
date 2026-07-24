@@ -29,8 +29,8 @@ function NewStockRegister() {
     supplier_email: '',
     remarks: '',
   });
-  const [chemicalItems, setChemicalItems] = useState([{ chemical_name: '', pack_size: '', no_of_packs: '1', unit: 'ml', rate: '', make: '', restock_level: '' }]);
-  const [apparatusItems, setApparatusItems] = useState([{ apparatus_name: '', quantity_pieces: '', rate: '', make: '', restock_level: '' }]);
+  const [chemicalItems, setChemicalItems] = useState([]);
+  const [apparatusItems, setApparatusItems] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [alertDialog, setAlertDialog] = useState({ open: false, message: '' });
   const [fieldErrors, setFieldErrors] = useState({});

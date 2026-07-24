@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { FaArrowLeft, FaArrowRight, FaFlask, FaIdCard, FaUser, FaGraduationCap, FaCalendarAlt, FaCheckCircle, FaTimesCircle, FaClock, FaTrash, FaEdit, FaClipboardList, FaExclamationTriangle } from 'react-icons/fa';
+import { FaArrowLeft, FaArrowRight, FaFlask, FaIdCard, FaUser, FaGraduationCap, FaCalendarAlt, FaCheckCircle, FaTimesCircle, FaClock, FaTrash, FaEdit, FaClipboardList, FaExclamationTriangle, FaPrint } from 'react-icons/fa';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import AddRequestModal from '../components/modals/AddRequestModal';
@@ -316,10 +316,19 @@ function StockRequestDetail() {
                 <div className="staff-detail-page animate-up">
                     <div className="staff-detail-inner">
 
-                    {/* Back Row */}
-                    <div className="sd-back-row" onClick={() => navigate('/requests')}>
-                        <FaArrowLeft />
-                        <span>Request Details</span>
+                    {/* Header */}
+                    <div className="srq-header">
+                        <div className="srq-header-left">
+                            <div className="sd-back-row" onClick={() => navigate('/requests')}>
+                                <FaArrowLeft />
+                                <span>Request Details</span>
+                            </div>
+                        </div>
+                        <div className="srq-header-actions">
+                            <button className="sd-action-icon-btn" onClick={() => window.print()} title="Print">
+                                <FaPrint />
+                            </button>
+                        </div>
                     </div>
 
                     {/* Info Card */}
@@ -331,7 +340,7 @@ function StockRequestDetail() {
                             </div>
                         </div>
                         <hr className="sd-divider" />
-                        <div className="sd-meta-grid">
+                        <div className="srq-meta-grid">
                             <div className="sd-meta-item">
                                 <div className="sd-meta-label"><FaUser /> Staff</div>
                                 <div className="sd-meta-value">{request.requested_by_name}</div>
@@ -356,6 +365,10 @@ function StockRequestDetail() {
                                 <div className="sd-meta-label">Hour</div>
                                 <div className="sd-meta-value">{request.hour?.length ? request.hour.sort((a,b)=>a-b).join(', ') : '-'}</div>
                             </div>
+                            <div className="sd-meta-item">
+                                <div className="sd-meta-label">Venue</div>
+                                <div className="sd-meta-value">{request.venue || '-'}</div>
+                            </div>
                         </div>
                     </div>
 
@@ -365,11 +378,19 @@ function StockRequestDetail() {
                             <FaFlask /> Chemical Requirements
                         </div>
                         <hr className="sd-divider" />
-                        <div className="sd-chem-list">
+                        <div className="srq-chem-list">
                             {request.chemical_items?.map((item, idx) => (
-                                <div key={idx} className="sd-chem-row">
-                                    <span className="sd-chem-name">{item.chemical_name}</span>
-                                    <span className="sd-chem-qty">{item.quantity}<span className="sd-chem-unit"> {item.unit}</span></span>
+                                <div key={idx} className="srq-chem-card">
+                                    <div className="srq-chem-top">
+                                        <span className="srq-chem-name">{item.chemical_name}</span>
+                                        <span className="srq-chem-qty">{item.quantity}<span className="srq-chem-unit"> {item.unit}</span></span>
+                                    </div>
+                                    {item.actual_used_quantity != null && ['reported', 'completed'].includes(request.status) && (
+                                        <div className="srq-chem-top" style={{ marginTop: 4 }}>
+                                            <span className="srq-chem-name" style={{ fontWeight: 400, fontSize: 13, color: 'var(--text-muted)' }}>Actual Used</span>
+                                            <span className="srq-chem-qty" style={{ fontSize: 13, fontWeight: 600 }}>{item.actual_used_quantity}<span className="srq-chem-unit"> {item.unit}</span></span>
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                             {(!request.chemical_items || request.chemical_items.length === 0) && (
@@ -385,13 +406,13 @@ function StockRequestDetail() {
                                 {request.purpose_type === 'research_project' ? 'Research / Project' : 'Practical Lab'}
                             </div>
                             <hr className="sd-divider" />
-                            <div className="sd-meta-grid">
-                                <div className="sd-meta-item" style={{ gridColumn: '1 / -1' }}>
+                            <div className="srq-meta-grid">
+                                <div className="sd-meta-item">
                                     <div className="sd-meta-label">Experiment Name(s)</div>
                                     <div className="sd-meta-value">{request.experiment_name || '-'}</div>
                                 </div>
                                 {request.purpose_type === 'research_project' && (
-                                    <div className="sd-meta-item" style={{ gridColumn: '1 / -1' }}>
+                                    <div className="sd-meta-item">
                                         <div className="sd-meta-label">Student Name(s)</div>
                                         <div className="sd-meta-value">{request.student_name || '-'}</div>
                                     </div>
@@ -523,10 +544,19 @@ function StockRequestDetail() {
             <div className="staff-detail-page animate-up">
                 <div className="staff-detail-inner">
 
-                {/* Back Row */}
-                <div className="sd-back-row" onClick={() => navigate('/requests')}>
-                    <FaArrowLeft />
-                    <span>Request Details</span>
+                {/* Header */}
+                <div className="srq-header">
+                    <div className="srq-header-left">
+                        <div className="sd-back-row" onClick={() => navigate('/requests')}>
+                            <FaArrowLeft />
+                            <span>Request Details</span>
+                        </div>
+                    </div>
+                    <div className="srq-header-actions">
+                        <button className="sd-action-icon-btn" onClick={() => window.print()} title="Print">
+                            <FaPrint />
+                        </button>
+                    </div>
                 </div>
 
                 {/* Info Card */}
@@ -538,7 +568,7 @@ function StockRequestDetail() {
                         </div>
                     </div>
                     <hr className="sd-divider" />
-                    <div className="sd-meta-grid">
+                    <div className="srq-meta-grid">
                         <div className="sd-meta-item">
                             <div className="sd-meta-label"><FaUser /> Requested By</div>
                             <div className="sd-meta-value">{request.requested_by_name}</div>
@@ -563,6 +593,10 @@ function StockRequestDetail() {
                             <div className="sd-meta-label">Hour</div>
                             <div className="sd-meta-value">{request.hour?.length ? request.hour.sort((a,b)=>a-b).join(', ') : '-'}</div>
                         </div>
+                        <div className="sd-meta-item">
+                            <div className="sd-meta-label">Venue</div>
+                            <div className="sd-meta-value">{request.venue || '-'}</div>
+                        </div>
                     </div>
                 </div>
 
@@ -572,11 +606,19 @@ function StockRequestDetail() {
                         <FaFlask /> Chemical Requirements
                     </div>
                     <hr className="sd-divider" />
-                    <div className="sd-chem-list">
+                    <div className="srq-chem-list">
                         {request.chemical_items?.map((item, idx) => (
-                            <div key={idx} className="sd-chem-row">
-                                <span className="sd-chem-name">{item.chemical_name}</span>
-                                <span className="sd-chem-qty">{item.quantity}<span className="sd-chem-unit"> {item.unit}</span></span>
+                            <div key={idx} className="srq-chem-card">
+                                <div className="srq-chem-top">
+                                    <span className="srq-chem-name">{item.chemical_name}</span>
+                                    <span className="srq-chem-qty">{item.quantity}<span className="srq-chem-unit"> {item.unit}</span></span>
+                                </div>
+                                {item.actual_used_quantity != null && ['reported', 'completed'].includes(request.status) && (
+                                    <div className="srq-chem-top" style={{ marginTop: 4 }}>
+                                        <span className="srq-chem-name" style={{ fontWeight: 400, fontSize: 13, color: 'var(--text-muted)' }}>Actual Used</span>
+                                        <span className="srq-chem-qty" style={{ fontSize: 13, fontWeight: 600 }}>{item.actual_used_quantity}<span className="srq-chem-unit"> {item.unit}</span></span>
+                                    </div>
+                                )}
                             </div>
                         ))}
                         {(!request.chemical_items || request.chemical_items.length === 0) && (
@@ -592,13 +634,13 @@ function StockRequestDetail() {
                             {request.purpose_type === 'research_project' ? 'Research / Project' : 'Practical Lab'}
                         </div>
                         <hr className="sd-divider" />
-                        <div className="sd-meta-grid">
-                            <div className="sd-meta-item" style={{ gridColumn: '1 / -1' }}>
+                        <div className="srq-meta-grid">
+                            <div className="sd-meta-item">
                                 <div className="sd-meta-label">Experiment Name(s)</div>
                                 <div className="sd-meta-value">{request.experiment_name || '-'}</div>
                             </div>
                             {request.purpose_type === 'research_project' && (
-                                <div className="sd-meta-item" style={{ gridColumn: '1 / -1' }}>
+                                <div className="sd-meta-item">
                                     <div className="sd-meta-label">Student Name(s)</div>
                                     <div className="sd-meta-value">{request.student_name || '-'}</div>
                                 </div>
@@ -642,15 +684,17 @@ function StockRequestDetail() {
                         <div className="sd-card-title"><FaCheckCircle /> Verify & Complete Request</div>
                         <hr className="sd-divider" />
                         <p className="sd-section-helper">Review the usage report submitted by the staff. Inventory will be automatically adjusted upon confirmation.</p>
-                        <div className="card no-padding">
-                            <table className="detail-table comparison-mode">
+
+                        {/* Desktop Table */}
+                        <div className="vc-table-wrap">
+                            <table className="vc-table">
                                 <thead>
                                     <tr>
-                                        <th>Chemical</th>
-                                        <th>Requested</th>
-                                        <th>Actual Used</th>
-                                        <th>Returned</th>
-                                        <th>Additional</th>
+                                        <th className="vc-th-left">Chemical</th>
+                                        <th className="vc-th-right">Requested</th>
+                                        <th className="vc-th-right">Actual Used</th>
+                                        <th className="vc-th-right">Returned</th>
+                                        <th className="vc-th-right">Additional</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -661,17 +705,49 @@ function StockRequestDetail() {
                                         const add = Math.max(0, act - req);
                                         return (
                                             <tr key={item.id}>
-                                                <td className="item-name">{item.chemical_name}</td>
-                                                <td><span className="qty-badge muted">{req} {item.unit}</span></td>
-                                                <td><span className="qty-badge primary">{act} {item.unit}</span></td>
-                                                <td>{ret > 0 ? <span className="diff-badge positive"><FaArrowLeft /> {ret.toFixed(2)} {item.unit}</span> : <span className="diff-none">-</span>}</td>
-                                                <td>{add > 0 ? <span className="diff-badge negative"><FaArrowRight /> {add.toFixed(2)} {item.unit}</span> : <span className="diff-none">-</span>}</td>
+                                                <td className="vc-td-name">{item.chemical_name}</td>
+                                                <td className="vc-td-right"><span className="vc-badge vc-badge-muted">{req} {item.unit}</span></td>
+                                                <td className="vc-td-right"><span className="vc-badge vc-badge-primary">{act} {item.unit}</span></td>
+                                                <td className="vc-td-right">{ret > 0 ? <span className="vc-diff vc-diff-positive"><FaArrowLeft /> {ret.toFixed(2)} {item.unit}</span> : <span className="vc-diff-none">—</span>}</td>
+                                                <td className="vc-td-right">{add > 0 ? <span className="vc-diff vc-diff-negative"><FaArrowRight /> {add.toFixed(2)} {item.unit}</span> : <span className="vc-diff-none">—</span>}</td>
                                             </tr>
                                         );
                                     })}
                                 </tbody>
                             </table>
                         </div>
+
+                        {/* Mobile Cards */}
+                        <div className="vc-cards">
+                            {request.chemical_items?.map(item => {
+                                const req = parseFloat(item.quantity) || 0;
+                                const act = parseFloat(item.actual_used_quantity) || 0;
+                                const ret = Math.max(0, req - act);
+                                const add = Math.max(0, act - req);
+                                return (
+                                    <div key={item.id} className="vc-card">
+                                        <div className="vc-card-header">{item.chemical_name}</div>
+                                        <div className="vc-card-row">
+                                            <span className="vc-card-label">Requested</span>
+                                            <span className="vc-badge vc-badge-muted">{req} {item.unit}</span>
+                                        </div>
+                                        <div className="vc-card-row">
+                                            <span className="vc-card-label">Actual Used</span>
+                                            <span className="vc-badge vc-badge-primary">{act} {item.unit}</span>
+                                        </div>
+                                        <div className="vc-card-row">
+                                            <span className="vc-card-label">Returned</span>
+                                            {ret > 0 ? <span className="vc-diff vc-diff-positive"><FaArrowLeft /> {ret.toFixed(2)} {item.unit}</span> : <span className="vc-diff-none">—</span>}
+                                        </div>
+                                        <div className="vc-card-row">
+                                            <span className="vc-card-label">Additional</span>
+                                            {add > 0 ? <span className="vc-diff vc-diff-negative"><FaArrowRight /> {add.toFixed(2)} {item.unit}</span> : <span className="vc-diff-none">—</span>}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
                         <button className="sd-btn sd-btn-primary sd-btn-full" onClick={handleMarkAsCompleted} disabled={actionLoading} style={{marginTop: '16px'}}>
                             {actionLoading ? 'Processing...' : <><FaCheckCircle /> Confirm & Adjust Inventory</>}
                         </button>
@@ -683,11 +759,13 @@ function StockRequestDetail() {
                     <div className="sd-card">
                         <div className="sd-card-title"><FaClipboardList /> Execution Summary</div>
                         <hr className="sd-divider" />
-                        <div className="sd-chem-list">
+                        <div className="srq-chem-list">
                             {request.chemical_items?.map(item => (
-                                <div key={item.id} className="sd-chem-row">
-                                    <span className="sd-chem-name">{item.chemical_name}</span>
-                                    <span className="sd-chem-qty">{item.actual_used_quantity}<span className="sd-chem-unit"> {item.unit}</span></span>
+                                <div key={item.id} className="srq-chem-card">
+                                    <div className="srq-chem-top">
+                                        <span className="srq-chem-name">{item.chemical_name}</span>
+                                        <span className="srq-chem-qty">{item.actual_used_quantity}<span className="srq-chem-unit"> {item.unit}</span></span>
+                                    </div>
                                 </div>
                             ))}
                         </div>
