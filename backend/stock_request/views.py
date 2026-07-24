@@ -255,7 +255,8 @@ class StockRequestViewSet(viewsets.ModelViewSet):
             staff_name=obj.requested_by.full_name,
             class_field=obj.class_name,
             date=obj.date,
-            status='completed'
+            status='completed',
+            venue=obj.venue
         )
 
         # 2. Process Items and Apply Delta to Inventory

@@ -219,7 +219,7 @@ class IssueRegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = IssueRegister
-        fields = ['ir_id', 'request_code', 'stock_request_db_id', 'staff_name', 'class_field', 'date', 'status', 'chemicals', 'source_request']
+        fields = ['ir_id', 'request_code', 'stock_request_db_id', 'staff_name', 'class_field', 'date', 'status', 'venue', 'chemicals', 'source_request']
 
     def get_source_request(self, obj):
         if not obj.stock_request_db_id:

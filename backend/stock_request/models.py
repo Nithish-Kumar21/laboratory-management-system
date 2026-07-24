@@ -162,6 +162,7 @@ class IssueRegister(models.Model):
     class_field = models.CharField(db_column='class', max_length=50)
     date = models.DateField()
     status = models.CharField(max_length=20)
+    venue = models.CharField(max_length=100, blank=True, default='B.Sc Chemistry Laboratory')
 
     class Meta:
         managed = False
