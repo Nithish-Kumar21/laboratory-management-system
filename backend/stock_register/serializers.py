@@ -166,6 +166,13 @@ class StockRegisterCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Enter a valid email address")
         return value
 
+    def validate(self, attrs):
+        if not attrs.get('chemical_items') and not attrs.get('apparatus_items'):
+            raise serializers.ValidationError(
+                "At least one of chemical_items or apparatus_items must be provided."
+            )
+        return attrs
+
     def create(self, validated_data):
         chemical_items_data = validated_data.pop('chemical_items', [])
         apparatus_items_data = validated_data.pop('apparatus_items', [])

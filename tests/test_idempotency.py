@@ -26,6 +26,10 @@ class TestIdempotency:
             'reason': REASON,
             'status': 'draft',
             'date': timezone.now().date().isoformat(),
+            'day_order': 'I',
+            'hour': [1, 2],
+            'purpose_type': 'practical_lab',
+            'experiment_name': 'Titration',
             'chemical_items': [
                 {'chemical_name': CHEM_NAME, 'quantity': '100.00'},
             ],

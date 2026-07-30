@@ -87,6 +87,10 @@ class TestAuditLoggingOnActions:
             'chemical_items': [{'chemical_name': 'Hydrochloric Acid', 'quantity': 10, 'unit': 'ml'}],
             'class_name': 'I B.Sc Chemistry',
             'date': today.isoformat(),
+            'day_order': 'I',
+            'hour': [1, 2],
+            'purpose_type': 'practical_lab',
+            'experiment_name': 'Titration',
         }, format='json')
         assert resp.status_code == 201, f'Expected 201, got {resp.status_code}: {resp.content[:500]}'
         logs = AuditLog.objects.filter(action='REQUEST_CREATED')
@@ -98,6 +102,10 @@ class TestAuditLoggingOnActions:
             'chemical_items': [{'chemical_name': 'Hydrochloric Acid', 'quantity': 10, 'unit': 'ml'}],
             'class_name': 'I B.Sc Chemistry',
             'date': today.isoformat(),
+            'day_order': 'I',
+            'hour': [1, 2],
+            'purpose_type': 'practical_lab',
+            'experiment_name': 'Titration',
             'status': 'draft',
         }, format='json')
         assert create_resp.status_code == 201
@@ -127,7 +135,7 @@ class TestAuditLoggingOnActions:
             'invoice_number': 'INV-AUDIT-001',
             'supplier_name': 'Test Supplier Audit',
             'date': '2026-06-30',
-            'chemical_items': [{'chemical_name': 'Ethanol', 'make': 'TestCorp', 'quantity': 100, 'unit': 'ml', 'rate': '500.00'}],
+            'chemical_items': [{'chemical_name': 'Ethanol', 'make': 'TestCorp', 'pack_size': 100, 'unit': 'ml', 'rate': '500.00', 'no_of_packs': 1}],
         }, format='json')
         assert resp.status_code == 201, f'Expected 201, got {resp.status_code}: {resp.content[:1000].decode()}'
         logs = AuditLog.objects.filter(action='STOCK_ENTRY_ADDED')

@@ -36,6 +36,10 @@ class TestM3E2EWorkflow:
             'reason': REASON,
             'status': status_val,
             'date': timezone.now().date().isoformat(),
+            'day_order': 'I',
+            'hour': [1, 2],
+            'purpose_type': 'practical_lab',
+            'experiment_name': 'Titration',
             'chemical_items': [
                 {'chemical_name': chemical, 'quantity': '200.00'},
             ],
@@ -112,6 +116,10 @@ class TestM3E2EWorkflow:
             'class_name': CLASS_NAME,
             'reason': REASON,
             'date': timezone.now().date().isoformat(),
+            'day_order': 'I',
+            'hour': [1, 2],
+            'purpose_type': 'practical_lab',
+            'experiment_name': 'Titration',
             'chemical_items': [],
             'apparatus_items': [
                 {'apparatus_name': APPARATUS_NAME, 'quantity_pieces': 5},

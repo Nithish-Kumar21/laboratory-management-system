@@ -114,22 +114,33 @@ def lockout_user(db):
 @pytest.mark.django_db
 class TestSecretKeyMissingCrashesApp:
     def test_secret_key_missing_crashes_app(self):
-        env = os.environ.copy()
-        env.pop('SECRET_KEY', None)
-        env['DJANGO_SETTINGS_MODULE'] = 'backend.settings.dev'
-        result = subprocess.run(
-            ['python', 'manage.py', 'check'],
-            env=env,
-            capture_output=True,
-            text=True,
-            cwd=os.path.join(os.path.dirname(__file__), '..', 'backend'),
-        )
-        assert result.returncode != 0, (
-            "manage.py check should fail when SECRET_KEY is missing"
-        )
-        assert 'SECRET_KEY' in result.stderr or 'KeyError' in result.stderr, (
-            f"Expected SECRET_KEY-related error in stderr, got:\n{result.stderr}"
-        )
+        backend_dir = os.path.join(os.path.dirname(__file__), '..', 'backend')
+        dotenv_path = os.path.join(backend_dir, '.env')
+        dotenv_backup = dotenv_path + '.bak'
+
+        try:
+            if os.path.exists(dotenv_path):
+                os.rename(dotenv_path, dotenv_backup)
+
+            env = os.environ.copy()
+            env.pop('SECRET_KEY', None)
+            env['DJANGO_SETTINGS_MODULE'] = 'backend.settings.dev'
+            result = subprocess.run(
+                ['python', 'manage.py', 'check'],
+                env=env,
+                capture_output=True,
+                text=True,
+                cwd=backend_dir,
+            )
+            assert result.returncode != 0, (
+                "manage.py check should fail when SECRET_KEY is missing"
+            )
+            assert 'SECRET_KEY' in result.stderr or 'KeyError' in result.stderr, (
+                f"Expected SECRET_KEY-related error in stderr, got:\n{result.stderr}"
+            )
+        finally:
+            if os.path.exists(dotenv_backup):
+                os.rename(dotenv_backup, dotenv_path)
 
 
 @pytest.mark.django_db
