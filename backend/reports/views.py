@@ -79,8 +79,8 @@ class YearEndReportView(APIView):
         chem_by_name = defaultdict(lambda: {'total_qty': Decimal('0'), 'total_cost': Decimal('0'), 'count': 0, 'unit': 'ml'})
         for item in chem_items_list:
             name = item.chemical_name
-            chem_by_name[name]['total_qty'] += item.quantity
-            chem_by_name[name]['total_cost'] += item.quantity * item.rate
+            chem_by_name[name]['total_qty'] += item.total_quantity
+            chem_by_name[name]['total_cost'] += item.total_quantity * item.rate
             chem_by_name[name]['count'] += 1
             chem_by_name[name]['unit'] = item.unit
 
@@ -102,8 +102,8 @@ class YearEndReportView(APIView):
         for sr in stock_registers:
             month_key = sr.date.strftime('%b %Y')
             for ci in ChemicalItem.objects.filter(stock_register=sr):
-                monthly_map[month_key]['chemicals_cost'] += ci.quantity * ci.rate
-                monthly_map[month_key]['chemicals_quantity'] += ci.quantity
+                monthly_map[month_key]['chemicals_cost'] += ci.total_quantity * ci.rate
+                monthly_map[month_key]['chemicals_quantity'] += ci.total_quantity
             for ai in ApparatusItem.objects.filter(stock_register=sr):
                 monthly_map[month_key]['apparatus_cost'] += ai.quantity_pieces * ai.rate
                 monthly_map[month_key]['apparatus_quantity'] += ai.quantity_pieces
@@ -244,7 +244,7 @@ class YearEndReportView(APIView):
         avail_chems = AvailableChemical.objects.all()
         low_chems = []
         for ac in avail_chems:
-            rl = ac.reorder_level if ac.reorder_level is not None else 0
+            rl = float(ac.reorder_level) if ac.reorder_level is not None else 0
             raw_qty = float(ac.quantity)
             current_qty = max(0, raw_qty)
             if raw_qty < 0:

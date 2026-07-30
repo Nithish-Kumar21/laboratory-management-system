@@ -1,3 +1,6 @@
+import os
+os.environ.setdefault('SECRET_KEY', 'test-secret-key-not-for-production')
+
 from .settings.base import *
 
 DATABASES = {
@@ -8,9 +11,6 @@ DATABASES = {
         "PASSWORD": "postgres",
         "HOST": "localhost",
         "PORT": "5432",
-        "TEST": {
-            "NAME": "test_postgres",
-        },
     }
 }
 
@@ -29,6 +29,6 @@ SIMPLE_JWT = {
 }
 
 REST_FRAMEWORK['DEFAULT_THROTTLE_CLASSES'] = []
-REST_FRAMEWORK['DEFAULT_THROTTLE_RATES'] = {}
+REST_FRAMEWORK['DEFAULT_THROTTLE_RATES'] = {'login': None}
 
 EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'

@@ -70,10 +70,10 @@ class DamagedEntryViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         
-        # 1. Increment apparatus in inventory
+        # 1. Lock and increment apparatus in inventory
         for item in instance.damaged_items.all():
             try:
-                available = AvailableApparatus.objects.get(apparatus_name=item.apparatus_name)
+                available = AvailableApparatus.objects.select_for_update().get(apparatus_name=item.apparatus_name)
                 available.available_quantity_pieces += item.quantity
                 available.save()
             except AvailableApparatus.DoesNotExist:

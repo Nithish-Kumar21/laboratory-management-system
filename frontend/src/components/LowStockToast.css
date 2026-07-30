@@ -1,6 +1,6 @@
 .low-stock-toast {
     position: fixed;
-    bottom: 20px;
+    top: 72px;
     right: 20px;
     background: #fff;
     border-left: 6px solid #e74c3c;
@@ -109,12 +109,12 @@
 
 @keyframes slideIn {
     from {
-        transform: translateX(120%);
+        transform: translateY(-120%);
         opacity: 0;
     }
 
     to {
-        transform: translateX(0);
+        transform: translateY(0);
         opacity: 1;
     }
 }

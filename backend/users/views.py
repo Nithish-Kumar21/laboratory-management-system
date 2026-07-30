@@ -18,6 +18,7 @@ from .serializers import (
     PasswordResetRequestSerializer, PasswordResetConfirmSerializer
 )
 from .email_utils import send_password_reset_email, send_welcome_email
+from .throttles import LoginRateThrottle
 from audit.services import AuditLogService
 
 logger = logging.getLogger(__name__)
@@ -25,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 class LoginView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [LoginRateThrottle]
 
     def post(self, request):
         username = request.data.get('username')
@@ -392,7 +394,7 @@ class UserRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         return user
 
     def perform_update(self, serializer):
-        instance = self.get_object()
+        instance = serializer.instance
         old_active = instance.is_active
         if self.request.user.role != 'hod':
             serializer.save(

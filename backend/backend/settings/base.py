@@ -1,10 +1,14 @@
+import os
 from pathlib import Path
 from datetime import timedelta
 from decouple import config
+from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+load_dotenv(BASE_DIR / '.env')
 
-SECRET_KEY = config('SECRET_KEY')
+
+SECRET_KEY = os.environ['SECRET_KEY']
 
 DEBUG = config('DEBUG', default=False, cast=bool)
 
@@ -124,6 +128,10 @@ REST_FRAMEWORK = {
     'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler',
     'NON_FIELD_ERRORS_KEY': 'error',
     'DATETIME_FORMAT': '%Y-%m-%d %H:%M:%S',
+    'DEFAULT_THROTTLE_CLASSES': [],
+    'DEFAULT_THROTTLE_RATES': {
+        'login': '5/min',
+    },
 }
 
 SIMPLE_JWT = {

@@ -565,17 +565,21 @@
     font-size: 18px;
 }
 
-/* Cards */
+/* Section (flat layout — no card background/shadow) */
 .sd-card {
-    background: #fff;
-    border-radius: 14px;
-    border: 0.5px solid #e2e8f0;
-    padding: 32px;
+    background: transparent;
+    border-radius: 0;
+    border: none;
+    padding: 24px 0;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.sd-card:last-child {
+    border-bottom: none;
 }
 
 :root.dark-mode .sd-card {
-    background: #1e293b;
-    border-color: #334155;
+    border-bottom-color: #334155;
 }
 
 .sd-card-header {
@@ -878,11 +882,12 @@
 
 /* Error Card */
 .sd-card-error {
-    border-color: #FCA5A5;
+    border-left: 3px solid #FCA5A5;
+    padding-left: 20px;
 }
 
 :root.dark-mode .sd-card-error {
-    border-color: #DC2626;
+    border-left-color: #DC2626;
 }
 
 .sd-card-error .sd-card-title svg {
@@ -1151,10 +1156,209 @@
     }
 }
 
+/* ===== HEADER ===== */
+.srq-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.srq-header-left {
+    display: flex;
+    align-items: center;
+}
+
+.srq-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ===== METADATA GRID ===== */
+.srq-meta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px 24px;
+    margin-top: 4px;
+}
+
+/* ===== CHEMICAL LIST ===== */
+.srq-chem-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.srq-chem-card {
+    background: #F8FAFC;
+    border: 1px solid #f1f5f9;
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+:root.dark-mode .srq-chem-card {
+    background: #1a2332;
+    border-color: #334155;
+}
+
+.srq-chem-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.srq-chem-name {
+    font-size: 15px;
+    color: var(--text-main);
+    font-weight: 600;
+    flex: 1;
+    min-width: 0;
+}
+
+.srq-chem-qty {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1A3C6E;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+:root.dark-mode .srq-chem-qty {
+    color: #4A90D9;
+}
+
+.srq-chem-unit {
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text-muted);
+    margin-left: 2px;
+}
+
+/* ===== VERIFY & COMPLETE ===== */
+.vc-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg-surface);
+}
+
+.vc-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px;
+}
+
+.vc-th-left {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    background: var(--bg-main);
+    border-bottom: 1px solid var(--border);
+}
+
+.vc-th-right {
+    padding: 12px 16px;
+    text-align: right;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    background: var(--bg-main);
+    border-bottom: 1px solid var(--border);
+}
+
+.vc-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+}
+
+.vc-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.vc-table tbody tr:hover {
+    background: rgba(79, 70, 229, 0.02);
+}
+
+.vc-td-name {
+    font-weight: 600;
+    color: #3f51b5;
+    white-space: nowrap;
+}
+
+.vc-td-right {
+    text-align: right;
+}
+
+.vc-badge {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.vc-badge-muted {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+}
+
+.vc-badge-primary {
+    background: #eef2ff;
+    color: #4f46e5;
+    border: 1px solid #c7d2fe;
+}
+
+.vc-diff {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.vc-diff-positive {
+    background: #f0fdf4;
+    color: #16a34a;
+    border: 1px solid #bbf7d0;
+}
+
+.vc-diff-negative {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+}
+
+.vc-diff-none {
+    color: #cbd5e1;
+    font-weight: 500;
+}
+
+.vc-cards {
+    display: none;
+}
+
 /* ===== TOAST ===== */
 .cr-toast {
     position: fixed;
-    bottom: 80px;
+    top: 72px;
     right: 16px;
     background: #1A3C6E;
     color: #fff;
@@ -1170,7 +1374,7 @@
 }
 
 @keyframes cr-toast-in {
-    from { opacity: 0; transform: translateY(12px); }
+    from { opacity: 0; transform: translateY(-12px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
@@ -1181,9 +1385,14 @@
     }
 
     .sd-card {
-        padding: 24px;
+        padding: 20px 0;
     }
 
+    .srq-header-actions {
+        display: none;
+    }
+
+    .srq-meta-grid,
     .sd-meta-grid {
         grid-template-columns: 1fr 1fr;
         gap: 8px 16px;
@@ -1198,6 +1407,58 @@
         flex: 1;
         min-width: 0;
         width: auto;
+    }
+
+    /* Verify & Complete: switch to cards on mobile */
+    .vc-table-wrap {
+        display: none;
+    }
+
+    .vc-cards {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .vc-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .vc-card-header {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #3f51b5;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .vc-card-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .vc-card-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+        flex-shrink: 0;
+    }
+
+    .vc-card-row .vc-badge,
+    .vc-card-row .vc-diff,
+    .vc-card-row .vc-diff-none {
+        font-size: 0.85rem;
+        padding: 6px 12px;
     }
 
     .sd-usage-row {

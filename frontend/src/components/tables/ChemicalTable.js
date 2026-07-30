@@ -13,7 +13,7 @@ function ChemicalTable({ showExtra = true, searchTerm = '', showOnlyLowStock = f
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('available_chemicals/')
+    api.get('/available_chemicals/')
       .then((res) => {
         setChemicals(
           Array.isArray(res.data) ? res.data : res.data.results || []
@@ -27,7 +27,7 @@ function ChemicalTable({ showExtra = true, searchTerm = '', showOnlyLowStock = f
 
   const filtered = chemicals.filter((item) => {
     const term = searchTerm.toLowerCase();
-    if (term && !item.chemical_name.toLowerCase().includes(term)) return false;
+    if (term && !(item.chemical_name || '').toLowerCase().includes(term)) return false;
     if (showOnlyLowStock) {
       const qty = parseFloat(item.quantity);
       const reorder = parseFloat(item.reorder_level || 0);

@@ -36,7 +36,7 @@ class StockRequestCreateSerializer(serializers.ModelSerializer):
         model = StockRequest
         fields = [
             'id', 'request_id', 'class_name', 'reason', 'date',
-            'day_order', 'hour', 'purpose_type', 'experiment_name', 'student_name',
+            'day_order', 'hour', 'purpose_type', 'experiment_name', 'student_name', 'venue',
             'chemical_items', 'status', 'created_at'
         ]
         read_only_fields = ['id', 'request_id', 'created_at']
@@ -87,17 +87,6 @@ class StockRequestCreateSerializer(serializers.ModelSerializer):
                 except AvailableChemical.DoesNotExist:
                     pass
 
-        status = data.get('status', 'pending')
-        if status == 'pending' and user.role == 'staff':
-            active_statuses = ['pending', 'accepted', 'issued', 'reported']
-            has_active = StockRequest.objects.filter(
-                requested_by=user,
-                status__in=active_statuses
-            ).exists()
-            if has_active:
-                raise serializers.ValidationError(
-                    "You already have an active request. Complete your previous request first, or save this as a draft."
-                )
         return data
 
     def create(self, validated_data):
@@ -159,7 +148,7 @@ class StockRequestListSerializer(serializers.ModelSerializer):
         model = StockRequest
         fields = [
             'id', 'request_id', 'class_name', 'status', 'reason', 'date', 'created_at',
-            'day_order', 'hour', 'purpose_type', 'experiment_name', 'student_name',
+            'day_order', 'hour', 'purpose_type', 'experiment_name', 'student_name', 'venue',
             'requested_by_name', 'requested_by_id',
             'chemical_items',
             'issued_at', 'reported_at', 'completed_at',
@@ -181,7 +170,7 @@ class StockRequestDetailSerializer(serializers.ModelSerializer):
         model = StockRequest
         fields = [
             'id', 'request_id', 'class_name', 'status', 'reason', 'rejection_reason', 'created_at', 'date',
-            'day_order', 'hour', 'purpose_type', 'experiment_name', 'student_name',
+            'day_order', 'hour', 'purpose_type', 'experiment_name', 'student_name', 'venue',
             'requested_by_name', 'requested_by_id', 'requested_by',
             'chemical_items',
             'reviewed_at', 'reviewed_by_name',
@@ -230,7 +219,7 @@ class IssueRegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = IssueRegister
-        fields = ['ir_id', 'request_code', 'stock_request_db_id', 'staff_name', 'class_field', 'date', 'status', 'chemicals', 'source_request']
+        fields = ['ir_id', 'request_code', 'stock_request_db_id', 'staff_name', 'class_field', 'date', 'status', 'venue', 'chemicals', 'source_request']
 
     def get_source_request(self, obj):
         if not obj.stock_request_db_id:
@@ -243,6 +232,7 @@ class IssueRegisterSerializer(serializers.ModelSerializer):
                 'purpose_type': sr.purpose_type,
                 'experiment_name': sr.experiment_name,
                 'student_name': sr.student_name,
+                'venue': sr.venue,
             }
         except StockRequest.DoesNotExist:
             return None

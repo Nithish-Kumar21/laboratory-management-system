@@ -4,6 +4,17 @@ import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import './UserProfile.css';
 
+function getInitials(user) {
+  if (!user) return '?';
+  const role = user.role || '';
+  if (role === 'hod') return 'HD';
+  if (role === 'store_keeper') return 'SK';
+  if (role === 'staff') return 'ST';
+  return user.full_name
+    ? user.full_name.split(' ').filter(Boolean).map(n => n[0]).join('').toUpperCase().slice(0, 2)
+    : '?';
+}
+
 const UserProfile = () => {
   const { user, updateUser } = useAuth();
   const navigate = useNavigate();
@@ -45,24 +56,18 @@ const UserProfile = () => {
       updateUser({ ...user, ...response.data });
       setSuccess('Profile updated successfully!');
     } catch (err) {
-      setError('Failed to update profile');
+      const data = err.response?.data;
+      let msg = 'Failed to update profile';
+      if (data) {
+        const firstKey = Object.keys(data)[0];
+        if (firstKey) {
+          const val = data[firstKey];
+          msg = Array.isArray(val) ? val[0] : String(val);
+        }
+      }
+      setError(msg);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const getRoleStyles = (role) => {
-    switch (role) {
-      case 'admin':
-        return { backgroundColor: '#eff6ff', color: '#1e40af' };
-      case 'hod':
-        return { backgroundColor: '#fff7ed', color: '#9a3412' };
-      case 'store_keeper':
-        return { backgroundColor: '#eff6ff', color: '#1e40af' }; // Blue as in image
-      case 'staff':
-        return { backgroundColor: '#fdf4ff', color: '#86198f' };
-      default:
-        return { backgroundColor: '#f8fafc', color: '#475569' };
     }
   };
 
@@ -76,6 +81,10 @@ const UserProfile = () => {
     }
   };
 
+  const roleDisplay = getRoleDisplay(user?.role);
+  const statusText = user?.is_active ? 'Active' : 'Inactive';
+  const initials = getInitials(user);
+
   return (
     <div className="profile-container">
       <div className="profile-header">
@@ -83,103 +92,195 @@ const UserProfile = () => {
       </div>
 
       {error && (
-        <div style={{ color: '#ef4444', marginBottom: '20px', fontWeight: 'bold' }}>{error}</div>
+        <div className="profile-alert profile-alert-error">{error}</div>
       )}
       {success && (
-        <div style={{ color: '#10b981', marginBottom: '20px', fontWeight: 'bold' }}>{success}</div>
+        <div className="profile-alert profile-alert-success">{success}</div>
       )}
 
-      <div className="space-y-8">
-        {/* Account Information Card */}
-        <div className="profile-card">
-          <div className="profile-card-header px-5 py-4 md:px-6 md:py-5 border-b border-[var(--border)]">
-            <h2>Account Information</h2>
+      {/* ===== MOBILE LAYOUT ===== */}
+      <div className="profile-mobile">
+        {/* Identity Block */}
+        <div className="profile-identity">
+          <div className="profile-avatar profile-avatar--mobile">
+            {initials}
           </div>
-          <div className="profile-card-body p-5 md:p-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-12">
-              <div className="info-item">
-                <label>Employee ID:</label>
-                <span>{user?.employee_id || '-'}</span>
-              </div>
-              <div className="info-item">
-                <label>Role:</label>
-                <span className="badge-profile bg-[#EAF2FB] text-[#1A3C6E]">
-                  {getRoleDisplay(user?.role)}
-                </span>
-              </div>
-              <div className="info-item">
-                <label>Status:</label>
-                <span
-                  className="badge-profile"
-                  style={{ backgroundColor: '#f0fdf4', color: '#16a34a' }}
-                >
-                  {user?.is_active ? 'Active' : 'Inactive'}
-                </span>
-              </div>
-            </div>
+          <h2 className="profile-name">{user?.full_name || 'User'}</h2>
+          <span className="badge-profile" style={{ backgroundColor: '#EAF2FB', color: '#1A3C6E' }}>
+            {roleDisplay}
+          </span>
+        </div>
+
+        {/* Stat Row */}
+        <div className="profile-stat-row">
+          <div className="profile-stat-card">
+            <span className="profile-stat-label">Status</span>
+            <span
+              className="badge-profile badge-profile--sm"
+              style={{ backgroundColor: '#f0fdf4', color: '#16a34a' }}
+            >
+              {statusText}
+            </span>
+          </div>
+          <div className="profile-stat-card">
+            <span className="profile-stat-label">Employee ID</span>
+            <span className="profile-stat-value">{user?.employee_id || '-'}</span>
           </div>
         </div>
 
         {/* Update Profile Card */}
         <div className="profile-card">
-          <div className="profile-card-header px-5 py-4 md:px-6 md:py-5 border-b border-[var(--border)]">
-            <h2>Update Profile</h2>
-          </div>
-          <div className="profile-card-body p-5 md:p-6">
+          <h3 className="profile-card-title">Update Profile</h3>
           <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-              <div className="form-group">
+            <div className="profile-form-stack">
+              <div className="profile-form-group">
                 <label>Full Name</label>
                 <input
                   type="text"
                   name="full_name"
                   value={formData.full_name}
                   onChange={handleChange}
-                  className="input-profile min-h-[44px]"
+                  className="input-profile"
                   placeholder="Enter full name"
                 />
               </div>
-              <div className="form-group">
+              <div className="profile-form-group">
                 <label>Email</label>
                 <input
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className="input-profile min-h-[44px]"
+                  className="input-profile"
                   placeholder="Enter email"
                 />
               </div>
-              <div className="form-group">
+              <div className="profile-form-group">
                 <label>Phone</label>
                 <input
                   type="tel"
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  className="input-profile min-h-[44px]"
+                  className="input-profile"
                   placeholder="Enter phone number"
                 />
               </div>
             </div>
 
-            <div className="profile-actions flex-col md:flex-row w-full gap-3">
-              <button
-                type="submit"
-                disabled={loading}
-                className="btn-indigo w-full md:w-auto"
-              >
+            <div className="profile-actions profile-actions--stacked">
+              <button type="submit" disabled={loading} className="btn-indigo">
                 {loading ? 'Updating...' : 'Update Profile'}
               </button>
-              <button
-                type="button"
-                onClick={() => navigate('/')}
-                className="btn-hollow w-full md:w-auto"
-              >
+              <button type="button" onClick={() => navigate('/')} className="btn-hollow">
                 Cancel
               </button>
             </div>
           </form>
+        </div>
+      </div>
+
+      {/* ===== DESKTOP LAYOUT ===== */}
+      <div className="profile-desktop">
+        {/* Left Column - Identity */}
+        <div className="profile-sidebar-card">
+          <div className="profile-identity">
+            <div className="profile-avatar profile-avatar--desktop">
+              {initials}
+            </div>
+            <h2 className="profile-name">{user?.full_name || 'User'}</h2>
+            <span className="badge-profile" style={{ backgroundColor: '#EAF2FB', color: '#1A3C6E' }}>
+              {roleDisplay}
+            </span>
+            <span
+              className="badge-profile badge-profile--sm"
+              style={{ backgroundColor: '#f0fdf4', color: '#16a34a' }}
+            >
+              {statusText}
+            </span>
+          </div>
+        </div>
+
+        {/* Right Column - Content */}
+        <div className="profile-main-col">
+          {/* Account Information Card */}
+          <div className="profile-card">
+            <h3 className="profile-card-title">Account Information</h3>
+            <div className="profile-info-grid-3">
+              <div className="profile-info-item">
+                <span className="profile-info-label">Employee ID</span>
+                <span className="profile-info-value">{user?.employee_id || '-'}</span>
+              </div>
+              <div className="profile-info-item">
+                <span className="profile-info-label">Role</span>
+                <span
+                  className="badge-profile badge-profile--sm"
+                  style={{ backgroundColor: '#EAF2FB', color: '#1A3C6E' }}
+                >
+                  {roleDisplay}
+                </span>
+              </div>
+              <div className="profile-info-item">
+                <span className="profile-info-label">Status</span>
+                <span
+                  className="badge-profile badge-profile--sm"
+                  style={{ backgroundColor: '#f0fdf4', color: '#16a34a' }}
+                >
+                  {statusText}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Update Profile Card */}
+          <div className="profile-card">
+            <h3 className="profile-card-title">Update Profile</h3>
+            <form onSubmit={handleSubmit}>
+              <div className="profile-form-grid-desktop">
+                <div className="profile-form-group">
+                  <label>Full Name</label>
+                  <input
+                    type="text"
+                    name="full_name"
+                    value={formData.full_name}
+                    onChange={handleChange}
+                    className="input-profile"
+                    placeholder="Enter full name"
+                  />
+                </div>
+                <div className="profile-form-group">
+                  <label>Email</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="input-profile"
+                    placeholder="Enter email"
+                  />
+                </div>
+                <div className="profile-form-group profile-form-group--half">
+                  <label>Phone</label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    className="input-profile"
+                    placeholder="Enter phone number"
+                  />
+                </div>
+              </div>
+
+              <div className="profile-actions profile-actions--inline">
+                <button type="submit" disabled={loading} className="btn-indigo">
+                  {loading ? 'Updating...' : 'Update Profile'}
+                </button>
+                <button type="button" onClick={() => navigate('/')} className="btn-hollow">
+                  Cancel
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       </div>

@@ -9,6 +9,27 @@ const api = axios.create({
   },
 });
 
+// Single-flight token refresh: when multiple requests get 401 simultaneously,
+// only the first triggers a refresh. All others queue up and replay with the
+// new token once the single refresh completes. This prevents race conditions
+// where multiple concurrent refresh calls invalidate each other.
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(({ resolve, reject }) => {
+    error ? reject(error) : resolve(token);
+  });
+  failedQueue = [];
+};
+
+const clearAuthAndRedirect = () => {
+  localStorage.removeItem('access_token');
+  localStorage.removeItem('refresh_token');
+  localStorage.removeItem('user');
+  window.location.href = '/login';
+};
+
 // Add token to requests
 api.interceptors.request.use(
   (config) => {
@@ -44,7 +65,18 @@ api.interceptors.response.use(
         return Promise.reject(error);
       }
 
+      // If a refresh is already in progress, queue this request to wait on it
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        }).then((token) => {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          return api(originalRequest);
+        });
+      }
+
       originalRequest._retry = true;
+      isRefreshing = true;
 
       try {
         const refreshToken = localStorage.getItem('refresh_token');
@@ -52,22 +84,30 @@ api.interceptors.response.use(
           throw new Error('No refresh token available');
         }
 
+        // SimpleJWT's TokenRefreshView returns { access } only — no refresh token rotation.
         const response = await axios.post(`${API_BASE_URL}users/token/refresh/`, {
           refresh: refreshToken,
         });
 
         const { access } = response.data;
         localStorage.setItem('access_token', access);
+        // If backend ever rotates refresh tokens, store the new one here:
+        // if (response.data.refresh) {
+        //   localStorage.setItem('refresh_token', response.data.refresh);
+        // }
+
+        // Release all queued requests with the new token
+        processQueue(null, access);
 
         originalRequest.headers.Authorization = `Bearer ${access}`;
         return api(originalRequest);
       } catch (refreshError) {
-        // Refresh failed - logout
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem('user');
-        window.location.href = '/login';
+        // Refresh failed — clear auth state and redirect to login exactly once
+        processQueue(refreshError);
+        clearAuthAndRedirect();
         return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
       }
     }
 

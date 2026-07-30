@@ -1,1 +1,65 @@
 @import url('./NewStockRegister.css');
+
+/* ── Qty + Delete wrapper (mobile base) ── */
+.nrf-dmg-qty-wrap {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+/* ── Mobile: prevent grid overflow for incident/auto rows ── */
+@media (max-width: 768px) {
+  .nrf-dmg-form .nrf-auto-row,
+  .nrf-dmg-form .nrf-incident-row {
+    grid-template-columns: 1fr;
+    overflow-x: hidden;
+  }
+
+  .nrf-dmg-form .nrf-field {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .nrf-dmg-form .nrf-field select.nrf-input,
+  .nrf-dmg-form .nrf-field input.nrf-input {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .nrf-dmg-form .nrf-multi-dropdown {
+    max-height: 200px;
+    overflow-y: auto;
+  }
+}
+
+/* ── Desktop: Damaged Items — single horizontal row ── */
+@media (min-width: 769px) {
+  .nrf-dmg-form .nrf-dmg-entry {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .nrf-dmg-form .nrf-dmg-apparatus {
+    flex: 2;
+    min-width: 0;
+  }
+
+  .nrf-dmg-form .nrf-dmg-caused {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .nrf-dmg-form .nrf-dmg-qty-wrap {
+    flex-shrink: 0;
+    align-items: flex-end;
+  }
+
+  .nrf-dmg-form .nrf-dmg-qty {
+    min-width: 80px;
+  }
+
+  .nrf-dmg-form .nrf-del-btn {
+    align-self: flex-end;
+  }
+}
