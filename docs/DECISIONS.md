@@ -34,3 +34,18 @@
 
 - Prevents race conditions when multiple staff request the same chemical concurrently
 - Concurrency test verified: inventory decremented exactly once (1000 → 900), second concurrent request returns 400
+
+## 7. Pre-deploy security hardening — settings split, secrets management, login rate limiting (2026-07-27)
+
+**What was implemented:**
+- **SECRET_KEY no-fallback**: `base.py` reads `SECRET_KEY` via `os.environ['SECRET_KEY']` (crashes with KeyError if missing — no `.env` fallback). `settings.py` (monolithic) was deleted; split across `base.py`, `dev.py`, `prod.py`.
+- **DEBUG=False leak prevention**: `prod.py` sets `DEBUG = False`. LoginView 500 responses return no traceback, no file paths, no SQL — verified by automated test.
+- **Login rate limiting**: DRF-native `LoginRateThrottle` (5/min per IP) added to `LoginView.throttle_classes`. Coexists independently with the existing account lockout mechanism (5 failed attempts → 30min lockout).
+- **`.env.example`**: Created with variable names only, no real values.
+- **Test coverage**: 5 automated tests in `tests/test_security_hardening.py` verifying SECRET_KEY crash, DEBUG=False leak prevention, throttle firing, throttle message clarity, and lockout-throttle independence.
+
+**Rationale for DRF native throttling over django-ratelimit:**
+- DRF's `SimpleRateThrottle` is already installed (dependency of djangorestframework) — adds zero new dependencies
+- `django-ratelimit` would add a package, middleware configuration, and a different API surface for a single use case
+- DRF throttle integrates directly with view classes via `throttle_classes`, no middleware changes needed
+- Scope-based rate config (`'login': '5/min'`) in `REST_FRAMEWORK.DEFAULT_THROTTLE_RATES` is clean and readable

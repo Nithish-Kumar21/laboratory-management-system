@@ -46,3 +46,11 @@
 **Fix**: `AuthContext.checkAuth()` now calls `GET /users/me/` on app load and syncs the role if it differs from localStorage. See `frontend/src/context/AuthContext.js:30-41`.
 
 **Architecture note**: Roles are checked inline in each backend action method (`views.py:135,240,443,475`), not via a shared permission class. The `StockRequestPermission` class only enforces HTTP method per role, not action-level restrictions. This is a "duplicated" pattern — each action re-checks the role independently. A shared permission class could consolidate this, but the current approach is explicit and correct.
+
+## 7. View-level throttle_classes bypasses test suite global disable (MEDIUM)
+
+- `settings_test.py` disables throttling globally via `DEFAULT_THROTTLE_CLASSES = []`
+- Any DRF view that sets `throttle_classes = [...]` at the view level **overrides** that global disable
+- If the view's throttle scope has no rate defined in `DEFAULT_THROTTLE_RATES`, instantiation raises `ImproperlyConfigured` and all tests hitting that endpoint crash with 500
+- Current instance: `LoginView.throttle_classes = [LoginRateThrottle]` requires `'login': '5/min'` in `settings_test.py`'s `DEFAULT_THROTTLE_RATES`
+- **Rule for future work**: any view-level `throttle_classes` must have its scope's rate added to `settings_test.py`'s `DEFAULT_THROTTLE_RATES`, or tests hitting that view will break

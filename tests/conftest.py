@@ -184,3 +184,9 @@ def _ensure_venue_column(db):
 @pytest.fixture
 def today():
     return timezone.now().date()
+
+
+@pytest.fixture(autouse=True)
+def clear_throttle_cache():
+    from django.core.cache import cache
+    cache.clear()
