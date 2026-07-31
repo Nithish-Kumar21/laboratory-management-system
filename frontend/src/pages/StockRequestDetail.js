@@ -79,7 +79,6 @@ function StockRequestDetail() {
     const [editMode, setEditMode] = useState(false);
     const [editQuantities, setEditQuantities] = useState({});
     const [availableChemicals, setAvailableChemicals] = useState([]);
-    const [hodRemarks, setHodRemarks] = useState('');
     const [acceptError, setAcceptError] = useState('');
 
     const fmtQty = (value) => {
@@ -109,7 +108,6 @@ function StockRequestDetail() {
             const initial = {};
             (request.chemical_items || []).forEach((it) => { initial[it.id] = it.quantity; });
             setEditQuantities(initial);
-            setHodRemarks('');
             setAcceptError('');
             api.get('available_chemicals/')
                 .then((res) => {
@@ -121,7 +119,6 @@ function StockRequestDetail() {
         } else {
             setEditMode(false);
             setEditQuantities({});
-            setHodRemarks('');
             setAcceptError('');
         }
     };
@@ -144,7 +141,6 @@ function StockRequestDetail() {
         }
         const payload = {};
         if (changed.length) payload.chemical_items = changed;
-        if (hodRemarks.trim()) payload.hod_remarks = hodRemarks.trim();
         setActionLoading(true);
         api.post(`stock_request/${id}/accept/`, payload)
             .then(() => {
@@ -153,7 +149,6 @@ function StockRequestDetail() {
                 showToast(changed.length ? 'Request approved with adjusted quantities' : 'Request Approved');
                 setEditMode(false);
                 setEditQuantities({});
-                setHodRemarks('');
                 setAcceptError('');
             })
             .catch(err => setDialog({ open: true, message: err.response?.data?.error || 'Failed to approve', showCancel: false }))
@@ -755,18 +750,6 @@ function StockRequestDetail() {
                             {(!request.chemical_items || request.chemical_items.length === 0) && (
                                 <div className="sd-empty-text">No chemicals listed</div>
                             )}
-                        </div>
-                    )}
-                    {editMode && (
-                        <div className="srq-accept-remarks">
-                            <label>Remarks to staff (optional)</label>
-                            <textarea
-                                value={hodRemarks}
-                                onChange={(e) => setHodRemarks(e.target.value)}
-                                rows={2}
-                                className="modern-textarea"
-                                placeholder="e.g. Reduced due to limited stock"
-                            />
                         </div>
                     )}
                 </div>

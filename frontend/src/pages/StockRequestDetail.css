@@ -1060,22 +1060,6 @@
     border-radius: 8px;
 }
 
-.srq-accept-remarks {
-    margin-top: 16px;
-}
-
-.srq-accept-remarks label {
-    display: block;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-muted);
-    margin-bottom: 6px;
-}
-
-.srq-accept-remarks .modern-textarea {
-    width: 100%;
-}
-
 /* Action Buttons */
 .sd-actions {
     display: flex;
