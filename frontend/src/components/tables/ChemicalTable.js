@@ -49,7 +49,7 @@ function ChemicalTable({ showExtra = true, searchTerm = '', showOnlyLowStock = f
             <tr>
               <th className="col-index">#</th>
               <th className="col-name">Name</th>
-              <th className="col-qty">Quantity</th>
+              <th className="col-qty">Stock in Hand</th>
               {showExtra && <th className="col-rl">Reorder Level</th>}
               {showExtra && <th className="col-status">Status</th>}
             </tr>
