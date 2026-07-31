@@ -4,7 +4,6 @@ import { FaArrowLeft, FaArrowRight, FaFlask, FaIdCard, FaUser, FaGraduationCap, 
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import AddRequestModal from '../components/modals/AddRequestModal';
-import AcceptRequestModal from '../components/modals/AcceptRequestModal';
 import ConfirmDialog from '../components/ConfirmDialog';
 import './StockRequestDetail.css';
 
@@ -74,14 +73,91 @@ function StockRequestDetail() {
 
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [rejectionReason, setRejectionReason] = useState('');
-    const [showAcceptModal, setShowAcceptModal] = useState(false);
     const [dialog, setDialog] = useState({ open: false, message: '', showCancel: true, variant: 'confirm', onConfirm: null });
 
-    const handleAccept = (result) => {
-        setShowAcceptModal(false);
-        fetchRequest();
-        window.dispatchEvent(new CustomEvent('inventory-updated'));
-        showToast(result?.adjusted ? 'Request approved with adjusted quantities' : 'Request Approved');
+    // Inline Quantity Adjustment (HOD accept) State
+    const [editMode, setEditMode] = useState(false);
+    const [editQuantities, setEditQuantities] = useState({});
+    const [availableChemicals, setAvailableChemicals] = useState([]);
+    const [hodRemarks, setHodRemarks] = useState('');
+    const [acceptError, setAcceptError] = useState('');
+
+    const fmtQty = (value) => {
+        if (value === null || value === undefined || value === '') return '';
+        const n = parseFloat(value);
+        if (Number.isNaN(n)) return '';
+        return String(n);
+    };
+
+    const availFor = (item) => availableChemicals.find(
+        (c) => String(c.chemical_name || '').toLowerCase() === String(item.chemical_name || '').toLowerCase()
+    );
+
+    const rowError = (item, val) => {
+        if (val === '' || val === null || val === undefined) return 'Quantity is required.';
+        const n = parseFloat(val);
+        if (Number.isNaN(n) || n <= 0) return 'Enter a quantity greater than 0.';
+        const a = availFor(item);
+        if (a && n > parseFloat(a.quantity)) {
+            return `Exceeds available stock (${fmtQty(a.quantity)} ${a.unit || item.unit}).`;
+        }
+        return '';
+    };
+
+    const toggleEditMode = () => {
+        if (!editMode) {
+            const initial = {};
+            (request.chemical_items || []).forEach((it) => { initial[it.id] = it.quantity; });
+            setEditQuantities(initial);
+            setHodRemarks('');
+            setAcceptError('');
+            api.get('available_chemicals/')
+                .then((res) => {
+                    const data = Array.isArray(res.data) ? res.data : res.data.results || [];
+                    setAvailableChemicals(data);
+                })
+                .catch((err) => console.error('Error fetching available chemicals:', err));
+            setEditMode(true);
+        } else {
+            setEditMode(false);
+            setEditQuantities({});
+            setHodRemarks('');
+            setAcceptError('');
+        }
+    };
+
+    const handleAccept = () => {
+        let firstError = '';
+        const changed = [];
+        if (editMode) {
+            (request.chemical_items || []).forEach((it) => {
+                const msg = rowError(it, editQuantities[it.id]);
+                if (msg && !firstError) firstError = msg;
+                if (parseFloat(editQuantities[it.id]) !== parseFloat(it.quantity)) {
+                    changed.push({ chemical_item_id: it.id, quantity_ml: parseFloat(editQuantities[it.id]) });
+                }
+            });
+            if (firstError) {
+                setAcceptError(firstError);
+                return;
+            }
+        }
+        const payload = {};
+        if (changed.length) payload.chemical_items = changed;
+        if (hodRemarks.trim()) payload.hod_remarks = hodRemarks.trim();
+        setActionLoading(true);
+        api.post(`stock_request/${id}/accept/`, payload)
+            .then(() => {
+                fetchRequest();
+                window.dispatchEvent(new CustomEvent('inventory-updated'));
+                showToast(changed.length ? 'Request approved with adjusted quantities' : 'Request Approved');
+                setEditMode(false);
+                setEditQuantities({});
+                setHodRemarks('');
+                setAcceptError('');
+            })
+            .catch(err => setDialog({ open: true, message: err.response?.data?.error || 'Failed to approve', showCancel: false }))
+            .finally(() => setActionLoading(false));
     };
 
     const handleReject = async () => {
@@ -603,29 +679,96 @@ function StockRequestDetail() {
 
                 {/* Chemical Requirements Card */}
                 <div className="sd-card">
-                    <div className="sd-card-title">
-                        <FaFlask /> Chemical Requirements
-                    </div>
-                    <hr className="sd-divider" />
-                    <div className="srq-chem-list">
-                        {request.chemical_items?.map((item, idx) => (
-                            <div key={idx} className="srq-chem-card">
-                                <div className="srq-chem-top">
-                                    <span className="srq-chem-name">{item.chemical_name}</span>
-                                    <span className="srq-chem-qty">{item.quantity}<span className="srq-chem-unit"> {item.unit}</span></span>
-                                </div>
-                                {item.actual_used_quantity != null && ['reported', 'completed'].includes(request.status) && (
-                                    <div className="srq-chem-top" style={{ marginTop: 4 }}>
-                                        <span className="srq-chem-name" style={{ fontWeight: 400, fontSize: 13, color: 'var(--text-muted)' }}>Actual Used</span>
-                                        <span className="srq-chem-qty" style={{ fontSize: 13, fontWeight: 600 }}>{item.actual_used_quantity}<span className="srq-chem-unit"> {item.unit}</span></span>
-                                    </div>
-                                )}
-                            </div>
-                        ))}
-                        {(!request.chemical_items || request.chemical_items.length === 0) && (
-                            <div className="sd-empty-text">No chemicals listed</div>
+                    <div className="srq-card-title-row">
+                        <div className="sd-card-title">
+                            <FaFlask /> Chemical Requirements
+                        </div>
+                        {isHOD && request.status === 'pending' && (
+                            <button
+                                type="button"
+                                className={`srq-chem-edit-btn ${editMode ? 'active' : ''}`}
+                                onClick={toggleEditMode}
+                                title={editMode ? 'Done editing quantities' : 'Edit quantities'}
+                            >
+                                <FaEdit /> {editMode ? 'Done' : 'Edit'}
+                            </button>
                         )}
                     </div>
+                    <hr className="sd-divider" />
+                    {acceptError && <div className="error-banner">{acceptError}</div>}
+                    {editMode ? (
+                        <div className="sd-usage-table">
+                            {request.chemical_items?.map((item) => {
+                                const err = rowError(item, editQuantities[item.id]);
+                                const a = availFor(item);
+                                return (
+                                    <div key={item.id} className="srq-chem-edit-row">
+                                        <div className="srq-chem-edit-name">
+                                            <span className="sd-usage-name">{item.chemical_name}</span>
+                                            <span className="srq-chem-avail">
+                                                Available: {a ? `${fmtQty(a.quantity)} ${a.unit || item.unit}` : '—'}
+                                            </span>
+                                        </div>
+                                        <span className="sd-usage-requested">{fmtQty(item.quantity)} {item.unit}</span>
+                                        <div className="sd-usage-input-wrap">
+                                            <input
+                                                type="number"
+                                                min="0.01"
+                                                step="0.01"
+                                                value={editQuantities[item.id] ?? item.quantity}
+                                                onChange={(e) => {
+                                                    setEditQuantities({ ...editQuantities, [item.id]: e.target.value });
+                                                    if (acceptError) setAcceptError('');
+                                                }}
+                                                className={`sd-usage-input ${err ? 'input-error' : ''}`}
+                                            />
+                                            <span className="sd-input-unit">{item.unit}</span>
+                                        </div>
+                                        {err && (
+                                            <div className="srq-chem-edit-error">
+                                                <FaExclamationTriangle /> {err}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                            {(!request.chemical_items || request.chemical_items.length === 0) && (
+                                <div className="sd-empty-text">No chemicals listed</div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="srq-chem-list">
+                            {request.chemical_items?.map((item, idx) => (
+                                <div key={idx} className="srq-chem-card">
+                                    <div className="srq-chem-top">
+                                        <span className="srq-chem-name">{item.chemical_name}</span>
+                                        <span className="srq-chem-qty">{item.quantity}<span className="srq-chem-unit"> {item.unit}</span></span>
+                                    </div>
+                                    {item.actual_used_quantity != null && ['reported', 'completed'].includes(request.status) && (
+                                        <div className="srq-chem-top" style={{ marginTop: 4 }}>
+                                            <span className="srq-chem-name" style={{ fontWeight: 400, fontSize: 13, color: 'var(--text-muted)' }}>Actual Used</span>
+                                            <span className="srq-chem-qty" style={{ fontSize: 13, fontWeight: 600 }}>{item.actual_used_quantity}<span className="srq-chem-unit"> {item.unit}</span></span>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                            {(!request.chemical_items || request.chemical_items.length === 0) && (
+                                <div className="sd-empty-text">No chemicals listed</div>
+                            )}
+                        </div>
+                    )}
+                    {editMode && (
+                        <div className="srq-accept-remarks">
+                            <label>Remarks to staff (optional)</label>
+                            <textarea
+                                value={hodRemarks}
+                                onChange={(e) => setHodRemarks(e.target.value)}
+                                rows={2}
+                                className="modern-textarea"
+                                placeholder="e.g. Reduced due to limited stock"
+                            />
+                        </div>
+                    )}
                 </div>
 
                 {/* Purpose Type Card */}
@@ -779,8 +922,8 @@ function StockRequestDetail() {
                         <button className="sd-btn sd-btn-danger" onClick={() => setShowRejectModal(true)} disabled={actionLoading}>
                             <FaTimesCircle /> Reject
                         </button>
-                        <button className="sd-btn sd-btn-primary" onClick={() => setShowAcceptModal(true)} disabled={actionLoading}>
-                            <FaCheckCircle /> Approve
+                        <button className="sd-btn sd-btn-primary" onClick={handleAccept} disabled={actionLoading}>
+                            {actionLoading ? 'Processing...' : <><FaCheckCircle /> Approve</>}
                         </button>
                     </div>
                 )}
@@ -845,13 +988,6 @@ function StockRequestDetail() {
             )}
 
             <AddRequestModal isOpen={showEditModal} onClose={() => setShowEditModal(false)} onSuccess={fetchRequest} editData={request} hasActiveRequest={hasActiveRequest} />
-            {showAcceptModal && (
-                <AcceptRequestModal
-                    request={request}
-                    onClose={() => setShowAcceptModal(false)}
-                    onAccepted={handleAccept}
-                />
-            )}
             <ConfirmDialog open={dialog.open} message={dialog.message} showCancel={dialog.showCancel} confirmLabel="OK" cancelLabel="Cancel" variant={dialog.variant || 'confirm'} onConfirm={() => { if (dialog.onConfirm) dialog.onConfirm(); else setDialog({ open: false }); }} onCancel={() => setDialog({ open: false })} />
             {toast && <div className="cr-toast cr-toast-visible">{toast}</div>}
         </div>

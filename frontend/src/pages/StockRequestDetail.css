@@ -965,6 +965,117 @@
     color: var(--text-muted);
 }
 
+/* Inline Quantity Adjustment (HOD accept) */
+.srq-card-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.srq-card-title-row .sd-card-title {
+    margin-bottom: 0;
+}
+
+.srq-chem-edit-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 8px;
+    border: 1px solid #CBD5E1;
+    background: #EEF4FF;
+    color: #1A3C6E;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.srq-chem-edit-btn:hover {
+    background: #1A3C6E;
+    color: #fff;
+    border-color: #1A3C6E;
+}
+
+.srq-chem-edit-btn.active {
+    background: #1A3C6E;
+    color: #fff;
+    border-color: #1A3C6E;
+}
+
+:root.dark-mode .srq-chem-edit-btn {
+    background: #1e293b;
+    border-color: #4B5563;
+    color: #4A90D9;
+}
+
+:root.dark-mode .srq-chem-edit-btn:hover,
+:root.dark-mode .srq-chem-edit-btn.active {
+    background: #4A90D9;
+    color: #fff;
+    border-color: #4A90D9;
+}
+
+.srq-chem-edit-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 10px 12px;
+    background: var(--bg-main);
+    border-radius: 8px;
+    border: 0.5px solid #e2e8f0;
+}
+
+:root.dark-mode .srq-chem-edit-row {
+    border-color: #334155;
+}
+
+.srq-chem-edit-name {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.srq-chem-avail {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.srq-chem-edit-error {
+    flex: 1 1 100%;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #ef4444;
+    padding: 6px 10px;
+    background: rgba(239, 68, 68, 0.08);
+    border-radius: 8px;
+}
+
+.srq-accept-remarks {
+    margin-top: 16px;
+}
+
+.srq-accept-remarks label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+
+.srq-accept-remarks .modern-textarea {
+    width: 100%;
+}
+
 /* Action Buttons */
 .sd-actions {
     display: flex;
