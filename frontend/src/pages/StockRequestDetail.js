@@ -4,6 +4,7 @@ import { FaArrowLeft, FaArrowRight, FaFlask, FaIdCard, FaUser, FaGraduationCap, 
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import AddRequestModal from '../components/modals/AddRequestModal';
+import AcceptRequestModal from '../components/modals/AcceptRequestModal';
 import ConfirmDialog from '../components/ConfirmDialog';
 import './StockRequestDetail.css';
 
@@ -73,14 +74,14 @@ function StockRequestDetail() {
 
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [rejectionReason, setRejectionReason] = useState('');
+    const [showAcceptModal, setShowAcceptModal] = useState(false);
     const [dialog, setDialog] = useState({ open: false, message: '', showCancel: true, variant: 'confirm', onConfirm: null });
 
-    const handleAccept = () => {
-        setActionLoading(true);
-        api.post(`stock_request/${id}/accept/`)
-            .then(() => { fetchRequest(); window.dispatchEvent(new CustomEvent('inventory-updated')); showToast('Request Approved'); })
-            .catch(err => setDialog({ open: true, message: err.response?.data?.error || 'Failed to approve', showCancel: false }))
-            .finally(() => setActionLoading(false));
+    const handleAccept = (result) => {
+        setShowAcceptModal(false);
+        fetchRequest();
+        window.dispatchEvent(new CustomEvent('inventory-updated'));
+        showToast(result?.adjusted ? 'Request approved with adjusted quantities' : 'Request Approved');
     };
 
     const handleReject = async () => {
@@ -778,8 +779,8 @@ function StockRequestDetail() {
                         <button className="sd-btn sd-btn-danger" onClick={() => setShowRejectModal(true)} disabled={actionLoading}>
                             <FaTimesCircle /> Reject
                         </button>
-                        <button className="sd-btn sd-btn-primary" onClick={handleAccept} disabled={actionLoading}>
-                            {actionLoading ? 'Processing...' : <><FaCheckCircle /> Approve</>}
+                        <button className="sd-btn sd-btn-primary" onClick={() => setShowAcceptModal(true)} disabled={actionLoading}>
+                            <FaCheckCircle /> Approve
                         </button>
                     </div>
                 )}
@@ -844,6 +845,13 @@ function StockRequestDetail() {
             )}
 
             <AddRequestModal isOpen={showEditModal} onClose={() => setShowEditModal(false)} onSuccess={fetchRequest} editData={request} hasActiveRequest={hasActiveRequest} />
+            {showAcceptModal && (
+                <AcceptRequestModal
+                    request={request}
+                    onClose={() => setShowAcceptModal(false)}
+                    onAccepted={handleAccept}
+                />
+            )}
             <ConfirmDialog open={dialog.open} message={dialog.message} showCancel={dialog.showCancel} confirmLabel="OK" cancelLabel="Cancel" variant={dialog.variant || 'confirm'} onConfirm={() => { if (dialog.onConfirm) dialog.onConfirm(); else setDialog({ open: false }); }} onCancel={() => setDialog({ open: false })} />
             {toast && <div className="cr-toast cr-toast-visible">{toast}</div>}
         </div>

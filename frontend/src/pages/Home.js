@@ -5,6 +5,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import AddRequestModal from '../components/modals/AddRequestModal';
+import AcceptRequestModal from '../components/modals/AcceptRequestModal';
 import './Home.css';
 import { getStatus } from '../utils/inventory';
 import './VintageClock.css';
@@ -31,7 +32,9 @@ function Home() {
   const [requestsLoading, setRequestsLoading] = useState(false);
   const [hasPendingRequest, setHasPendingRequest] = useState(false);
   const [rejectState, setRejectState] = useState({ show: false, id: null, reason: '' });
+  const [acceptRequest, setAcceptRequest] = useState(null);
   const [actionError, setActionError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -129,15 +132,13 @@ function Home() {
     return () => clearInterval(interval);
   }, [isHOD, isStaff, isAdmin]);
 
-  const handleAccept = (id) => {
+  const handleAcceptSuccess = (result) => {
+    setAcceptRequest(null);
     setActionError('');
-    api
-      .post(`/stock_request/${id}/accept/`)
-      .then(() => {
-        fetchRequests();
-        window.dispatchEvent(new CustomEvent('inventory-updated'));
-      })
-      .catch((err) => setActionError(err.response?.data?.error || 'Failed to accept'));
+    setSuccessMsg(result?.adjusted ? 'Request approved with adjusted quantities.' : 'Request approved.');
+    setTimeout(() => setSuccessMsg(''), 4000);
+    fetchRequests();
+    window.dispatchEvent(new CustomEvent('inventory-updated'));
   };
 
   const handleRejectWithReason = () => {
@@ -318,6 +319,7 @@ function Home() {
               <Link to="/requests?status=pending" className="view-all-link">Manage All</Link>
             </div>
             {actionError && <div className="error-banner">{actionError}</div>}
+            {successMsg && <div className="success-banner">{successMsg}</div>}
             {requestsLoading ? (
               <p>Loading...</p>
             ) : pendingRequests.length === 0 ? (
@@ -337,7 +339,7 @@ function Home() {
                         <span className="request-date">{req.date ? new Date(req.date).toLocaleDateString() : new Date(req.created_at).toLocaleDateString()}</span>
                       </div>
                       <div className="request-mini-actions">
-                        <button className="btn-icon accept" title="Accept" onClick={(e) => { e.stopPropagation(); handleAccept(req.id); }}><FaCheck /></button>
+                        <button className="btn-icon accept" title="Accept" onClick={(e) => { e.stopPropagation(); setActionError(''); setSuccessMsg(''); setAcceptRequest(req); }}><FaCheck /></button>
                         <button className="btn-icon reject" title="Reject" onClick={(e) => { e.stopPropagation(); openRejectDialog(req.id); }}><FaTimes /></button>
                       </div>
                     </div>
@@ -386,6 +388,15 @@ function Home() {
               </div>
             </div>
           </div>
+        )}
+
+        {/* Accept Request Modal */}
+        {acceptRequest && (
+          <AcceptRequestModal
+            request={acceptRequest}
+            onClose={() => setAcceptRequest(null)}
+            onAccepted={handleAcceptSuccess}
+          />
         )}
       </div>
     </div>
