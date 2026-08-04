@@ -2,8 +2,11 @@ from types import SimpleNamespace
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase, TestCase
+from rest_framework import status
+from rest_framework.settings import api_settings
 from rest_framework.test import APITestCase
 
 from .models import PasswordResetToken
@@ -214,3 +217,51 @@ class ResetPasswordViewTests(APITestCase):
         self.assertEqual(resp.status_code, 200)
         self.user.refresh_from_db()
         self.assertTrue(self.user.check_password('NewPass@123'))
+
+
+class LoginThrottleTest(APITestCase):
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user(
+            employee_id='THR001', email='thr@test.com',
+            password='Throttle@Pass1', role='staff',
+            full_name='Throttle Test', phone='+919876543210',
+            designation='Staff', department='B.Sc Chemistry',
+        )
+        self._orig_rates = api_settings.DEFAULT_THROTTLE_RATES.copy()
+        api_settings.DEFAULT_THROTTLE_RATES['login'] = '10/min'
+        api_settings._cached_attrs.discard('DEFAULT_THROTTLE_RATES')
+
+    def tearDown(self):
+        api_settings.DEFAULT_THROTTLE_RATES.clear()
+        api_settings.DEFAULT_THROTTLE_RATES.update(self._orig_rates)
+        api_settings._cached_attrs.discard('DEFAULT_THROTTLE_RATES')
+        cache.clear()
+
+    def test_throttle_rejects_after_limit(self):
+        for _ in range(10):
+            resp = self.client.post('/api/users/login/', {
+                'username': 'THR001', 'password': 'wrong',
+            })
+            self.assertNotEqual(resp.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+
+        resp = self.client.post('/api/users/login/', {
+            'username': 'THR001', 'password': 'wrong',
+        })
+        self.assertEqual(resp.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+        self.assertFalse(resp.data['success'])
+        self.assertIn('error', resp.data)
+
+    def test_throttle_independent_of_account_lockout(self):
+        for _ in range(10):
+            self.client.post('/api/users/login/', {
+                'username': 'THR001', 'password': 'wrong',
+            })
+
+        resp = self.client.post('/api/users/login/', {
+            'username': 'THR001', 'password': 'wrong',
+        })
+        self.assertEqual(resp.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+
+        self.user.refresh_from_db()
+        self.assertLessEqual(self.user.failed_login_attempts, 5)
