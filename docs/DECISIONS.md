@@ -34,3 +34,27 @@
 
 - Prevents race conditions when multiple staff request the same chemical concurrently
 - Concurrency test verified: inventory decremented exactly once (1000 → 900), second concurrent request returns 400
+
+## 7. Raw SQL schema changes must be applied in 3 places
+
+All models are `managed=False` — Django does not auto-apply schema changes.
+Every schema change is a manually-run SQL statement (`ALTER TABLE`,
+`CREATE TABLE`, etc.). This is intentional (it prevents AI agents/tools from
+silently drifting the schema), but it means schema changes do NOT propagate
+anywhere automatically.
+
+**The rule:** a raw SQL schema change is only "done" when it has been applied
+in all three places:
+
+1. **Your own real/working local database** — the one the app actually runs against day to day.
+2. **Your own local test database** — the separate database Django auto-creates for `manage.py test`. This is NOT the same database as #1, even though it's easy to assume it is. If tests suddenly fail with "column does not exist" errors after a schema change, this is the first thing to check.
+3. **Every teammate** — each teammate maintains their own separate local database (not shared), so the same SQL must be manually re-run by each person on both their real and test databases.
+
+**Practical tip:** the fastest way to re-sync a test database after a schema
+change is to dump the schema (not data) from the real database and restore it
+into the test database, keeping the `django_migrations` table/ledger intact so
+Django doesn't attempt to re-migrate a `managed=False` project.
+
+**Full background:** see `docs/KNOWN_ISSUES_schema_sync_note.md` (August 2026
+incident: a `committed_quantity_ml` column added to one teammate's working DB
+caused 14 false test failures on another machine until the test DB was re-synced).
