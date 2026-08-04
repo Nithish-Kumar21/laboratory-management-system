@@ -35,6 +35,17 @@ function StockRequestDetail() {
         }
     }, [id]);
 
+    useEffect(() => {
+        if (isHOD || isStoreKeeper) {
+            api.get('available_chemicals/')
+                .then((res) => {
+                    const data = Array.isArray(res.data) ? res.data : res.data.results || [];
+                    setAvailableChemicals(data);
+                })
+                .catch((err) => console.error('Error fetching available chemicals:', err));
+        }
+    }, [id, isHOD, isStoreKeeper]);
+
     const checkActiveRequests = async () => {
         try {
             const res = await api.get('/stock_request/');
@@ -194,11 +205,25 @@ function StockRequestDetail() {
             .finally(() => setActionLoading(false));
     };
 
+    const extractCompleteErrorMessage = (err, fallback) => {
+        console.error('Complete request failed:', err);
+        const data = err?.response?.data;
+        if (data && typeof data === 'object') {
+            if (data.error) return data.error;
+            if (data.detail) return data.detail;
+        }
+        if (typeof data === 'string' && data.trim()) {
+            const cleaned = data.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+            if (cleaned) return cleaned.length > 300 ? cleaned.slice(0, 300) + '...' : cleaned;
+        }
+        return err?.response?.status ? `${fallback} Please contact support with error code ${err.response.status}.` : fallback;
+    };
+
     const handleMarkAsCompleted = () => {
         setActionLoading(true);
         api.post(`stock_request/${id}/mark_as_completed/`)
             .then(() => { fetchRequest(); window.dispatchEvent(new CustomEvent('inventory-updated')); showToast('Request completed'); })
-            .catch(err => setDialog({ open: true, message: err.response?.data?.error || 'Failed to complete request', showCancel: false }))
+            .catch(err => setDialog({ open: true, message: extractCompleteErrorMessage(err, 'Failed to complete request'), showCancel: false }))
             .finally(() => setActionLoading(false));
     };
 
@@ -696,29 +721,46 @@ function StockRequestDetail() {
                         <div className="sd-usage-table">
                             {request.chemical_items?.map((item) => {
                                 const err = rowError(item, editQuantities[item.id]);
-                                const a = availFor(item);
+                                const stock = availFor(item);
+                                const hasStock = stock !== undefined;
+                                const remainingQty = hasStock ? fmtQty(stock.remaining ?? stock.quantity) : null;
+                                const remainingUnit = hasStock ? (stock.unit || item.unit) : item.unit;
                                 return (
                                     <div key={item.id} className="srq-chem-edit-row">
                                         <div className="srq-chem-edit-name">
                                             <span className="sd-usage-name">{item.chemical_name}</span>
-                                            <span className="srq-chem-avail">
-                                                Available: {a ? `${fmtQty(a.remaining ?? a.quantity)} ${a.unit || item.unit}` : '—'}
-                                            </span>
                                         </div>
-                                        <span className="sd-usage-requested">{fmtQty(item.quantity)} {item.unit}</span>
-                                        <div className="sd-usage-input-wrap">
-                                            <input
-                                                type="number"
-                                                min="0.01"
-                                                step="0.01"
-                                                value={editQuantities[item.id] ?? item.quantity}
-                                                onChange={(e) => {
-                                                    setEditQuantities({ ...editQuantities, [item.id]: e.target.value });
-                                                    if (acceptError) setAcceptError('');
-                                                }}
-                                                className={`sd-usage-input ${err ? 'input-error' : ''}`}
-                                            />
-                                            <span className="sd-input-unit">{item.unit}</span>
+                                        <div className="srq-chem-qty-group">
+                                            <div className="srq-chem-qty-item">
+                                                <span className="srq-chem-qty-label">Requested</span>
+                                                <div className="sd-usage-input-wrap">
+                                                    <input
+                                                        type="number"
+                                                        min="0.01"
+                                                        step="0.01"
+                                                        value={editQuantities[item.id] ?? item.quantity}
+                                                        onChange={(e) => {
+                                                            const raw = e.target.value;
+                                                            const n = parseFloat(raw);
+                                                            if (raw === '' || Number.isNaN(n) || n <= 0) {
+                                                                setEditQuantities({ ...editQuantities, [item.id]: item.quantity });
+                                                            } else {
+                                                                setEditQuantities({ ...editQuantities, [item.id]: raw });
+                                                            }
+                                                            if (acceptError) setAcceptError('');
+                                                        }}
+                                                        className={`sd-usage-input ${err ? 'input-error' : ''}`}
+                                                    />
+                                                    <span className="sd-input-unit">{item.unit}</span>
+                                                </div>
+                                            </div>
+                                            <div className="srq-chem-qty-item">
+                                                <span className="srq-chem-qty-label">Stock Available</span>
+                                                <span className="srq-chem-qty">
+                                                    {remainingQty !== null ? remainingQty : '—'}
+                                                    {remainingQty !== null && <span className="srq-chem-unit"> {remainingUnit}</span>}
+                                                </span>
+                                            </div>
                                         </div>
                                         {err && (
                                             <div className="srq-chem-edit-error">
@@ -734,12 +776,34 @@ function StockRequestDetail() {
                         </div>
                     ) : (
                         <div className="srq-chem-list">
-                            {request.chemical_items?.map((item, idx) => (
+                            {request.chemical_items?.map((item, idx) => {
+                                const stock = availFor(item);
+                                const hasStock = stock !== undefined;
+                                const remainingQty = hasStock ? fmtQty(stock.remaining ?? stock.quantity) : null;
+                                const remainingUnit = hasStock ? (stock.unit || item.unit) : item.unit;
+                                return (
                                 <div key={idx} className="srq-chem-card">
                                     <div className="srq-chem-top">
                                         <span className="srq-chem-name">{item.chemical_name}</span>
-                                        <span className="srq-chem-qty">{item.quantity}<span className="srq-chem-unit"> {item.unit}</span></span>
+                                        <div className="srq-chem-qty-group">
+                                            <div className="srq-chem-qty-item">
+                                                <span className="srq-chem-qty-label">Requested</span>
+                                                <span className="srq-chem-qty">{item.quantity}<span className="srq-chem-unit"> {item.unit}</span></span>
+                                            </div>
+                                            {isHOD && (
+                                                <div className="srq-chem-qty-item srq-chem-stock-desktop">
+                                                    <span className="srq-chem-qty-label">Stock Available</span>
+                                                    <span className="srq-chem-qty">{remainingQty !== null ? remainingQty : '—'}<span className="srq-chem-unit"> {remainingQty !== null ? remainingUnit : ''}</span></span>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
+                                    {isHOD && (
+                                        <div className="srq-chem-stock-row">
+                                            <span className="srq-chem-qty-label">Stock Available</span>
+                                            <span className="srq-chem-qty">{remainingQty !== null ? remainingQty : '—'}<span className="srq-chem-unit"> {remainingQty !== null ? remainingUnit : ''}</span></span>
+                                        </div>
+                                    )}
                                     {item.actual_used_quantity != null && ['reported', 'completed'].includes(request.status) && (
                                         <div className="srq-chem-top" style={{ marginTop: 4 }}>
                                             <span className="srq-chem-name" style={{ fontWeight: 400, fontSize: 13, color: 'var(--text-muted)' }}>Actual Used</span>
@@ -747,7 +811,8 @@ function StockRequestDetail() {
                                         </div>
                                     )}
                                 </div>
-                            ))}
+                                );
+                            })}
                             {(!request.chemical_items || request.chemical_items.length === 0) && (
                                 <div className="sd-empty-text">No chemicals listed</div>
                             )}

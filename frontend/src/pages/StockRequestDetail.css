@@ -1022,6 +1022,7 @@
 .srq-chem-edit-row {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     flex-wrap: wrap;
     gap: 12px;
     padding: 10px 12px;
@@ -1037,14 +1038,6 @@
 .srq-chem-edit-name {
     flex: 1;
     min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.srq-chem-avail {
-    font-size: 12px;
-    color: var(--text-muted);
 }
 
 .srq-chem-edit-error {
@@ -1334,6 +1327,33 @@
     margin-left: 2px;
 }
 
+.srq-chem-qty-group {
+    display: flex;
+    align-items: flex-end;
+    gap: 20px;
+    flex-shrink: 0;
+}
+
+.srq-chem-qty-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 3px;
+}
+
+.srq-chem-qty-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.srq-chem-stock-row {
+    display: none;
+    align-items: baseline;
+    gap: 8px;
+}
+
 /* ===== VERIFY & COMPLETE ===== */
 .vc-table-wrap {
     overflow-x: auto;
@@ -1493,6 +1513,20 @@
         gap: 8px 16px;
     }
 
+    .srq-chem-qty-group {
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 8px;
+    }
+
+    .srq-chem-stock-row {
+        display: flex;
+    }
+
+    .srq-chem-stock-desktop {
+        display: none;
+    }
+
     .sd-actions {
         flex-direction: row;
         flex-wrap: nowrap;
@@ -1561,11 +1595,11 @@
         gap: 8px;
     }
 
-    .sd-usage-input-wrap {
+    .sd-usage-row .sd-usage-input-wrap {
         width: 100%;
     }
 
-    .sd-usage-input {
+    .sd-usage-row .sd-usage-input {
         width: 100%;
     }
 }
