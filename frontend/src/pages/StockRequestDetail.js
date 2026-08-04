@@ -97,8 +97,9 @@ function StockRequestDetail() {
         const n = parseFloat(val);
         if (Number.isNaN(n) || n <= 0) return 'Enter a quantity greater than 0.';
         const a = availFor(item);
-        if (a && n > parseFloat(a.quantity)) {
-            return `Exceeds available stock (${fmtQty(a.quantity)} ${a.unit || item.unit}).`;
+        const availQty = a ? parseFloat(a.remaining ?? a.quantity) : 0;
+        if (a && n > availQty) {
+            return `Exceeds available stock (${fmtQty(availQty)} ${a.unit || item.unit}).`;
         }
         return '';
     };
@@ -701,7 +702,7 @@ function StockRequestDetail() {
                                         <div className="srq-chem-edit-name">
                                             <span className="sd-usage-name">{item.chemical_name}</span>
                                             <span className="srq-chem-avail">
-                                                Available: {a ? `${fmtQty(a.quantity)} ${a.unit || item.unit}` : '—'}
+                                                Available: {a ? `${fmtQty(a.remaining ?? a.quantity)} ${a.unit || item.unit}` : '—'}
                                             </span>
                                         </div>
                                         <span className="sd-usage-requested">{fmtQty(item.quantity)} {item.unit}</span>

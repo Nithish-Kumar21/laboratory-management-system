@@ -142,3 +142,100 @@ class UnitPropagationTest(APITestCase):
         for item in response.data['chemical_items']:
             self.assertIn('unit', item)
             self.assertEqual(item['unit'], 'g')
+
+
+class MarkAsIssuedRollbackTest(APITestCase):
+    """mark_as_issued must abort the whole transaction if any item is short on stock.
+
+    TECHNICAL_SPEC.md Section 5 (accepted -> issued guard): if any chemical
+    fails the stock check, the entire operation must roll back — earlier
+    decrements must not persist.
+    """
+
+    def setUp(self):
+        self.today = timezone.now().date()
+
+        self.staff = User.objects.create_user(
+            employee_id='staff_roll', email='staff_roll@test.com', password='password123',
+            role='staff', full_name='Staff Rollback',
+            phone='+919999999201', designation='Staff', department='B.Sc Chemistry'
+        )
+        self.hod = User.objects.create_user(
+            employee_id='hod_roll', email='hod_roll@test.com', password='password123',
+            role='hod', full_name='HOD Rollback',
+            phone='+919999999202', designation='HOD', department='B.Sc Chemistry'
+        )
+        self.store_keeper = User.objects.create_user(
+            employee_id='sk_roll', email='sk_roll@test.com', password='password123',
+            role='store_keeper', full_name='Store Keeper Rollback',
+            phone='+919999999203', designation='Store Keeper', department='B.Sc Chemistry'
+        )
+
+        self.chem_ok = AvailableChemical.objects.create(
+            chemical_name='Rollback OK Chemical',
+            quantity=Decimal('100.00'),
+            unit='g',
+            last_updated=self.today,
+        )
+        self.chem_short = AvailableChemical.objects.create(
+            chemical_name='Rollback Short Chemical',
+            quantity=Decimal('100.00'),
+            unit='g',
+            last_updated=self.today,
+        )
+
+    def _login(self, user):
+        resp = self.client.post('/api/users/login/', {
+            'username': user.employee_id, 'password': 'password123'
+        })
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {resp.data["access"]}')
+
+    def test_mark_as_issued_rolls_back_earlier_items_on_insufficient_stock(self):
+        """Two items; item 1 has stock, item 2 is short -> 400 and NO decrement."""
+        self._login(self.staff)
+        resp = self.client.post('/api/stock_request/', {
+            'class_name': 'I B.Sc Chemistry',
+            'reason': 'Rollback test',
+            'day_order': 'I',
+            'hour': [1, 2],
+            'purpose_type': 'practical_lab',
+            'experiment_name': 'Test Experiment',
+            'chemical_items': [
+                {'chemical_name': self.chem_ok.chemical_name, 'quantity': 80.00},
+                {'chemical_name': self.chem_short.chemical_name, 'quantity': 20.00},
+            ],
+            'status': 'pending',
+        }, format='json')
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        req_id = resp.data['id']
+
+        self._login(self.hod)
+        resp = self.client.post(f'/api/stock_request/{req_id}/accept/')
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        # Deplete item 2's stock after acceptance (simulates stock consumed
+        # between accept and issue), so item 2 is short at issue time.
+        AvailableChemical.objects.filter(pk=self.chem_short.pk).update(quantity=Decimal('10.00'))
+
+        before_ok = AvailableChemical.objects.get(pk=self.chem_ok.pk).quantity
+        before_short = AvailableChemical.objects.get(pk=self.chem_short.pk).quantity
+
+        self._login(self.store_keeper)
+        resp = self.client.post(f'/api/stock_request/{req_id}/mark_as_issued/')
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('Insufficient stock', resp.data['error'])
+        self.assertIn(self.chem_short.chemical_name, resp.data['error'])
+
+        # Whole operation must have rolled back: no decrement persisted.
+        self.assertEqual(
+            AvailableChemical.objects.get(pk=self.chem_ok.pk).quantity,
+            before_ok,
+        )
+        self.assertEqual(
+            AvailableChemical.objects.get(pk=self.chem_short.pk).quantity,
+            before_short,
+        )
+
+        # Request must remain accepted, not issued.
+        req = StockRequest.objects.get(pk=req_id)
+        self.assertEqual(req.status, 'accepted')

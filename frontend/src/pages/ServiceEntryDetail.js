@@ -102,7 +102,7 @@ function ServiceEntryDetail() {
   const getQuantityField = (item) => {
     if (detailTab === 'service') return { label: 'In Service', value: item.quantity_remaining };
     if (detailTab === 'returned') return { label: 'Repaired', value: item.quantity_repaired };
-    return { label: 'Damaged', value: item.quantity_damaged };
+    return { label: 'Condemned', value: item.quantity_damaged };
   };
 
   const hasCompany = entry.company_name || entry.company_address || entry.company_contact_number;
@@ -237,7 +237,7 @@ function ServiceEntryDetail() {
                 className={`de-tab ${detailTab === 'damaged' ? 'active' : ''}`}
                 onClick={() => setDetailTab('damaged')}
               >
-                Damaged
+                Condemned
               </button>
             </div>
 
@@ -265,9 +265,9 @@ function ServiceEntryDetail() {
                           className="sd-action-btn damaged-btn"
                           onClick={() => openActionPopup(item.id, 'damaged')}
                           disabled={item.quantity_remaining === 0}
-                          title={item.quantity_remaining === 0 ? 'No items remaining' : 'Mark as damaged'}
+                          title={item.quantity_remaining === 0 ? 'No items remaining' : 'Mark as condemned'}
                         >
-                          <FaTrash /> Damaged
+                          <FaTrash /> Condemned
                         </button>
                       </div>
                     )}
@@ -302,12 +302,12 @@ function ServiceEntryDetail() {
         <div className="modal-overlay-modern" onClick={() => setActionPopup({ ...actionPopup, open: false })}>
           <div className="modal-content-modern" style={{ maxWidth: '400px' }} onClick={e => e.stopPropagation()}>
             <div className="modal-header-modern">
-              <h2>{actionPopup.actionType === 'repaired' ? 'Mark as Repaired' : 'Mark as Damaged'}</h2>
+              <h2>{actionPopup.actionType === 'repaired' ? 'Mark as Repaired' : 'Mark as Condemned'}</h2>
               <button className="close-btn-modern" onClick={() => setActionPopup({ ...actionPopup, open: false })}>&times;</button>
             </div>
             <div className="modal-body-scroll">
               <p style={{ marginBottom: '16px', fontSize: '14px', color: '#4A4A4A' }}>
-                Enter the quantity to mark as <strong>{actionPopup.actionType}</strong>:
+                Enter the quantity to mark as <strong>{actionPopup.actionType === 'repaired' ? 'Repaired' : 'Condemned'}</strong>:
               </p>
               <input
                 type="number"

@@ -142,7 +142,17 @@ class StockRequestViewSet(viewsets.ModelViewSet):
                 {'success': False, 'error': 'Only store keeper or admin can mark requests as issued'},
                 status=status.HTTP_403_FORBIDDEN
             )
-        obj = self.get_object()
+        # Lock the request row before any status check so concurrent
+        # mark_as_issued calls serialize on the same request (pre-deploy
+        # race-condition pattern: lock the request object first, then the
+        # request's chemical items, then the AvailableChemical rows).
+        try:
+            obj = StockRequest.objects.select_for_update().get(pk=pk)
+        except StockRequest.DoesNotExist:
+            return Response(
+                {'success': False, 'error': 'Not found.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
         if obj.status == 'issued':
             return Response(
                 {'success': True, 'data': {'message': 'Already issued.'}},
@@ -154,19 +164,26 @@ class StockRequestViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        for item in obj.chemical_items.all():
+        items = list(obj.chemical_items.select_for_update())
+        for item in items:
             try:
                 chem = AvailableChemical.objects.select_for_update().get(
                     chemical_name__iexact=item.chemical_name
                 )
                 if chem.quantity < item.quantity:
+                    # Abort the whole transaction (TECHNICAL_SPEC.md §5):
+                    # mark for rollback so earlier decrements in this loop are
+                    # undone, then return the error response normally.
+                    transaction.set_rollback(True)
                     return Response(
                         {'success': False, 'error': f'Insufficient stock for {item.chemical_name}. Available: {chem.quantity}, Requested: {item.quantity}'},
                         status=status.HTTP_400_BAD_REQUEST
                     )
                 chem.quantity -= item.quantity
+                chem.committed_quantity_ml -= item.quantity
                 chem.save()
             except AvailableChemical.DoesNotExist:
+                transaction.set_rollback(True)
                 return Response(
                     {'success': False, 'error': f'Chemical {item.chemical_name} not found in inventory'},
                     status=status.HTTP_400_BAD_REQUEST
@@ -401,9 +418,20 @@ class StockRequestViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @action(detail=True, methods=['post'])
+    @transaction.atomic
     def submit(self, request, pk=None):
         """Move a draft request to pending status"""
-        obj = self.get_object()
+        # Lock the request row before any status/ownership check so concurrent
+        # submit calls serialize on the same request (pre-deploy race-condition
+        # pattern: lock the request object first, then run the active-request
+        # check inside the same transaction).
+        try:
+            obj = StockRequest.objects.select_for_update().get(pk=pk)
+        except StockRequest.DoesNotExist:
+            return Response(
+                {'success': False, 'error': 'Not found.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
         if obj.requested_by != request.user:
             return Response(
                 {'success': False, 'error': 'You can only submit your own drafts'},
@@ -420,7 +448,7 @@ class StockRequestViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Check for existing active request
+        # Check for existing active request (serialized by the row lock above)
         active_statuses = ['pending', 'accepted', 'issued', 'reported']
         has_active = StockRequest.objects.filter(
             requested_by=request.user, 
@@ -528,19 +556,48 @@ class StockRequestViewSet(viewsets.ModelViewSet):
                     chemical_name__iexact=item.chemical_name
                 )
             except AvailableChemical.DoesNotExist:
+                transaction.set_rollback(True)
                 return Response(
                     {'success': False, 'error': f'Chemical {item.chemical_name} not found in inventory'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            if new_qty > chem.quantity:
+            remaining = chem.quantity - chem.committed_quantity_ml
+            if new_qty > remaining:
+                transaction.set_rollback(True)
                 return Response(
-                    {'success': False, 'error': f'Insufficient stock for {item.chemical_name}. Available: {_fmt_quantity(chem.quantity)}, Requested: {_fmt_quantity(new_qty)}'},
+                    {'success': False, 'error': f'Insufficient stock for {item.chemical_name}. Available: {_fmt_quantity(remaining)}, Requested: {_fmt_quantity(new_qty)}'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
             if new_qty != item.quantity:
                 adjustments.append((item, item.quantity, new_qty))
                 item.quantity = new_qty
                 item.save()
+
+        # Commit the (possibly HOD-adjusted) requested quantity for every
+        # chemical on the request — including items the HOD did not adjust —
+        # so later accept/issue decisions see this stock as promised.
+        # Validation is against remaining stock (physical minus already
+        # committed), not raw physical stock.
+        for item in obj.chemical_items.select_for_update():
+            try:
+                chem = AvailableChemical.objects.select_for_update().get(
+                    chemical_name__iexact=item.chemical_name
+                )
+            except AvailableChemical.DoesNotExist:
+                transaction.set_rollback(True)
+                return Response(
+                    {'success': False, 'error': f'Chemical {item.chemical_name} not found in inventory'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            remaining = chem.quantity - chem.committed_quantity_ml
+            if item.quantity > remaining:
+                transaction.set_rollback(True)
+                return Response(
+                    {'success': False, 'error': f'Insufficient stock for {item.chemical_name}. Available: {_fmt_quantity(remaining)}, Requested: {_fmt_quantity(item.quantity)}'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            chem.committed_quantity_ml += item.quantity
+            chem.save()
 
         obj.status = 'accepted'
         obj.reviewed_at = timezone.now()

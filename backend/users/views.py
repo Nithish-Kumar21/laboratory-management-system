@@ -271,7 +271,7 @@ class ResetPasswordView(APIView):
         from django.contrib.auth.password_validation import validate_password
         from django.core.exceptions import ValidationError as DjangoValidationError
         try:
-            validate_password(new_password)
+            validate_password(new_password, user=reset_token.user)
         except DjangoValidationError as e:
             return Response(
                 {'new_password': list(e.messages)},
