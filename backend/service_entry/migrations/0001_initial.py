@@ -116,40 +116,17 @@ BEFORE INSERT ON service_entry_item_logs
 FOR EACH ROW
 EXECUTE FUNCTION fn_service_action_apply();
 
-CREATE OR REPLACE FUNCTION fn_service_entry_check_complete()
-RETURNS TRIGGER AS $$
-DECLARE
-    v_open_count INTEGER;
-BEGIN
-    SELECT COUNT(*) INTO v_open_count
-    FROM service_entry_items
-    WHERE service_entry_id = NEW.service_entry_id
-      AND quantity_remaining > 0;
-
-    IF v_open_count = 0 THEN
-        UPDATE service_entry
-        SET status = 'completed',
-            completed_at = now()
-        WHERE id = NEW.service_entry_id
-          AND status != 'completed';
-    END IF;
-
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-DROP TRIGGER IF EXISTS trg_service_entry_complete ON service_entry_items;
-
-CREATE TRIGGER trg_service_entry_complete
-AFTER UPDATE ON service_entry_items
-FOR EACH ROW
-EXECUTE FUNCTION fn_service_entry_check_complete();
+-- NOTE: trg_service_entry_complete / fn_service_entry_check_complete were
+-- INTENTIONALLY REMOVED. The old AFTER UPDATE trigger auto-completed a
+-- service entry the moment the last item's quantity_remaining reached 0,
+-- pre-empting the Storekeeper's explicit final submit. Completion is now
+-- handled solely by the explicit "Complete Entry" action at
+-- POST /service-entries/{id}/complete/ (ServiceEntryViewSet.complete in
+-- service_entry/views.py). Do NOT reintroduce this trigger/function.
 """,
             reverse_sql="""
-DROP TRIGGER IF EXISTS trg_service_entry_complete ON service_entry_items;
 DROP TRIGGER IF EXISTS trg_service_action_apply ON service_entry_item_logs;
 DROP TRIGGER IF EXISTS trg_service_item_sent ON service_entry_items;
-DROP FUNCTION IF EXISTS fn_service_entry_check_complete();
 DROP FUNCTION IF EXISTS fn_service_action_apply();
 DROP FUNCTION IF EXISTS fn_service_item_sent_decrement();
 DROP TABLE IF EXISTS service_entry_item_logs;

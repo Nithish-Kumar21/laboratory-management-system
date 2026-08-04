@@ -1,3 +1,5 @@
+import logging
+
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -10,6 +12,8 @@ from .serializers import (
     ServiceActionSerializer,
 )
 from backend.permissions import ServiceEntryPermission
+
+logger = logging.getLogger('lms')
 
 
 class ServiceEntryViewSet(viewsets.ModelViewSet):
@@ -43,8 +47,9 @@ class ServiceEntryViewSet(viewsets.ModelViewSet):
             headers = self.get_success_headers(serializer.data)
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
         except Exception as e:
+            logger.exception("ServiceEntry create failed - %s: %s", type(e).__name__, e)
             return Response(
-                {"error": str(e)},
+                {"error": "An unexpected error occurred while creating the service entry. Please try again."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -155,6 +160,7 @@ class ServiceEntryViewSet(viewsets.ModelViewSet):
         from django.utils import timezone
         entry.status = 'completed'
         entry.completed_at = timezone.now()
+        entry.updated_by = request.user
         entry.save()
 
         return Response(ServiceEntryDetailSerializer(entry).data)
