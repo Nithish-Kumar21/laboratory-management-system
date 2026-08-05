@@ -660,34 +660,80 @@ class StockRequestViewSet(viewsets.ModelViewSet):
 
 
     @action(detail=True, methods=['post'])
+    @transaction.atomic
     def cancel(self, request, pk=None):
-        """Cancel a pending request"""
-        obj = self.get_object()
-        if obj.requested_by != request.user:
+        """Cancel a pending request (owner only), or release committed stock on an
+        accepted request (HOD or store keeper only)."""
+        reason = (request.data.get('reason') or '').strip()
+        try:
+            obj = StockRequest.objects.select_for_update().get(pk=pk)
+        except StockRequest.DoesNotExist:
             return Response(
-                {'success': False, 'error': 'You can only cancel your own requests'},
-                status=status.HTTP_403_FORBIDDEN
+                {'success': False, 'error': 'Not found.'},
+                status=status.HTTP_404_NOT_FOUND
             )
+
         if obj.status == 'cancelled':
             return Response(
                 {'success': True, 'data': {'message': 'Already cancelled.'}},
                 status=status.HTTP_200_OK
             )
-        if obj.status != 'pending':
+
+        if obj.status == 'pending':
+            if obj.requested_by != request.user:
+                return Response(
+                    {'success': False, 'error': 'You can only cancel your own requests'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            description = f'Request {obj.request_id} cancelled by {request.user.full_name}'
+            if reason:
+                description += f' Reason: {reason}'
+            AuditLogService.log(
+                user=request.user,
+                action='REQUEST_CANCELLED',
+                entity_type='StockRequest',
+                entity_id=obj.id,
+                description=description,
+                request=request,
+            )
+        elif obj.status == 'accepted':
+            if request.user.role not in ('hod', 'store_keeper'):
+                return Response(
+                    {'success': False, 'error': 'Only HOD or store keeper can cancel an accepted request.'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            items = list(obj.chemical_items.select_for_update())
+            for item in items:
+                try:
+                    chem = AvailableChemical.objects.select_for_update().get(
+                        chemical_name__iexact=item.chemical_name
+                    )
+                except AvailableChemical.DoesNotExist:
+                    return Response(
+                        {'success': False, 'error': f'Chemical {item.chemical_name} not found in inventory'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                chem.committed_quantity_ml -= item.quantity
+                chem.save()
+            description = f'Request {obj.request_id} cancelled by {request.user.full_name}. Committed stock released.'
+            if reason:
+                description += f' Reason: {reason}'
+            AuditLogService.log(
+                user=request.user,
+                action='REQUEST_CANCELLED',
+                entity_type='StockRequest',
+                entity_id=obj.id,
+                description=description,
+                request=request,
+            )
+        else:
             return Response(
-                {'success': False, 'error': 'Only pending requests can be cancelled.'},
+                {'success': False, 'error': 'Only pending or accepted requests can be cancelled.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
         obj.status = 'cancelled'
         obj.save()
-        AuditLogService.log(
-            user=request.user,
-            action='REQUEST_CANCELLED',
-            entity_type='StockRequest',
-            entity_id=obj.id,
-            description=f'Request {obj.request_id} cancelled by {request.user.full_name}',
-            request=request,
-        )
         return Response(StockRequestDetailSerializer(obj).data)
 
 

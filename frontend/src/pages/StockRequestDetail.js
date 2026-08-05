@@ -52,7 +52,7 @@ function StockRequestDetail() {
             const data = Array.isArray(res.data) ? res.data : res.data.results || [];
             // Active = any request that is NOT completed, NOT rejected, NOT draft, and NOT the current one (if current is not draft)
             // But here we only care if they have ANY other active request that would block submitting this draft.
-            setHasActiveRequest(data.some(r => r.id !== parseInt(id) && r.status !== 'completed' && r.status !== 'rejected' && r.status !== 'draft'));
+            setHasActiveRequest(data.some(r => r.id !== parseInt(id) && r.status !== 'completed' && r.status !== 'rejected' && r.status !== 'draft' && r.status !== 'cancelled'));
         } catch (err) {
             console.error('Error checking active requests:', err);
         }
@@ -84,6 +84,8 @@ function StockRequestDetail() {
 
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [rejectionReason, setRejectionReason] = useState('');
+    const [showCancelModal, setShowCancelModal] = useState(false);
+    const [cancelReason, setCancelReason] = useState('');
     const [dialog, setDialog] = useState({ open: false, message: '', showCancel: true, variant: 'confirm', onConfirm: null });
 
     // Inline Quantity Adjustment (HOD accept) State
@@ -193,6 +195,14 @@ function StockRequestDetail() {
         api.post(`stock_request/${id}/mark_as_issued/`)
             .then(() => { fetchRequest(); window.dispatchEvent(new CustomEvent('inventory-updated')); showToast('Marked as Issued'); })
             .catch(err => setDialog({ open: true, message: err.response?.data?.error || 'Failed to mark as issued', showCancel: false }))
+            .finally(() => setActionLoading(false));
+    };
+
+    const handleReleaseCancel = () => {
+        setActionLoading(true);
+        api.post(`stock_request/${id}/cancel/`, { reason: cancelReason })
+            .then(() => { setShowCancelModal(false); setCancelReason(''); fetchRequest(); window.dispatchEvent(new CustomEvent('inventory-updated')); showToast('Request Cancelled & Stock Released'); })
+            .catch(err => setDialog({ open: true, message: err.response?.data?.error || 'Failed to cancel request', showCancel: false }))
             .finally(() => setActionLoading(false));
     };
 
@@ -977,11 +987,23 @@ function StockRequestDetail() {
                     </div>
                 )}
 
+                {/* HOD Release Action */}
+                {isHOD && request.status === 'accepted' && (
+                    <div className="sd-actions">
+                        <button className="sd-btn sd-btn-danger" onClick={() => setShowCancelModal(true)} disabled={actionLoading}>
+                            <FaTimesCircle /> Cancel & Release Stock
+                        </button>
+                    </div>
+                )}
+
                 {/* StoreKeeper Issue Action */}
                 {isStoreKeeper && request.status === 'accepted' && (
                     <div className="sd-actions">
                         <button className="sd-btn sd-btn-primary sd-btn-full" onClick={handleMarkAsIssued} disabled={actionLoading}>
                             {actionLoading ? 'Processing...' : <><FaCheckCircle /> Mark as Issued</>}
+                        </button>
+                        <button className="sd-btn sd-btn-danger sd-btn-full" onClick={() => setShowCancelModal(true)} disabled={actionLoading}>
+                            <FaTimesCircle /> Cancel & Release Stock
                         </button>
                     </div>
                 )}
@@ -1031,6 +1053,26 @@ function StockRequestDetail() {
                         <div className="modal-footer" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                             <button type="button" className="btn-secondary" onClick={() => { setShowRejectModal(false); setRejectionReason(''); }} disabled={actionLoading}>Cancel</button>
                             <button type="button" className="btn-reject" onClick={handleReject} disabled={actionLoading || !rejectionReason.trim()}>{actionLoading ? 'Processing...' : 'Reject Request'}</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Cancel / Release Stock Modal */}
+            {showCancelModal && (
+                <div className="modal-overlay" onClick={() => setShowCancelModal(false)}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3>Cancel Request & Release Stock</h3>
+                            <button type="button" className="modal-close" onClick={() => setShowCancelModal(false)} aria-label="Close">×</button>
+                        </div>
+                        <div className="modal-body">
+                            <p className="sd-section-helper">This will cancel the request and release the committed stock back to inventory. Reason is optional.</p>
+                            <textarea value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} placeholder="Reason (optional)..." rows={4} className="modern-textarea" style={{ width: '100%', marginTop: '8px' }} />
+                        </div>
+                        <div className="modal-footer" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                            <button type="button" className="btn-secondary" onClick={() => { setShowCancelModal(false); setCancelReason(''); }} disabled={actionLoading}>Close</button>
+                            <button type="button" className="btn-reject" onClick={handleReleaseCancel} disabled={actionLoading}>{actionLoading ? 'Processing...' : 'Cancel & Release'}</button>
                         </div>
                     </div>
                 </div>

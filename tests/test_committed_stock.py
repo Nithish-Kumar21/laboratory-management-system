@@ -162,3 +162,141 @@ class TestAvailableChemicalRemainingField:
         chem = next(c for c in self._rows(resp.data) if c['chemical_name'] == 'Remaining Chemical')
         assert Decimal(chem['quantity']) == Decimal('600.00')
         assert Decimal(chem['remaining']) == Decimal('600.00')
+
+
+class TestCancelReleasesCommittedStock:
+    """HOD/Storekeeper can cancel an accepted request to release committed stock."""
+
+    def _create_chemical(self, qty='1000.00'):
+        return AvailableChemical.objects.create(
+            chemical_name=CHEM, quantity=Decimal(qty),
+            reorder_level=Decimal('50.00'), unit='ml'
+        )
+
+    def _create_pending(self, client, qty='400.00'):
+        resp = client.post('/api/stock_request/', {
+            'class_name': CLASS_NAME,
+            'reason': 'Committed stock release test',
+            'status': 'pending',
+            'date': timezone.now().date().isoformat(),
+            'day_order': 'I',
+            'hour': [1],
+            'purpose_type': 'practical_lab',
+            'experiment_name': 'Committed release experiment',
+            'chemical_items': [{'chemical_name': CHEM, 'quantity': str(qty)}],
+        }, format='json')
+        assert resp.status_code == status.HTTP_201_CREATED, resp.data
+        return resp.data['id']
+
+    def _cancel(self, client, req_id, **kwargs):
+        return client.post(f'/api/stock_request/{req_id}/cancel/', kwargs, format='json')
+
+    def test_hod_cancel_releases_committed_stock(self, auth_staff, auth_hod):
+        self._create_chemical()
+        req_id = self._create_pending(auth_staff)
+        resp = auth_hod.post(f'/api/stock_request/{req_id}/accept/')
+        assert resp.status_code == status.HTTP_200_OK
+        assert AvailableChemical.objects.get(chemical_name=CHEM).committed_quantity_ml == Decimal('400.00')
+
+        resp = self._cancel(auth_hod, req_id, reason='No longer needed')
+        assert resp.status_code == status.HTTP_200_OK, resp.data
+
+        chem = AvailableChemical.objects.get(chemical_name=CHEM)
+        assert chem.quantity == Decimal('1000.00')
+        assert chem.committed_quantity_ml == Decimal('0.00')
+        assert StockRequest.objects.get(id=req_id).status == 'cancelled'
+
+    def test_store_keeper_cancel_releases_committed_stock(self, auth_staff, auth_hod, auth_store_keeper):
+        self._create_chemical()
+        req_id = self._create_pending(auth_staff)
+        resp = auth_hod.post(f'/api/stock_request/{req_id}/accept/')
+        assert resp.status_code == status.HTTP_200_OK
+
+        resp = self._cancel(auth_store_keeper, req_id)
+        assert resp.status_code == status.HTTP_200_OK, resp.data
+
+        chem = AvailableChemical.objects.get(chemical_name=CHEM)
+        assert chem.quantity == Decimal('1000.00')
+        assert chem.committed_quantity_ml == Decimal('0.00')
+        assert StockRequest.objects.get(id=req_id).status == 'cancelled'
+
+    def test_staff_owner_cannot_cancel_own_accepted(self, auth_staff, auth_hod):
+        self._create_chemical()
+        req_id = self._create_pending(auth_staff)
+        resp = auth_hod.post(f'/api/stock_request/{req_id}/accept/')
+        assert resp.status_code == status.HTTP_200_OK
+
+        resp = self._cancel(auth_staff, req_id)
+        assert resp.status_code == status.HTTP_403_FORBIDDEN
+
+        chem = AvailableChemical.objects.get(chemical_name=CHEM)
+        assert chem.committed_quantity_ml == Decimal('400.00')
+        assert StockRequest.objects.get(id=req_id).status == 'accepted'
+
+    def test_staff_cancel_own_pending_still_works(self, auth_staff):
+        self._create_chemical()
+        req_id = self._create_pending(auth_staff)
+
+        resp = self._cancel(auth_staff, req_id)
+        assert resp.status_code == status.HTTP_200_OK, resp.data
+        assert StockRequest.objects.get(id=req_id).status == 'cancelled'
+        assert AvailableChemical.objects.get(chemical_name=CHEM).committed_quantity_ml == Decimal('0.00')
+
+    def test_cancel_accepted_is_idempotent_no_double_release(self, auth_staff, auth_hod):
+        self._create_chemical()
+        req_id = self._create_pending(auth_staff)
+        resp = auth_hod.post(f'/api/stock_request/{req_id}/accept/')
+        assert resp.status_code == status.HTTP_200_OK
+
+        assert self._cancel(auth_hod, req_id).status_code == status.HTTP_200_OK
+        assert AvailableChemical.objects.get(chemical_name=CHEM).committed_quantity_ml == Decimal('0.00')
+
+        resp = self._cancel(auth_hod, req_id)
+        assert resp.status_code == status.HTTP_200_OK, resp.data
+        assert AvailableChemical.objects.get(chemical_name=CHEM).committed_quantity_ml == Decimal('0.00')
+
+    def test_cancel_releases_hod_adjusted_quantity(self, auth_staff, auth_hod):
+        self._create_chemical()
+        req_id = self._create_pending(auth_staff, '400.00')
+        item_id = StockRequest.objects.get(id=req_id).chemical_items.first().id
+        resp = auth_hod.post(f'/api/stock_request/{req_id}/accept/', {
+            'chemical_items': [{'chemical_item_id': item_id, 'quantity_ml': '150.00'}],
+        }, format='json')
+        assert resp.status_code == status.HTTP_200_OK, resp.data
+        assert AvailableChemical.objects.get(chemical_name=CHEM).committed_quantity_ml == Decimal('150.00')
+
+        resp = self._cancel(auth_hod, req_id)
+        assert resp.status_code == status.HTTP_200_OK, resp.data
+
+        chem = AvailableChemical.objects.get(chemical_name=CHEM)
+        assert chem.quantity == Decimal('1000.00')
+        assert chem.committed_quantity_ml == Decimal('0.00')
+
+    def test_staff_can_submit_new_request_after_cancel_of_accepted(self, auth_staff, auth_hod, staff_user):
+        self._create_chemical()
+        req_id = self._create_pending(auth_staff)
+        resp = auth_hod.post(f'/api/stock_request/{req_id}/accept/')
+        assert resp.status_code == status.HTTP_200_OK
+
+        def _post_new(qty):
+            return auth_staff.post('/api/stock_request/', {
+                'class_name': CLASS_NAME,
+                'reason': 'New request after release',
+                'status': 'pending',
+                'date': timezone.now().date().isoformat(),
+                'day_order': 'I',
+                'hour': [1],
+                'purpose_type': 'practical_lab',
+                'experiment_name': 'New experiment',
+                'chemical_items': [{'chemical_name': CHEM, 'quantity': qty}],
+            }, format='json')
+
+        # While the accepted request is active, a new non-draft request is blocked.
+        blocked = _post_new('100.00')
+        assert blocked.status_code == status.HTTP_400_BAD_REQUEST, blocked.data
+
+        # After the accepted request is cancelled, the same submission succeeds.
+        assert self._cancel(auth_hod, req_id).status_code == status.HTTP_200_OK
+        resp = _post_new('100.00')
+        assert resp.status_code == status.HTTP_201_CREATED, resp.data
+        assert StockRequest.objects.filter(requested_by=staff_user).exclude(status='cancelled').count() == 1
