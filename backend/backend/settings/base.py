@@ -126,6 +126,10 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_CLASSES': [],
     'DEFAULT_THROTTLE_RATES': {
         'login': '10/min',
+        'forgot_password': '5/min',
+        'reset_password': '3/min',
+        'verify_reset_token': '10/min',
+        # ScopedRateThrottle uses REMOTE_ADDR; ensure NUM_PROXIES is set if behind reverse proxy
     },
     'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler',
     'NON_FIELD_ERRORS_KEY': 'error',

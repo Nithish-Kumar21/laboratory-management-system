@@ -1,5 +1,8 @@
+import logging
+
 from rest_framework import viewsets, status
-from django.db import transaction
+from django.db import transaction, IntegrityError
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import DamagedEntry, DamagedItem
@@ -10,6 +13,8 @@ from .serializers import (
 )
 from inventory.models import AvailableApparatus  # ✅ Add this import
 from backend.permissions import DamagedEntryPermission
+
+logger = logging.getLogger(__name__)
 
 
 class DamagedEntryViewSet(viewsets.ModelViewSet):
@@ -47,9 +52,22 @@ class DamagedEntryViewSet(viewsets.ModelViewSet):
             self.perform_create(serializer)
             headers = self.get_success_headers(serializer.data)
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-        except Exception as e:
+        except IntegrityError:
             return Response(
-                {"error": str(e)}, 
+                {"error": "A conflicting record already exists."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except DjangoValidationError:
+            return Response(
+                {"error": "Invalid damage report data."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            logger.error(
+                'Unexpected error in DamagedEntryView.create: %s', e, exc_info=True
+            )
+            return Response(
+                {"error": "An error occurred processing the damage report."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 

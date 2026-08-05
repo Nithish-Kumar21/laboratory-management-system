@@ -12,7 +12,7 @@ from rest_framework_simplejwt.exceptions import TokenError
 from django.contrib.auth import authenticate
 from django.conf import settings
 from django.utils import timezone
-from .models import User, PasswordResetToken, DegreeClass
+from .models import User, PasswordResetToken, DegreeClass, ChangePasswordToken
 from .serializers import (
     UserSerializer, UserCreateSerializer, UserUpdateSerializer,
     ChangePasswordSerializer, FirstLoginChangePasswordSerializer,
@@ -47,17 +47,15 @@ class LoginView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        # Generic lockout message (valid + locked account only). All other
+        # invalid-credential paths return the same generic 401 to prevent
+        # user enumeration.
         try:
             u = User.objects.get(employee_id=username)
             if u.is_account_locked():
                 return Response(
-                    {'error': 'Account is temporarily locked. Try again later.'},
-                    status=status.HTTP_403_FORBIDDEN
-                )
-            if not u.is_active:
-                return Response(
-                    {'error': 'Account is inactive'},
-                    status=status.HTTP_403_FORBIDDEN
+                    {'error': 'Too many failed attempts. Try again later.'},
+                    status=status.HTTP_401_UNAUTHORIZED
                 )
         except User.DoesNotExist:
             pass
@@ -65,6 +63,7 @@ class LoginView(APIView):
         user = authenticate(request, username=username, password=password)
 
         if user is None:
+            logger.warning('Failed login attempt for employee_id=%s', username)
             return Response(
                 {'error': 'Invalid employee ID or password'},
                 status=status.HTTP_401_UNAUTHORIZED
@@ -86,6 +85,14 @@ class LoginView(APIView):
                 lifetime=timedelta(
                     minutes=settings.FIRST_LOGIN_TOKEN_EXPIRY_MINUTES
                 )
+            )
+
+            ChangePasswordToken.objects.create(
+                user=user,
+                token_jti=temp_token['jti'],
+                expires_at=timezone.now() + timedelta(
+                    minutes=settings.FIRST_LOGIN_TOKEN_EXPIRY_MINUTES
+                ),
             )
 
             return Response({
@@ -158,12 +165,41 @@ class ChangePasswordView(APIView):
                         status=status.HTTP_403_FORBIDDEN
                     )
 
+                # Require the current (pre-set) password so a stolen temp token
+                # alone cannot change a password.
+                current_password = request.data.get('current_password')
+                if not current_password or not user.check_password(current_password):
+                    return Response(
+                        {'error': 'Current password is incorrect.'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                # Consume the single-use token record (DB-backed, keyed by jti).
+                jti = token.get('jti')
+                token_record = None
+                if jti:
+                    token_record = ChangePasswordToken.objects.filter(
+                        user=user,
+                        token_jti=jti,
+                        used_at__isnull=True,
+                        expires_at__gt=timezone.now(),
+                    ).first()
+
+                if not token_record or not user.is_first_login:
+                    return Response(
+                        {'error': 'Token expired or already used.'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
                 serializer = FirstLoginChangePasswordSerializer(
                     data=request.data,
                     context={'user': user}
                 )
                 if serializer.is_valid():
                     serializer.save()
+
+                    token_record.used_at = timezone.now()
+                    token_record.save(update_fields=['used_at'])
 
                     AuditLogService.log(
                         user=user,
@@ -215,6 +251,8 @@ class ChangePasswordView(APIView):
 
 class ForgotPasswordView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'forgot_password'
 
     def post(self, request):
         serializer = PasswordResetRequestSerializer(data=request.data)
@@ -249,6 +287,8 @@ class ForgotPasswordView(APIView):
 
 class ResetPasswordView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'reset_password'
 
     def post(self, request):
         token_str = request.data.get('token')
@@ -322,6 +362,8 @@ class ResetPasswordView(APIView):
 
 class VerifyResetTokenView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'verify_reset_token'
 
     def get(self, request):
         token_str = request.query_params.get('token')

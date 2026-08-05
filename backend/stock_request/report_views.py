@@ -7,6 +7,7 @@ from django.utils.timezone import now
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework import status
 
 from reports.permissions import IsHODOrStorekeeper
 
@@ -117,7 +118,13 @@ class IssueRegisterReportView(APIView):
         if export == 'csv':
             return self._export_csv(items)
 
-        page = int(request.query_params.get('page', 1))
+        try:
+            page = int(request.query_params.get('page', 1))
+        except (ValueError, TypeError):
+            return Response(
+                {'error': 'Invalid page number.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         page_size = 25
         total = len(items)
         start_idx = (page - 1) * page_size
