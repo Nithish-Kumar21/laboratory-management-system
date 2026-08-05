@@ -6,7 +6,8 @@ import sys
 
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings.dev')
+    # Default to prod; override with DJANGO_SETTINGS_MODULE=backend.settings.dev for local development
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings.prod')
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
