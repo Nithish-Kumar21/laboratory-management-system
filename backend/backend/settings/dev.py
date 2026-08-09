@@ -7,6 +7,7 @@ REST_FRAMEWORK = {**REST_FRAMEWORK, 'DEFAULT_THROTTLE_RATES': {
     'login': '10/min',
     'forgot_password': '5/min',
     'reset_password': '3/min',
+    'verify_reset_token': '10/min',
 }}
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'testserver']
