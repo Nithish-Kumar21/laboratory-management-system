@@ -1,3 +1,4 @@
+from datetime import timedelta
 from types import SimpleNamespace
 
 from django.contrib.auth import get_user_model
@@ -5,13 +6,14 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase, TestCase
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.settings import api_settings
 from rest_framework.test import APITestCase
 from rest_framework_simplejwt.settings import api_settings as jwt_api_settings
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 
-from .models import PasswordResetToken
+from .models import ChangePasswordToken, PasswordResetToken
 from .serializers import (
     ChangePasswordSerializer,
     FirstLoginChangePasswordSerializer,
@@ -308,3 +310,141 @@ class LogoutBlacklistTests(APITestCase):
         finally:
             jwt_api_settings.ROTATE_REFRESH_TOKENS = orig_rotate
             jwt_api_settings.BLACKLIST_AFTER_ROTATION = orig_blacklist
+
+
+class FirstLoginTempTokenTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            employee_id='FIRST01', email='first@test.com',
+            password='PreSet@Pass1', role='staff',
+            full_name='First Login', phone='+919876543211',
+            designation='Staff', department='B.Sc Chemistry',
+        )
+        self.user.is_first_login = True
+        self.user.save()
+
+    def _login_temp(self):
+        resp = self.client.post('/api/users/login/', {
+            'username': 'FIRST01', 'password': 'PreSet@Pass1',
+        })
+        self.assertEqual(resp.status_code, 200)
+        return resp.data['temp_token']
+
+    def test_login_creates_change_password_token_record(self):
+        token_str = self._login_temp()
+        token = AccessToken(token_str)
+        record = ChangePasswordToken.objects.get(user=self.user, token_jti=token['jti'])
+        self.assertIsNone(record.used_at)
+        self.assertGreater(record.expires_at, timezone.now())
+
+    def test_change_password_requires_current_password(self):
+        token_str = self._login_temp()
+        resp = self.client.post(
+            '/api/users/change-password/',
+            {'new_password': 'NewPass@123', 'confirm_password': 'NewPass@123'},
+            HTTP_AUTHORIZATION=f'Bearer {token_str}',
+        )
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.data['error'], 'Current password is incorrect.')
+
+    def test_change_password_wrong_current_password(self):
+        token_str = self._login_temp()
+        resp = self.client.post(
+            '/api/users/change-password/',
+            {
+                'current_password': 'Wrong@Pass1',
+                'new_password': 'NewPass@123',
+                'confirm_password': 'NewPass@123',
+            },
+            HTTP_AUTHORIZATION=f'Bearer {token_str}',
+        )
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.data['error'], 'Current password is incorrect.')
+
+    def test_temp_token_single_use(self):
+        token_str = self._login_temp()
+        resp = self.client.post(
+            '/api/users/change-password/',
+            {
+                'current_password': 'PreSet@Pass1',
+                'new_password': 'NewPass@123',
+                'confirm_password': 'NewPass@123',
+            },
+            HTTP_AUTHORIZATION=f'Bearer {token_str}',
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.is_first_login)
+        self.assertTrue(self.user.check_password('NewPass@123'))
+
+        resp2 = self.client.post(
+            '/api/users/change-password/',
+            {
+                'current_password': 'NewPass@123',
+                'new_password': 'Another@Pass456',
+                'confirm_password': 'Another@Pass456',
+            },
+            HTTP_AUTHORIZATION=f'Bearer {token_str}',
+        )
+        self.assertEqual(resp2.status_code, 400)
+        self.assertEqual(resp2.data['error'], 'Token expired or already used.')
+
+
+class LoginEnumerationTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            employee_id='ENUM001', email='enum@test.com',
+            password='Enum@Pass1', role='staff',
+            full_name='Enum Test', phone='+919876543212',
+            designation='Staff', department='B.Sc Chemistry',
+        )
+        cache.clear()
+
+    def _login(self, username, password):
+        return self.client.post('/api/users/login/', {
+            'username': username, 'password': password,
+        })
+
+    def test_invalid_id_and_wrong_password_share_message(self):
+        r1 = self._login('ENUM999', 'Whatever@1')
+        r2 = self._login('ENUM001', 'Wrong@Pass1')
+        self.assertEqual(r1.status_code, 401)
+        self.assertEqual(r2.status_code, 401)
+        self.assertEqual(r1.data['error'], r2.data['error'])
+
+    def test_inactive_user_gets_generic_message(self):
+        self.user.is_active = False
+        self.user.save()
+        resp = self._login('ENUM001', 'Enum@Pass1')
+        self.assertEqual(resp.status_code, 401)
+        self.assertEqual(resp.data['error'], 'Invalid employee ID or password')
+
+    def test_locked_account_gets_lockout_message(self):
+        self.user.failed_login_attempts = 5
+        self.user.account_locked_until = timezone.now() + timedelta(minutes=30)
+        self.user.save()
+        resp = self._login('ENUM001', 'Enum@Pass1')
+        self.assertEqual(resp.status_code, 401)
+        self.assertEqual(resp.data['error'], 'Too many failed attempts. Try again later.')
+
+
+class ForgotPasswordThrottleTest(APITestCase):
+    def setUp(self):
+        cache.clear()
+        self._orig_rates = api_settings.DEFAULT_THROTTLE_RATES.copy()
+        api_settings.DEFAULT_THROTTLE_RATES['forgot_password'] = '5/min'
+        api_settings._cached_attrs.discard('DEFAULT_THROTTLE_RATES')
+
+    def tearDown(self):
+        api_settings.DEFAULT_THROTTLE_RATES.clear()
+        api_settings.DEFAULT_THROTTLE_RATES.update(self._orig_rates)
+        api_settings._cached_attrs.discard('DEFAULT_THROTTLE_RATES')
+        cache.clear()
+
+    def test_forgot_password_throttles_after_5_requests(self):
+        payload = {'employee_id': 'NOPE001', 'email': 'nope@test.com'}
+        for _ in range(5):
+            resp = self.client.post('/api/users/forgot-password/', payload)
+            self.assertNotEqual(resp.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+        resp = self.client.post('/api/users/forgot-password/', payload)
+        self.assertEqual(resp.status_code, status.HTTP_429_TOO_MANY_REQUESTS)

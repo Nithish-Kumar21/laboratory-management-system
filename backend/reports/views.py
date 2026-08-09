@@ -54,7 +54,13 @@ class YearEndReportView(APIView):
 
     def get(self, request):
         year_param = request.query_params.get('year')
-        start_year, end_year, start_date, end_date = get_academic_year_range(year_param)
+        try:
+            start_year, end_year, start_date, end_date = get_academic_year_range(year_param)
+        except (ValueError, TypeError):
+            return Response(
+                {'error': 'Invalid year format. Use a 4-digit number.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         data = self.build_report(start_year, end_year, start_date, end_date)
         return Response(data)

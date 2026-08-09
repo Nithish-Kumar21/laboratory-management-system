@@ -252,15 +252,17 @@ class TestAccountLockout:
             {'username': 'lockout_user', 'password': 'Correct@456'},
             format='json',
         )
-        assert resp.status_code == status.HTTP_403_FORBIDDEN, (
-            f"Locked account should return 403, got {resp.status_code}"
+        # Locked accounts return the same generic 401 as invalid credentials to
+        # prevent user enumeration (session-hardening behavior).
+        assert resp.status_code == status.HTTP_401_UNAUTHORIZED, (
+            f"Locked account should return 401, got {resp.status_code}"
         )
         body = resp.json()
-        assert 'locked' in body.get('error', '').lower(), (
-            f"Expected 'locked' in error message, got: {body}"
+        assert 'failed attempts' in body.get('error', '').lower(), (
+            f"Expected lockout message in error, got: {body}"
         )
         assert resp.status_code != status.HTTP_429_TOO_MANY_REQUESTS, (
-            "Response should be 403 (locked), not 429 (throttle)"
+            "Response should be 401 (locked), not 429 (throttle)"
         )
 
         cache.clear()

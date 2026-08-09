@@ -80,10 +80,10 @@ class TestFirstLoginFlow:
         login_resp = api_client.post('/api/users/login/', {'username': 'newstaff', 'password': 'Temp@1234'}, format='json')
         temp_token = login_resp.json()['temp_token']
 
-        # Change password with temp_token
+        # Change password with temp_token (current_password required)
         resp = api_client.post(
             '/api/users/change-password/',
-            {'new_password': 'NewSecure@456', 'confirm_password': 'NewSecure@456'},
+            {'current_password': 'Temp@1234', 'new_password': 'NewSecure@456', 'confirm_password': 'NewSecure@456'},
             format='json',
             HTTP_AUTHORIZATION=f'Bearer {temp_token}'
         )
@@ -106,7 +106,7 @@ class TestFirstLoginFlow:
 
         resp = api_client.post(
             '/api/users/change-password/',
-            {'new_password': 'Ab1$', 'confirm_password': 'Ab1$'},
+            {'current_password': 'Temp@1234', 'new_password': 'Ab1$', 'confirm_password': 'Ab1$'},
             format='json',
             HTTP_AUTHORIZATION=f'Bearer {temp_token}'
         )
