@@ -318,6 +318,12 @@ All of the following must be automatically logged without manual trigger in view
 | SQL injection | Django ORM only. No raw SQL. |
 | CSRF | DRF's `SessionAuthentication` requires CSRF. JWT-only endpoints are exempt but must be explicitly configured. |
 | Unauthorized access | Returns `403` with no information leak. Logged in audit. |
+| First-login password change | Requires the current (pre-set) password plus a single-use temp token; the token is DB-backed and cannot be replayed. |
+| Rate limiting | login `10/min`, forgot-password `5/min`, reset-password `3/min`, verify-reset-token `10/min` (per IP). |
+| User enumeration | Login returns one generic 401 for unknown IDs, wrong passwords, and inactive accounts. |
+| TLS (production) | `SECURE_SSL_REDIRECT`, `SESSION_COOKIE_SECURE`, `CSRF_COOKIE_SECURE`, HSTS (`31536000`), `X_FRAME_OPTIONS=DENY`. |
+| Token revocation | Logout blacklists the refresh token; rotation blacklists the old refresh token. |
+| Error leakage | Responses never expose exception text; errors are logged server-side. |
 
 ### 6.2 Performance
 
@@ -345,10 +351,26 @@ All of the following must be automatically logged without manual trigger in view
 ### 6.5 Environment & Configuration
 
 - All environment-specific values live in `.env` files — never hardcoded
-- Required env variables: `SECRET_KEY`, `DATABASE_URL`, `ALLOWED_HOSTS`, `CORS_ALLOWED_ORIGINS`, `DEBUG`
+- A commit-safe template is provided at `backend/.env.example` (placeholders only); `.env` itself is git-ignored
+- Required env variables: `SECRET_KEY`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT`, `ALLOWED_HOSTS`, `CORS_ALLOWED_ORIGINS`, `DEBUG`, `EMAIL_HOST_USER`, `EMAIL_APP_PASSWORD`
 - `SECRET_KEY` must have no default fallback in `settings.py` — the app must fail loudly if it's missing
 - Settings split into `settings/base.py`, `settings/dev.py`, `settings/prod.py`
 - Frontend API base URL via `REACT_APP_API_BASE_URL` environment variable
+
+### 6.6 Security Hardening (Phase 1–2)
+
+Implemented security fixes, summarized for reviewers:
+
+| Area | Fix |
+|---|---|
+| Transport | prod.py enforces HTTPS (`SECURE_SSL_REDIRECT`, secure cookies, HSTS 1yr, `X-Frame-Options: DENY`) |
+| Token revocation | Logout blacklists the refresh token via `token_blacklist`; rotation invalidates old refresh tokens |
+| First-login flow | Current password + single-use DB-backed temp token required; replay rejected with 400 |
+| Rate limiting | login 10/min, forgot-password 5/min, reset-password 3/min, verify-reset-token 10/min (per IP) |
+| Enumeration | Generic 401 for all invalid-credential cases; locked accounts get a separate generic 401 |
+| Input guards | Non-integer `year`/`page` report params return 400, not 500 |
+| Exception leakage | Generic error messages to clients; full errors logged server-side |
+| Dependencies | Pinned `simplejwt==5.5.1`, `reportlab==5.0.0`, `openpyxl==3.1.5`; deleted legacy `settings.py` with insecure key |
 
 ---
 
