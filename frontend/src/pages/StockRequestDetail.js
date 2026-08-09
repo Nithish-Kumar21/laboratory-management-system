@@ -7,6 +7,8 @@ import AddRequestModal from '../components/modals/AddRequestModal';
 import ConfirmDialog from '../components/ConfirmDialog';
 import './StockRequestDetail.css';
 
+const STOREKEEPER_DELETABLE_STATUSES = ['draft', 'pending', 'accepted', 'rejected'];
+
 function StockRequestDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -119,9 +121,13 @@ function StockRequestDetail() {
 
     const toggleEditMode = () => {
         if (!editMode) {
-            const initial = {};
-            (request.chemical_items || []).forEach((it) => { initial[it.id] = it.quantity; });
-            setEditQuantities(initial);
+            // Re-entering edit mode must not discard already-typed edits
+            // (they are only committed together with the approval).
+            if (!editQuantities || Object.keys(editQuantities).length === 0) {
+                const initial = {};
+                (request.chemical_items || []).forEach((it) => { initial[it.id] = it.quantity; });
+                setEditQuantities(initial);
+            }
             setAcceptError('');
             api.get('available_chemicals/')
                 .then((res) => {
@@ -131,8 +137,9 @@ function StockRequestDetail() {
                 .catch((err) => console.error('Error fetching available chemicals:', err));
             setEditMode(true);
         } else {
+            // "Done" just exits edit mode; it is not a save. Keep the typed
+            // values so they are still applied when the request is approved.
             setEditMode(false);
-            setEditQuantities({});
             setAcceptError('');
         }
     };
@@ -140,7 +147,10 @@ function StockRequestDetail() {
     const handleAccept = () => {
         let firstError = '';
         const changed = [];
-        if (editMode) {
+        // Apply any pending quantity edits even if the user already exited
+        // edit mode ("Done" is not a save; edits commit with the approval).
+        const hasEdits = editQuantities && Object.keys(editQuantities).length > 0;
+        if (hasEdits) {
             (request.chemical_items || []).forEach((it) => {
                 const msg = rowError(it, editQuantities[it.id]);
                 if (msg && !firstError) firstError = msg;
@@ -256,14 +266,20 @@ function StockRequestDetail() {
     const handleDelete = () => {
         setDialog({
             open: true,
-            message: 'Are you sure you want to delete this request permanently?',
+            message: 'Are you sure you want to delete this request? It will be removed from all feeds.',
             showCancel: true,
             variant: 'danger',
+            confirmLabel: 'Delete',
+            cancelLabel: 'Cancel',
             onConfirm: () => {
                 setDialog({ open: false });
                 setActionLoading(true);
                 api.delete(`stock_request/${id}/`)
-                    .then(() => { window.dispatchEvent(new CustomEvent('inventory-updated')); navigate('/requests'); })
+                    .then(() => {
+                        window.dispatchEvent(new CustomEvent('inventory-updated'));
+                        sessionStorage.setItem('stock_request_deleted', 'Chemical request deleted');
+                        navigate('/requests');
+                    })
                     .catch(err => setDialog({ open: true, message: err.response?.data?.error || 'Failed to delete', showCancel: false }))
                     .finally(() => setActionLoading(false));
             }
@@ -798,7 +814,7 @@ function StockRequestDetail() {
                                         <div className="srq-chem-qty-group">
                                             <div className="srq-chem-qty-item">
                                                 <span className="srq-chem-qty-label">Requested</span>
-                                                <span className="srq-chem-qty">{item.quantity}<span className="srq-chem-unit"> {item.unit}</span></span>
+                                                <span className="srq-chem-qty">{editQuantities[item.id] ?? item.quantity}<span className="srq-chem-unit"> {item.unit}</span></span>
                                             </div>
                                             {isHOD && (
                                                 <div className="srq-chem-qty-item srq-chem-stock-desktop">
@@ -1029,7 +1045,7 @@ function StockRequestDetail() {
                             <FaEdit /> Edit
                         </button>
                     )}
-                    {user?.employee_id === request.requested_by_id && (request.status === 'draft' || request.status === 'pending' || request.status === 'rejected') && (
+                    {isStoreKeeper && STOREKEEPER_DELETABLE_STATUSES.includes(request.status) && (
                         <button className="sd-btn sd-btn-danger" onClick={handleDelete} disabled={actionLoading}>
                             <FaTrash /> {actionLoading ? 'Deleting...' : 'Delete'}
                         </button>

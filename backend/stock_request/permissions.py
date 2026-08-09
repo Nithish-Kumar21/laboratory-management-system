@@ -17,7 +17,7 @@ class StockRequestPermission(permissions.BasePermission):
         role = request.user.role
 
         if role == 'store_keeper':
-            return request.method in ['GET', 'POST']
+            return request.method in ['GET', 'POST', 'DELETE']
 
         # Staff: create, list own, delete own
         if role == 'staff':

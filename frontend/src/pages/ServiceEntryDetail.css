@@ -44,11 +44,6 @@
   overflow: hidden;
 }
 
-:root.dark-mode .sed-dropdown {
-  background: #1e293b;
-  border-color: #334155;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-}
 
 .sed-dropdown-item {
   display: flex;
@@ -70,9 +65,6 @@
   background: #f1f5f9;
 }
 
-:root.dark-mode .sed-dropdown-item:hover:not(:disabled) {
-  background: #334155;
-}
 
 .sed-dropdown-item:disabled {
   opacity: 0.4;
@@ -127,10 +119,6 @@
   gap: 8px;
 }
 
-:root.dark-mode .sed-item-card {
-  background: #1a2332;
-  border-color: #334155;
-}
 
 .sed-item-top {
   display: flex;
@@ -201,19 +189,6 @@
   background: #E0E0E0;
   color: #9AA3AF;
   cursor: not-allowed;
-}
-
-:root.dark-mode .sed-complete-btn {
-  background: #4A90D9;
-}
-
-:root.dark-mode .sed-complete-btn:hover:not(:disabled) {
-  background: #357ABD;
-}
-
-:root.dark-mode .sed-complete-btn:disabled {
-  background: #334155;
-  color: #64748B;
 }
 
 .sed-complete-btn svg {

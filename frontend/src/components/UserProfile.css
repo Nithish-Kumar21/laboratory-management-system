@@ -20,9 +20,6 @@
   margin: 0;
 }
 
-:root.dark-mode .profile-header h1 {
-  color: #93c5fd;
-}
 
 /* ===== ALERTS ===== */
 .profile-alert {
@@ -68,10 +65,6 @@
   font-size: 26px;
 }
 
-:root.dark-mode .profile-avatar {
-  background: rgba(74, 144, 217, 0.25);
-  color: #93c5fd;
-}
 
 /* ===== IDENTITY BLOCK ===== */
 .profile-identity {
@@ -124,11 +117,6 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
-:root.dark-mode .profile-stat-card {
-  background: var(--bg-surface);
-  border-color: #334155;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-}
 
 .profile-stat-label {
   font-size: 11px;
@@ -153,11 +141,6 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
-:root.dark-mode .profile-card {
-  background: var(--bg-surface);
-  border-color: #334155;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-}
 
 .profile-card-title {
   font-size: 17px;
@@ -296,11 +279,6 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
-:root.dark-mode .profile-sidebar-card {
-  background: var(--bg-surface);
-  border-color: #334155;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-}
 
 /* ===== MOBILE LAYOUT (default) ===== */
 .profile-mobile {

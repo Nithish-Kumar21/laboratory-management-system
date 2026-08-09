@@ -127,34 +127,3 @@
   font-size: 0.8rem;
 }
 
-:root.dark-mode .low-stock-alert {
-  background: #1E293B;
-  border-color: rgba(239,68,68,0.2);
-}
-
-:root.dark-mode .alert-header {
-  background: rgba(239,68,68,0.05);
-}
-
-:root.dark-mode .alert-title {
-  color: #FCA5A5;
-}
-
-:root.dark-mode .alert-content {
-  background: #1E293B;
-}
-
-:root.dark-mode .low-stock-table th {
-  background: #1A3C6E;
-  color: #fff;
-  border-bottom-color: #334155;
-}
-
-:root.dark-mode .low-stock-table td {
-  color: #CBD5E1;
-  border-bottom-color: #334155;
-}
-
-:root.dark-mode .low-stock-table tr:hover {
-  background: rgba(239,68,68,0.05);
-}

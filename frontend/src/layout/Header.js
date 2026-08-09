@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaSun, FaMoon, FaFlask } from 'react-icons/fa';
-import { useTheme } from '../context/ThemeContext';
+import { FaFlask } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import NotificationCenter from '../components/NotificationCenter';
 import './Header.css';
@@ -23,7 +22,6 @@ function getRoleLabel(role) {
 }
 
 function Header() {
-  const { themeMode, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -49,9 +47,6 @@ function Header() {
       <div className="header-right">
         <div className="header-right-group">
           <NotificationCenter />
-          <button className="header-theme-btn" onClick={toggleTheme} title="Toggle theme">
-            {themeMode === 'dark' ? <FaSun /> : <FaMoon />}
-          </button>
           <div className="header-user-group" ref={dropdownRef}>
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}

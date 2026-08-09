@@ -58,15 +58,64 @@ class StockRequestViewSet(viewsets.ModelViewSet):
             )
         return super().partial_update(request, *args, **kwargs)
 
+    @transaction.atomic
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         # Staff can delete before HOD approval or after rejection
-        if instance.status not in ('draft', 'pending', 'rejected'):
+        if request.user.role == 'staff' and instance.status not in ('draft', 'pending', 'rejected'):
             return Response(
                 {'error': 'Requests can only be deleted before approval or when rejected.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        return super().destroy(request, *args, **kwargs)
+        # Requests that have progressed past the deletable window (issued,
+        # reported, completed, cancelled) can never be deleted. Guarded before
+        # any inventory mutation so a blocked delete never touches inventory.
+        non_deletable_statuses = {'issued', 'reported', 'completed', 'cancelled'}
+        if instance.status in non_deletable_statuses:
+            if instance.status in ('issued', 'reported'):
+                return Response(
+                    {'detail': 'Cannot delete a request that has already been issued.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            return Response(
+                {'error': 'This request cannot be deleted.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        # Restore inventory atomically with the soft delete so a partial
+        # failure never leaves inventory out of sync:
+        # - accepted: release the committed/allocated quantity so the
+        #   remaining stock goes back up
+        # - draft/pending/rejected: nothing was committed or deducted
+        previous_status = instance.status
+        for item in instance.chemical_items.select_for_update():
+            try:
+                chem = AvailableChemical.objects.select_for_update().get(
+                    chemical_name__iexact=item.chemical_name
+                )
+            except AvailableChemical.DoesNotExist:
+                continue
+            if previous_status == 'accepted':
+                chem.committed_quantity_ml -= item.quantity
+                chem.save()
+            elif previous_status in ('issued', 'reported'):
+                # Defensive/dead code: issued/reported can no longer reach here
+                # because the non-deletable status guard runs above.
+                chem.quantity += item.quantity
+                chem.save()
+        # Soft delete: mark as cancelled so the request disappears from every
+        # role's feed (server-side filtering) while remaining in the DB for
+        # audit/history purposes.
+        instance.status = 'cancelled'
+        instance.save(update_fields=['status'])
+        AuditLogService.log(
+            user=request.user,
+            action='REQUEST_DELETED',
+            entity_type='StockRequest',
+            entity_id=instance.id,
+            description=f'Request {instance.request_id} deleted by {request.user.full_name}',
+            request=request,
+        )
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, methods=['get'])
     def pending_count(self, request):
@@ -77,6 +126,8 @@ class StockRequestViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = super().get_queryset()
+        # Soft-deleted (cancelled) requests are hidden from every role's feed.
+        qs = qs.exclude(status='cancelled')
         role = self.request.user.role
         status_filter = self.request.query_params.get('status')
         

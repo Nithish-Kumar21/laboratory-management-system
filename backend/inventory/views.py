@@ -50,8 +50,8 @@ class AvailableApparatusViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def names(self, request):
         """Get list of apparatus names and available quantity"""
-        data = AvailableApparatus.objects.values('apparatus_name', 'available_quantity_pieces').order_by('apparatus_name')
-        result = [{'name': item['apparatus_name'], 'available_quantity': item['available_quantity_pieces']} for item in data]
+        data = AvailableApparatus.objects.values('apparatus_name', 'available_quantity_pieces', 'reorder_level').order_by('apparatus_name')
+        result = [{'name': item['apparatus_name'], 'available_quantity': item['available_quantity_pieces'], 'reorder_level': item['reorder_level']} for item in data]
         return Response(result)
 
 class LowStockChemicalViewSet(viewsets.ReadOnlyModelViewSet):

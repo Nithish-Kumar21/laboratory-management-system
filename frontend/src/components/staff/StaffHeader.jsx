@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { FaFlask, FaBell, FaMoon, FaSun } from 'react-icons/fa';
+import React from 'react';
+import { FaFlask, FaBell } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
 
 function getInitials(user) {
@@ -10,7 +10,6 @@ function getInitials(user) {
 
 function StaffHeader({ hasNotification = false }) {
   const { user } = useAuth();
-  const [isDark, setIsDark] = useState(false);
 
   const name = user?.full_name || 'Staff';
   const role = user?.role || 'Store Department';
@@ -26,9 +25,6 @@ function StaffHeader({ hasNotification = false }) {
         <button className="relative bg-transparent border-none text-white/85 w-8 h-8 rounded-full flex items-center justify-center cursor-pointer text-xl hover:text-white hover:bg-white/10 shrink-0 p-0" title="Notifications">
           <FaBell />
           {hasNotification && <span className="absolute top-1 right-1 w-[6px] h-[6px] rounded-full bg-red-500" />}
-        </button>
-        <button className="bg-transparent border-none text-white/85 w-8 h-8 rounded-full flex items-center justify-center cursor-pointer text-xl hover:text-white hover:bg-white/10 shrink-0 p-0" onClick={() => setIsDark(!isDark)} title="Toggle theme">
-          {isDark ? <FaSun /> : <FaMoon />}
         </button>
         <div className="w-[34px] h-[34px] rounded-full bg-[#4A90D9] flex items-center justify-center text-white text-[13px] font-semibold shrink-0">
           {getInitials(user)}

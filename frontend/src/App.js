@@ -2,7 +2,6 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { FaPlus } from 'react-icons/fa';
 import { useAuth } from './context/AuthContext';
-import { ThemeProvider } from './context/ThemeContext';
 import Header from './layout/Header';
 import Sidebar from './layout/Sidebar';
 import BottomNav from './layout/BottomNav';
@@ -171,9 +170,7 @@ function FabButton() {
 
 function App() {
   return (
-    <ThemeProvider>
-      <AppContent />
-    </ThemeProvider>
+    <AppContent />
   );
 }
 

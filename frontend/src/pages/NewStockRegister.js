@@ -89,13 +89,43 @@ function NewStockRegister() {
   };
 
   const addChemicalRow = () => {
-    setChemicalItems([...chemicalItems, { chemical_name: '', pack_size: '', no_of_packs: '1', unit: 'ml', rate: '', make: '', restock_level: '' }]);
+    setChemicalItems([...chemicalItems, { chemical_name: '', pack_size: '', no_of_packs: '1', unit: 'ml', rate: '', make: '', restock_level: '', restock_source: 'manual' }]);
     scrollToBottom();
   };
 
   const addApparatusRow = () => {
-    setApparatusItems([...apparatusItems, { apparatus_name: '', quantity_pieces: '', rate: '', make: '', restock_level: '' }]);
+    setApparatusItems([...apparatusItems, { apparatus_name: '', quantity_pieces: '', rate: '', make: '', restock_level: '', restock_source: 'manual' }]);
     scrollToBottom();
+  };
+
+  const applyApparatusLookup = (i, name) => {
+    // Reorder level is auto-populated from inventory when the apparatus
+    // already exists; stays manual for brand-new apparatus.
+    setApparatusItems(prev => {
+      const next = [...prev];
+      const match = apparatusNames.find(a => a.name.toLowerCase() === (name || '').toLowerCase());
+      if (match && match.reorder_level != null) {
+        next[i] = { ...next[i], restock_level: String(match.reorder_level), restock_source: 'auto' };
+      } else {
+        next[i] = { ...next[i], restock_level: '', restock_source: 'manual' };
+      }
+      return next;
+    });
+  };
+
+  const applyChemicalLookup = (i, name) => {
+    // Reorder level is auto-populated from inventory when the chemical
+    // already exists; stays manual for brand-new chemicals.
+    setChemicalItems(prev => {
+      const next = [...prev];
+      const match = chemicalNames.find(c => c.name.toLowerCase() === (name || '').toLowerCase());
+      if (match && match.reorder_level != null) {
+        next[i] = { ...next[i], restock_level: String(match.reorder_level), restock_source: 'auto' };
+      } else {
+        next[i] = { ...next[i], restock_level: '', restock_source: 'manual' };
+      }
+      return next;
+    });
   };
 
   const calcChemicalTotalQty = (item) => {
@@ -209,27 +239,23 @@ function NewStockRegister() {
   };
 
   const selectChemical = (i, n) => {
-    const next = [...chemicalItems];
-    next[i].chemical_name = n;
-    // Auto-fill restock level from existing AvailableChemical
-    const match = chemicalNames.find(c => c.name.toLowerCase() === n.toLowerCase());
-    if (match && match.reorder_level != null) {
-      next[i].restock_level = String(match.reorder_level);
-    }
-    setChemicalItems(next);
+    setChemicalItems(prev => {
+      const next = [...prev];
+      next[i] = { ...next[i], chemical_name: n };
+      return next;
+    });
+    applyChemicalLookup(i, n);
     setShowChemicalSuggestions({});
     setActiveSuggestionIndex(-1);
   };
 
   const selectApparatus = (i, n) => {
-    const next = [...apparatusItems];
-    next[i].apparatus_name = n;
-    // Auto-fill restock level from existing AvailableApparatus
-    const match = apparatusNames.find(a => a.name.toLowerCase() === n.toLowerCase());
-    if (match && match.reorder_level != null) {
-      next[i].restock_level = String(match.reorder_level);
-    }
-    setApparatusItems(next);
+    setApparatusItems(prev => {
+      const next = [...prev];
+      next[i] = { ...next[i], apparatus_name: n };
+      return next;
+    });
+    applyApparatusLookup(i, n);
     setShowApparatusSuggestions({});
     setActiveSuggestionIndex(-1);
   };
@@ -368,7 +394,16 @@ function NewStockRegister() {
                   <div className="nrf-chem-field nrf-autocomplete">
                     <span className="nrf-chem-label">CHEMICAL NAME</span>
                     <input type="text" className="nrf-input" placeholder="Chemical name..." value={it.chemical_name} required autoComplete="off"
-                      onChange={e => { const next = [...chemicalItems]; next[i].chemical_name = e.target.value; setChemicalItems(next); setShowChemicalSuggestions({ [i]: true }); setActiveSuggestionIndex(-1); }}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setChemicalItems(prev => {
+                          const next = [...prev];
+                          next[i] = { ...next[i], chemical_name: val };
+                          return next;
+                        });
+                        applyChemicalLookup(i, val);
+                        setShowChemicalSuggestions({ [i]: true }); setActiveSuggestionIndex(-1);
+                      }}
                       onFocus={() => { setShowChemicalSuggestions({ [i]: true }); setActiveSuggestionIndex(-1); }}
                       onBlur={() => setTimeout(() => setShowChemicalSuggestions({}), 250)} />
                     {showChemicalSuggestions[i] && it.chemical_name && (
@@ -410,8 +445,15 @@ function NewStockRegister() {
                   </div>
                   <div className="nrf-chem-field">
                     <span className="nrf-chem-label">RESTOCK LEVEL</span>
-                    <input type="number" step="1" className="nrf-input" placeholder="Restock" value={it.restock_level ?? ''}
-                      onChange={e => { const next = [...chemicalItems]; next[i].restock_level = e.target.value; setChemicalItems(next); }} />
+                    <div className="nrf-restock-wrap">
+                      <input type="number" step="1" className="nrf-input" placeholder="Restock" value={it.restock_level ?? ''}
+                        onChange={e => { const next = [...chemicalItems]; next[i].restock_level = e.target.value; next[i].restock_source = 'manual'; setChemicalItems(next); }} />
+                      {it.restock_source === 'auto' ? (
+                        <span className="nrf-badge nrf-badge-auto">From Inventory</span>
+                      ) : (
+                        <span className="nrf-badge nrf-badge-manual">Manual Entry</span>
+                      )}
+                    </div>
                   </div>
                   <div className="nrf-chem-field nrf-autocomplete">
                     <span className="nrf-chem-label">MAKE / BRAND</span>
@@ -461,7 +503,16 @@ function NewStockRegister() {
                   <div className="nrf-app-field nrf-autocomplete">
                     <span className="nrf-app-label">APPARATUS NAME</span>
                     <input type="text" className="nrf-input" placeholder="Apparatus name..." value={it.apparatus_name} required autoComplete="off"
-                      onChange={e => { const next = [...apparatusItems]; next[i].apparatus_name = e.target.value; setApparatusItems(next); setShowApparatusSuggestions({ [i]: true }); setActiveSuggestionIndex(-1); }}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setApparatusItems(prev => {
+                          const next = [...prev];
+                          next[i] = { ...next[i], apparatus_name: val };
+                          return next;
+                        });
+                        applyApparatusLookup(i, val);
+                        setShowApparatusSuggestions({ [i]: true }); setActiveSuggestionIndex(-1);
+                      }}
                       onFocus={() => { setShowApparatusSuggestions({ [i]: true }); setActiveSuggestionIndex(-1); }}
                       onBlur={() => setTimeout(() => setShowApparatusSuggestions({}), 250)} />
                     {showApparatusSuggestions[i] && it.apparatus_name && (
@@ -492,8 +543,15 @@ function NewStockRegister() {
                   </div>
                   <div className="nrf-app-field">
                     <span className="nrf-app-label">RESTOCK LEVEL</span>
-                    <input type="number" step="1" className="nrf-input" placeholder="Restock" value={it.restock_level ?? ''}
-                      onChange={e => { const next = [...apparatusItems]; next[i].restock_level = e.target.value; setApparatusItems(next); }} />
+                    <div className="nrf-restock-wrap">
+                      <input type="number" step="1" className="nrf-input" placeholder="Restock" value={it.restock_level ?? ''}
+                        onChange={e => { const next = [...apparatusItems]; next[i].restock_level = e.target.value; next[i].restock_source = 'manual'; setApparatusItems(next); }} />
+                      {it.restock_source === 'auto' ? (
+                        <span className="nrf-badge nrf-badge-auto">From Inventory</span>
+                      ) : (
+                        <span className="nrf-badge nrf-badge-manual">Manual Entry</span>
+                      )}
+                    </div>
                   </div>
                 </div>
 

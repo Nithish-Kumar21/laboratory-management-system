@@ -44,8 +44,8 @@ const StockRequest = ({ draftsOnly = false }) => {
     setTimeout(() => setToast(null), 3000);
   }, []);
 
-  const fetchRequests = useCallback(async () => {
-    setLoading(true);
+  const fetchRequests = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       let url = 'stock_request/';
       const params = new URLSearchParams();
@@ -67,19 +67,43 @@ const StockRequest = ({ draftsOnly = false }) => {
         data = data.filter(r => r.status !== 'draft');
       }
 
+      // Always hide soft-deleted requests (server also filters; safety net)
+      data = data.filter(r => r.status !== 'cancelled');
+
       setRequests(data);
       setFetchError(null);
     } catch (err) {
       console.error('Error fetching requests:', err);
-      setFetchError('Failed to load requests. Check your connection and try again.');
+      // Only surface errors on manual/initial loads so background polling
+      // never replaces the current list with an error banner.
+      if (!silent) setFetchError('Failed to load requests. Check your connection and try again.');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [isHOD, isStoreKeeper, draftsOnly]);
 
   useEffect(() => {
     fetchRequests();
+
+    // Poll for updates so soft-deleted requests disappear from already-open
+    // tabs without a manual refresh (matches Home.js polling interval).
+    const interval = setInterval(() => fetchRequests(true), 30000);
+    const onFocus = () => fetchRequests(true);
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', onFocus);
+    };
   }, [fetchRequests]);
+
+  useEffect(() => {
+    const msg = sessionStorage.getItem('stock_request_deleted');
+    if (msg) {
+      showToast(msg);
+      sessionStorage.removeItem('stock_request_deleted');
+    }
+  }, [showToast]);
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));

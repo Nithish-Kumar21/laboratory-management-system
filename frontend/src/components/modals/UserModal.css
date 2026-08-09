@@ -16,7 +16,6 @@
 
 .user-modal-content {
     background: var(--bg-surface);
-    /* BLACK in dark mode */
     padding: 40px;
     border-radius: 24px;
     width: 100%;

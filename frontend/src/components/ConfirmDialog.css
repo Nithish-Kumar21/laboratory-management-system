@@ -73,5 +73,3 @@
 .confirm-dialog-btn.confirm.danger:hover {
   background: #b91c1c;
 }
-
-/* Dark mode overrides handled by variables above */
