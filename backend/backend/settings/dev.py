@@ -2,8 +2,12 @@ from .base import *
 
 DEBUG = True
 
-# Relax throttle for E2E testing
-REST_FRAMEWORK = {**REST_FRAMEWORK, 'DEFAULT_THROTTLE_RATES': {'login': '1000/min'}}
+# Throttle rates aligned with base so security controls are active in dev.
+REST_FRAMEWORK = {**REST_FRAMEWORK, 'DEFAULT_THROTTLE_RATES': {
+    'login': '10/min',
+    'forgot_password': '5/min',
+    'reset_password': '3/min',
+}}
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'testserver']
 

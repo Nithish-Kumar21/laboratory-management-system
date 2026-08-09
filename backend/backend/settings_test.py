@@ -29,6 +29,10 @@ SIMPLE_JWT = {
 }
 
 REST_FRAMEWORK['DEFAULT_THROTTLE_CLASSES'] = []
-REST_FRAMEWORK['DEFAULT_THROTTLE_RATES'] = {'login': None}
+REST_FRAMEWORK['DEFAULT_THROTTLE_RATES'] = {
+    'login': None,
+    'forgot_password': None,
+    'reset_password': None,
+}
 
 EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'

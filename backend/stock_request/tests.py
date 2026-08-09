@@ -101,6 +101,10 @@ class UnitPropagationTest(APITestCase):
         stock_item = StockRequestChemicalItem.objects.filter(stock_request_id=req_id).first()
         self.assertEqual(stock_item.unit, 'g')
 
+        self._login(self.staff)
+        response = self.client.post(f'/api/stock_request/{req_id}/submit/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
         self._login(self.hod)
         response = self.client.post(f'/api/stock_request/{req_id}/accept/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)

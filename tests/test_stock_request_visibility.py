@@ -68,6 +68,10 @@ def _list_requests(client, status_param=None):
     return []
 
 
+def _submit(client, req_id):
+    return client.post(f"/api/stock_request/{req_id}/submit/")
+
+
 def _setup_inventory():
     AvailableChemical.objects.get_or_create(
         chemical_name=CHEMICAL_NAME,
@@ -87,10 +91,12 @@ class TestPendingVisibility:
         _setup_inventory()
         _login(api_client, staff_user)
 
-        # Create directly as pending (simulates submit-from-form)
-        create_resp = _create(api_client, status_val="pending")
+        # Create draft, then submit (legitimate workflow)
+        create_resp = _create(api_client, status_val="draft")
         assert create_resp.status_code == status.HTTP_201_CREATED
         req_id = create_resp.data["id"]
+        submit_resp = _submit(api_client, req_id)
+        assert submit_resp.status_code == status.HTTP_200_OK
 
         # Staff list with ?status=all must include the pending request
         items = _list_requests(api_client, "all")
@@ -102,8 +108,9 @@ class TestPendingVisibility:
         _setup_inventory()
         _login(api_client, staff_user)
 
-        create_resp = _create(api_client, status_val="pending")
+        create_resp = _create(api_client, status_val="draft")
         req_id = create_resp.data["id"]
+        _submit(api_client, req_id)
 
         # No status param → backend treats as 'all' for staff
         items = _list_requests(api_client)
@@ -114,10 +121,11 @@ class TestPendingVisibility:
         """HOD must see other users' pending requests."""
         _setup_inventory()
 
-        # Staff creates pending request
+        # Staff creates request, submits it (draft → pending)
         _login(api_client, staff_user)
-        create_resp = _create(api_client, status_val="pending")
+        create_resp = _create(api_client, status_val="draft")
         req_id = create_resp.data["id"]
+        _submit(api_client, req_id)
 
         # HOD list (default sends status=pending)
         _login(api_client, hod_user)
@@ -130,8 +138,9 @@ class TestPendingVisibility:
         _setup_inventory()
         _login(api_client, hod_user)
 
-        create_resp = _create(api_client, status_val="pending")
+        create_resp = _create(api_client, status_val="draft")
         req_id = create_resp.data["id"]
+        _submit(api_client, req_id)
 
         # HOD default list
         items = _list_requests(api_client, "pending")
@@ -143,8 +152,9 @@ class TestPendingVisibility:
         _setup_inventory()
 
         _login(api_client, staff_user)
-        create_resp = _create(api_client, status_val="pending")
+        create_resp = _create(api_client, status_val="draft")
         req_id = create_resp.data["id"]
+        _submit(api_client, req_id)
 
         # Storekeeper list (no status param)
         _login(api_client, store_keeper_user)
@@ -160,8 +170,9 @@ class TestPendingVisibility:
         _setup_inventory()
 
         _login(api_client, staff_user)
-        create_resp = _create(api_client, status_val="pending")
+        create_resp = _create(api_client, status_val="draft")
         req_id = create_resp.data["id"]
+        _submit(api_client, req_id)
 
         _login(api_client, store_keeper_user)
         items = _list_requests(api_client, "all")
@@ -181,8 +192,9 @@ class TestApprovedVisibility:
     def _make_accepted(self, api_client, staff_user, hod_user):
         _setup_inventory()
         _login(api_client, staff_user)
-        create_resp = _create(api_client, status_val="pending")
+        create_resp = _create(api_client, status_val="draft")
         req_id = create_resp.data["id"]
+        _submit(api_client, req_id)
 
         _login(api_client, hod_user)
         resp = api_client.post(f"/api/stock_request/{req_id}/accept/")
@@ -236,8 +248,9 @@ class TestIssuedVisibility:
     def _make_issued(self, api_client, staff_user, hod_user, store_keeper_user):
         _setup_inventory()
         _login(api_client, staff_user)
-        create_resp = _create(api_client, status_val="pending")
+        create_resp = _create(api_client, status_val="draft")
         req_id = create_resp.data["id"]
+        _submit(api_client, req_id)
 
         _login(api_client, hod_user)
         api_client.post(f"/api/stock_request/{req_id}/accept/")
@@ -282,8 +295,9 @@ class TestRejectedVisibility:
     def _make_rejected(self, api_client, staff_user, hod_user):
         _setup_inventory()
         _login(api_client, staff_user)
-        create_resp = _create(api_client, status_val="pending")
+        create_resp = _create(api_client, status_val="draft")
         req_id = create_resp.data["id"]
+        _submit(api_client, req_id)
 
         _login(api_client, hod_user)
         resp = api_client.post(
@@ -328,27 +342,34 @@ class TestSecondSubmissionAutoDrafts:
     request, creating a second request should auto-save to 'draft' and
     be visible only to that staff member."""
 
-    def test_active_request_blocks_direct_pending_create(self, api_client, staff_user):
-        """Creating directly as pending while an active request exists
-        should be rejected by perform_create."""
+    def test_active_request_blocks_second_submit(self, api_client, staff_user):
+        """With an active (pending) request on file, submitting a second
+        request must be rejected — staff cannot hold two concurrent active
+        requests."""
         _setup_inventory()
         _login(api_client, staff_user)
 
-        # First request — pending
-        resp1 = _create(api_client, status_val="pending")
+        # First request — draft → submit → pending
+        resp1 = _create(api_client, status_val="draft")
         assert resp1.status_code == status.HTTP_201_CREATED
+        req1 = resp1.data["id"]
+        assert _submit(api_client, req1).status_code == status.HTTP_200_OK
 
-        # Second request — should be rejected (active request exists)
-        resp2 = _create(api_client, status_val="pending")
-        assert resp2.status_code == status.HTTP_400_BAD_REQUEST
+        # Second request — draft, then submit should be rejected (active exists)
+        resp2 = _create(api_client, status_val="draft")
+        assert resp2.status_code == status.HTTP_201_CREATED
+        req2 = resp2.data["id"]
+        assert _submit(api_client, req2).status_code == status.HTTP_400_BAD_REQUEST
 
     def test_second_request_as_draft_succeeds(self, api_client, staff_user):
         """Staff can save a second request as draft while active request exists."""
         _setup_inventory()
         _login(api_client, staff_user)
 
-        resp1 = _create(api_client, status_val="pending")
+        resp1 = _create(api_client, status_val="draft")
         assert resp1.status_code == status.HTTP_201_CREATED
+        req1 = resp1.data["id"]
+        assert _submit(api_client, req1).status_code == status.HTTP_200_OK
 
         # Second as draft — should succeed
         resp2 = _create(api_client, status_val="draft")
@@ -399,15 +420,17 @@ class TestCrossRoleIsolation:
             designation="Staff", department="B.Sc Chemistry",
         )
 
-        # Staff A creates
+        # Staff A creates and submits
         _login(api_client, staff_user)
-        resp_a = _create(api_client, status_val="pending")
+        resp_a = _create(api_client, status_val="draft")
         id_a = resp_a.data["id"]
+        _submit(api_client, id_a)
 
-        # Staff B creates
+        # Staff B creates and submits
         _login(api_client, staff_b)
-        resp_b = _create(api_client, status_val="pending")
+        resp_b = _create(api_client, status_val="draft")
         id_b = resp_b.data["id"]
+        _submit(api_client, id_b)
 
         # Staff A list
         _login(api_client, staff_user)

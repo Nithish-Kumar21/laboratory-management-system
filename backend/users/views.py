@@ -18,7 +18,7 @@ from .serializers import (
     PasswordResetRequestSerializer, PasswordResetConfirmSerializer
 )
 from .email_utils import send_password_reset_email, send_welcome_email
-from .throttles import LoginRateThrottle
+from .throttles import LoginRateThrottle, ForgotPasswordThrottle, ResetPasswordThrottle
 from audit.services import AuditLogService
 
 logger = logging.getLogger(__name__)
@@ -206,6 +206,7 @@ class ChangePasswordView(APIView):
 
 class ForgotPasswordView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [ForgotPasswordThrottle]
 
     def post(self, request):
         serializer = PasswordResetRequestSerializer(data=request.data)
@@ -218,7 +219,10 @@ class ForgotPasswordView(APIView):
         try:
             user = User.objects.get(employee_id=employee_id, email__iexact=email, is_active=True)
 
-            PasswordResetToken.objects.filter(user=user, used=False).delete()
+            # Only delete expired or already-used tokens. A valid, in-flight
+            # reset token must survive repeat requests.
+            PasswordResetToken.objects.filter(user=user, used=True).delete()
+            PasswordResetToken.objects.filter(user=user, expires_at__lt=timezone.now()).delete()
 
             reset_token = PasswordResetToken.create_for_user(user)
 
@@ -240,6 +244,7 @@ class ForgotPasswordView(APIView):
 
 class ResetPasswordView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [ResetPasswordThrottle]
 
     def post(self, request):
         token_str = request.data.get('token')
@@ -313,6 +318,7 @@ class ResetPasswordView(APIView):
 
 class VerifyResetTokenView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [ResetPasswordThrottle]
 
     def get(self, request):
         token_str = request.query_params.get('token')

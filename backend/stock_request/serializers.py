@@ -2,6 +2,7 @@ from rest_framework import serializers
 from django.utils import timezone
 from .models import StockRequest, StockRequestChemicalItem, StockRequestApparatusItem, IssueRegister, IssueChemicals
 from inventory.models import AvailableChemical
+from backend.security import sanitize_text
 
 
 class ChemicalItemWriteSerializer(serializers.Serializer):
@@ -37,9 +38,13 @@ class StockRequestCreateSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'request_id', 'class_name', 'reason', 'date',
             'day_order', 'hour', 'purpose_type', 'experiment_name', 'student_name', 'venue',
-            'chemical_items', 'status', 'created_at'
+            'chemical_items', 'status', 'created_at',
+            'reviewed_by', 'issued_by', 'reviewed_at', 'issued_at', 'reported_at', 'completed_at'
         ]
-        read_only_fields = ['id', 'request_id', 'created_at']
+        read_only_fields = [
+            'id', 'request_id', 'created_at', 'status',
+            'reviewed_by', 'issued_by', 'reviewed_at', 'issued_at', 'reported_at', 'completed_at'
+        ]
 
     def validate(self, data):
         chemicals = data.get('chemical_items', [])
@@ -89,6 +94,20 @@ class StockRequestCreateSerializer(serializers.ModelSerializer):
 
         return data
 
+    def validate_reason(self, value):
+        if len(value) > 1000:
+            raise serializers.ValidationError("Reason cannot exceed 1000 characters.")
+        return sanitize_text(value)
+
+    def validate_experiment_name(self, value):
+        return sanitize_text(value)
+
+    def validate_venue(self, value):
+        return sanitize_text(value)
+
+    def validate_student_name(self, value):
+        return sanitize_text(value)
+
     def create(self, validated_data):
         chemical_items_data = validated_data.pop('chemical_items', [])
         validated_data['requested_by'] = self.context['request'].user
@@ -107,6 +126,36 @@ class StockRequestCreateSerializer(serializers.ModelSerializer):
 
 
 class StockRequestUpdateSerializer(StockRequestCreateSerializer):
+    class Meta(StockRequestCreateSerializer.Meta):
+        # Status must be writable on update so a draft/rejected request can be
+        # resubmitted (draft -> pending). All other system-managed fields stay
+        # read-only to prevent mass assignment (ATK-22).
+        read_only_fields = [
+            'id', 'request_id', 'created_at',
+            'reviewed_by', 'issued_by', 'reviewed_at', 'issued_at', 'reported_at', 'completed_at'
+        ]
+
+    def validate(self, data):
+        data = super().validate(data)
+        instance = self.instance
+        new_status = data.get('status')
+
+        if instance is not None and new_status == 'pending':
+            if instance.status not in ('draft', 'rejected'):
+                raise serializers.ValidationError(
+                    {"status": "Only draft or rejected requests can be submitted for approval."}
+                )
+            active_statuses = ['pending', 'accepted', 'issued', 'reported']
+            has_active = StockRequest.objects.filter(
+                requested_by=instance.requested_by,
+                status__in=active_statuses,
+            ).exclude(pk=instance.pk).exists()
+            if has_active:
+                raise serializers.ValidationError(
+                    {"status": "You already have an active request. Complete your previous request first, or save this as a draft."}
+                )
+        return data
+
     def update(self, instance, validated_data):
         chemical_items_data = validated_data.pop('chemical_items', None)
         
@@ -198,6 +247,28 @@ class UsageReportSerializer(serializers.Serializer):
         if not value:
             raise serializers.ValidationError("At least one item must be reported")
         return value
+
+    def validate(self, data):
+        stock_request = self.context.get('stock_request')
+        if not stock_request:
+            return data
+
+        db_items = {item.id: item for item in stock_request.chemical_items.all()}
+
+        for item_data in data.get('items', []):
+            item_id = item_data.get('id')
+            db_item = db_items.get(item_id)
+            if db_item is None:
+                raise serializers.ValidationError(f"Invalid chemical item ID: {item_id}")
+
+            used = item_data.get('actual_used_quantity')
+            issued = db_item.quantity
+
+            if used > issued:
+                raise serializers.ValidationError(
+                    f"Reported usage ({used}) cannot exceed issued quantity ({issued}) for {db_item.chemical_name}."
+                )
+        return data
 
 
 class IssueChemicalsSerializer(serializers.ModelSerializer):
