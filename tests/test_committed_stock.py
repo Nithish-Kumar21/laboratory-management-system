@@ -41,7 +41,6 @@ class TestCommittedQuantityTracking:
         resp = client.post('/api/stock_request/', {
             'class_name': CLASS_NAME,
             'reason': 'Committed stock test',
-            'status': 'pending',
             'date': timezone.now().date().isoformat(),
             'day_order': 'I',
             'hour': [1],
@@ -50,7 +49,10 @@ class TestCommittedQuantityTracking:
             'chemical_items': [{'chemical_name': CHEM, 'quantity': str(qty)}],
         }, format='json')
         assert resp.status_code == status.HTTP_201_CREATED, resp.data
-        return resp.data['id']
+        req_id = resp.data['id']
+        submit_resp = client.post(f'/api/stock_request/{req_id}/submit/')
+        assert submit_resp.status_code == status.HTTP_200_OK, submit_resp.data
+        return req_id
 
     def test_accept_commits_promised_quantity(self, auth_staff, auth_hod):
         """accept() must commit the promised qty without touching physical stock."""
@@ -177,7 +179,6 @@ class TestCancelReleasesCommittedStock:
         resp = client.post('/api/stock_request/', {
             'class_name': CLASS_NAME,
             'reason': 'Committed stock release test',
-            'status': 'pending',
             'date': timezone.now().date().isoformat(),
             'day_order': 'I',
             'hour': [1],
@@ -186,7 +187,10 @@ class TestCancelReleasesCommittedStock:
             'chemical_items': [{'chemical_name': CHEM, 'quantity': str(qty)}],
         }, format='json')
         assert resp.status_code == status.HTTP_201_CREATED, resp.data
-        return resp.data['id']
+        req_id = resp.data['id']
+        submit_resp = client.post(f'/api/stock_request/{req_id}/submit/')
+        assert submit_resp.status_code == status.HTTP_200_OK, submit_resp.data
+        return req_id
 
     def _cancel(self, client, req_id, **kwargs):
         return client.post(f'/api/stock_request/{req_id}/cancel/', kwargs, format='json')
@@ -278,11 +282,10 @@ class TestCancelReleasesCommittedStock:
         resp = auth_hod.post(f'/api/stock_request/{req_id}/accept/')
         assert resp.status_code == status.HTTP_200_OK
 
-        def _post_new(qty):
+        def _post_new_draft(qty):
             return auth_staff.post('/api/stock_request/', {
                 'class_name': CLASS_NAME,
                 'reason': 'New request after release',
-                'status': 'pending',
                 'date': timezone.now().date().isoformat(),
                 'day_order': 'I',
                 'hour': [1],
@@ -291,12 +294,18 @@ class TestCancelReleasesCommittedStock:
                 'chemical_items': [{'chemical_name': CHEM, 'quantity': qty}],
             }, format='json')
 
-        # While the accepted request is active, a new non-draft request is blocked.
-        blocked = _post_new('100.00')
+        def _submit_new(req_id):
+            return auth_staff.post(f'/api/stock_request/{req_id}/submit/')
+
+        # While the accepted request is active, a new draft is allowed but its
+        # submission is blocked.
+        new_req = _post_new_draft('100.00')
+        assert new_req.status_code == status.HTTP_201_CREATED, new_req.data
+        blocked = _submit_new(new_req.data['id'])
         assert blocked.status_code == status.HTTP_400_BAD_REQUEST, blocked.data
 
-        # After the accepted request is cancelled, the same submission succeeds.
+        # After the accepted request is cancelled, the same draft submits.
         assert self._cancel(auth_hod, req_id).status_code == status.HTTP_200_OK
-        resp = _post_new('100.00')
-        assert resp.status_code == status.HTTP_201_CREATED, resp.data
+        resp = _submit_new(new_req.data['id'])
+        assert resp.status_code == status.HTTP_200_OK, resp.data
         assert StockRequest.objects.filter(requested_by=staff_user).exclude(status='cancelled').count() == 1

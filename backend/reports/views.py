@@ -9,6 +9,7 @@ from django.utils.timezone import now
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.exceptions import ValidationError
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -43,7 +44,12 @@ def get_academic_year_range(year=None):
         else:
             year = today.year - 1
     else:
-        year = int(year)
+        try:
+            year = int(year)
+        except (TypeError, ValueError):
+            raise ValidationError({'year': 'Year must be a valid number.'})
+    if not 2000 <= year <= 2100:
+        raise ValidationError({'year': 'Year must be between 2000 and 2100.'})
     start_date = date(year, 6, 1)
     end_date = date(year + 1, 5, 31)
     return year, year + 1, start_date, end_date

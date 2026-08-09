@@ -46,6 +46,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'users.middleware.FirstLoginMiddleware',
+    'backend.middleware.MaxRequestBodySizeMiddleware',
 ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -138,7 +139,17 @@ REST_FRAMEWORK = {
     'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler',
     'NON_FIELD_ERRORS_KEY': 'error',
     'DATETIME_FORMAT': '%Y-%m-%d %H:%M:%S',
+    # Throttle identity must come from REMOTE_ADDR, never from the
+    # X-Forwarded-For header (which a client can set to rotate its throttle
+    # bucket). 0 = no trusted reverse proxy in front of Django. In production
+    # behind Nginx, set this to the number of trusted proxies instead.
+    'NUM_PROXIES': 0,
 }
+
+# Reject request bodies larger than 2 MB before they are parsed.
+DATA_UPLOAD_MAX_MEMORY_SIZE = 2 * 1024 * 1024
+FILE_UPLOAD_MAX_MEMORY_SIZE = 2 * 1024 * 1024
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 100
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=8),

@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import DamagedEntry, DamagedItem
+from backend.security import sanitize_text
 
 
 # Read-only serializers (existing)
@@ -55,6 +56,9 @@ class DamagedItemWriteSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Quantity must be greater than 0")
         return value
 
+    def validate_caused_by(self, value):
+        return sanitize_text(value)
+
 
 class DamagedEntryCreateSerializer(serializers.ModelSerializer):
     """Serializer for creating new damaged entry with nested items"""
@@ -73,6 +77,9 @@ class DamagedEntryCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "At least one damaged apparatus item must be added"
             )
+        
+        if data.get('details'):
+            data['details'] = sanitize_text(data['details'])
         
         return data
     

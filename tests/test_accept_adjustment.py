@@ -25,7 +25,6 @@ class TestAcceptQuantityAdjustment:
         resp = staff_client.post('/api/stock_request/', {
             'class_name': CLASS_NAME,
             'reason': 'Test accept adjustment',
-            'status': 'pending',
             'date': timezone.now().date().isoformat(),
             'day_order': 'I',
             'hour': [1],
@@ -34,7 +33,10 @@ class TestAcceptQuantityAdjustment:
             'chemical_items': items,
         }, format='json')
         assert resp.status_code == 201
-        return resp.data['id']
+        req_id = resp.data['id']
+        submit_resp = staff_client.post(f'/api/stock_request/{req_id}/submit/')
+        assert submit_resp.status_code == status.HTTP_200_OK, submit_resp.data
+        return req_id
 
     def test_accept_without_payload_is_unchanged_regression(self, auth_staff, auth_hod):
         """Accept with no body must behave exactly as before — no adjustment."""

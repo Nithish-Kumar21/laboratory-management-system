@@ -16,6 +16,7 @@ from .serializers import (
 )
 from .permissions import StockRequestPermission
 from inventory.models import AvailableChemical
+from backend.security import sanitize_text
 from audit.services import AuditLogService
 
 
@@ -222,7 +223,7 @@ class StockRequestViewSet(viewsets.ModelViewSet):
         if obj.status != 'issued':
             return Response({'success': False, 'error': f'Usage can only be reported for issued requests. Current status: {obj.status}'}, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = UsageReportSerializer(data=request.data)
+        serializer = UsageReportSerializer(data=request.data, context={'stock_request': obj})
         if not serializer.is_valid():
             return Response({'success': False, 'error': 'Invalid data', 'details': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -386,7 +387,13 @@ class StockRequestViewSet(viewsets.ModelViewSet):
 
         # Pass generated ID to serializer so model.save() doesn't re-generate
         try:
-            instance = serializer.save(request_id=request_id)
+            instance = serializer.save(
+                request_id=request_id,
+                requested_by=user,
+                # Status is always draft on creation — never trust client input.
+                # Read-only in the create serializer, enforced here as belt-and-braces.
+                status='draft',
+            )
         except IntegrityError:
             # Fallback: unique constraint violation (extremely rare, e.g. if
             # another transaction committed between our lock and insert).
@@ -439,12 +446,12 @@ class StockRequestViewSet(viewsets.ModelViewSet):
             )
         if obj.status == 'pending':
             return Response(
-                {'success': True, 'data': {'message': 'Already submitted.'}},
-                status=status.HTTP_200_OK
+                {'success': False, 'error': 'Request has already been submitted.'},
+                status=status.HTTP_400_BAD_REQUEST
             )
         if obj.status != 'draft':
             return Response(
-                {'success': False, 'error': f'Cannot submit a request that is already {obj.status}'},
+                {'success': False, 'error': f"Cannot submit a request with status '{obj.status}'."},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
@@ -626,7 +633,7 @@ class StockRequestViewSet(viewsets.ModelViewSet):
                 {'success': False, 'error': 'Only HOD can reject requests'},
                 status=status.HTTP_403_FORBIDDEN
             )
-        rejection_reason = (request.data.get('rejection_reason') or '').strip()
+        rejection_reason = sanitize_text((request.data.get('rejection_reason') or '').strip())
         if not rejection_reason:
             return Response(
                 {'success': False, 'error': 'Reason for rejection is required.', 'rejection_reason': ['This field is required.']},

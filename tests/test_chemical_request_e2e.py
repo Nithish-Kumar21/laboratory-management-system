@@ -71,6 +71,10 @@ def _list_requests(client, status_param=None):
     return []
 
 
+def _submit(client, req_id):
+    return client.post(f"/api/stock_request/{req_id}/submit/")
+
+
 def _setup_inventory():
     AvailableChemical.objects.get_or_create(
         chemical_name=CHEMICAL_NAME,
@@ -162,8 +166,9 @@ class TestStorekeeperPendingExclusion:
     def test_storekeeper_does_not_see_pending_default(self, api_client, staff_user, store_keeper_user):
         _setup_inventory()
         _login(api_client, staff_user)
-        create_resp = _create(api_client, status_val="pending")
+        create_resp = _create(api_client, status_val="draft")
         req_id = create_resp.data["id"]
+        _submit(api_client, req_id)
 
         _login(api_client, store_keeper_user)
         items = _list_requests(api_client)
@@ -175,8 +180,9 @@ class TestStorekeeperPendingExclusion:
     def test_storekeeper_does_not_see_pending_with_all(self, api_client, staff_user, store_keeper_user):
         _setup_inventory()
         _login(api_client, staff_user)
-        create_resp = _create(api_client, status_val="pending")
+        create_resp = _create(api_client, status_val="draft")
         req_id = create_resp.data["id"]
+        _submit(api_client, req_id)
 
         _login(api_client, store_keeper_user)
         items = _list_requests(api_client, "all")
@@ -208,8 +214,11 @@ class TestHODPostApprovalVisibility:
     def _make_accepted(self, api_client, staff_user, hod_user):
         _setup_inventory()
         _login(api_client, staff_user)
-        create_resp = _create(api_client, status_val="pending")
+        create_resp = _create(api_client, status_val="draft")
         req_id = create_resp.data["id"]
+
+        submit_resp = _submit(api_client, req_id)
+        assert submit_resp.status_code == status.HTTP_200_OK
 
         _login(api_client, hod_user)
         resp = api_client.post(f"/api/stock_request/{req_id}/accept/")
@@ -261,8 +270,11 @@ class TestMarkAsIssuedPermissions:
     def _make_accepted(self, api_client, staff_user, hod_user):
         _setup_inventory()
         _login(api_client, staff_user)
-        create_resp = _create(api_client, status_val="pending")
+        create_resp = _create(api_client, status_val="draft")
         req_id = create_resp.data["id"]
+
+        submit_resp = _submit(api_client, req_id)
+        assert submit_resp.status_code == status.HTTP_200_OK
 
         _login(api_client, hod_user)
         resp = api_client.post(f"/api/stock_request/{req_id}/accept/")
@@ -298,8 +310,9 @@ class TestMarkAsIssuedPermissions:
         """Storekeeper CANNOT mark as issued when status=pending."""
         _setup_inventory()
         _login(api_client, staff_user)
-        create_resp = _create(api_client, status_val="pending")
+        create_resp = _create(api_client, status_val="draft")
         req_id = create_resp.data["id"]
+        _submit(api_client, req_id)
 
         _login(api_client, store_keeper_user)
         resp = api_client.post(f"/api/stock_request/{req_id}/mark_as_issued/")
