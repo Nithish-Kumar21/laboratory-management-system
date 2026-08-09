@@ -1,3 +1,4 @@
+from decimal import Decimal, InvalidOperation
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -16,6 +17,12 @@ from .serializers import (
 from .permissions import StockRequestPermission
 from inventory.models import AvailableChemical
 from audit.services import AuditLogService
+
+
+def _fmt_quantity(value):
+    if value is None:
+        return '0'
+    return str(value).rstrip('0').rstrip('.')
 
 
 class StockRequestViewSet(viewsets.ModelViewSet):
@@ -135,7 +142,17 @@ class StockRequestViewSet(viewsets.ModelViewSet):
                 {'success': False, 'error': 'Only store keeper or admin can mark requests as issued'},
                 status=status.HTTP_403_FORBIDDEN
             )
-        obj = self.get_object()
+        # Lock the request row before any status check so concurrent
+        # mark_as_issued calls serialize on the same request (pre-deploy
+        # race-condition pattern: lock the request object first, then the
+        # request's chemical items, then the AvailableChemical rows).
+        try:
+            obj = StockRequest.objects.select_for_update().get(pk=pk)
+        except StockRequest.DoesNotExist:
+            return Response(
+                {'success': False, 'error': 'Not found.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
         if obj.status == 'issued':
             return Response(
                 {'success': True, 'data': {'message': 'Already issued.'}},
@@ -147,19 +164,26 @@ class StockRequestViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        for item in obj.chemical_items.all():
+        items = list(obj.chemical_items.select_for_update())
+        for item in items:
             try:
                 chem = AvailableChemical.objects.select_for_update().get(
                     chemical_name__iexact=item.chemical_name
                 )
                 if chem.quantity < item.quantity:
+                    # Abort the whole transaction (TECHNICAL_SPEC.md §5):
+                    # mark for rollback so earlier decrements in this loop are
+                    # undone, then return the error response normally.
+                    transaction.set_rollback(True)
                     return Response(
                         {'success': False, 'error': f'Insufficient stock for {item.chemical_name}. Available: {chem.quantity}, Requested: {item.quantity}'},
                         status=status.HTTP_400_BAD_REQUEST
                     )
                 chem.quantity -= item.quantity
+                chem.committed_quantity_ml -= item.quantity
                 chem.save()
             except AvailableChemical.DoesNotExist:
+                transaction.set_rollback(True)
                 return Response(
                     {'success': False, 'error': f'Chemical {item.chemical_name} not found in inventory'},
                     status=status.HTTP_400_BAD_REQUEST
@@ -394,9 +418,20 @@ class StockRequestViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @action(detail=True, methods=['post'])
+    @transaction.atomic
     def submit(self, request, pk=None):
         """Move a draft request to pending status"""
-        obj = self.get_object()
+        # Lock the request row before any status/ownership check so concurrent
+        # submit calls serialize on the same request (pre-deploy race-condition
+        # pattern: lock the request object first, then run the active-request
+        # check inside the same transaction).
+        try:
+            obj = StockRequest.objects.select_for_update().get(pk=pk)
+        except StockRequest.DoesNotExist:
+            return Response(
+                {'success': False, 'error': 'Not found.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
         if obj.requested_by != request.user:
             return Response(
                 {'success': False, 'error': 'You can only submit your own drafts'},
@@ -413,7 +448,7 @@ class StockRequestViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Check for existing active request
+        # Check for existing active request (serialized by the row lock above)
         active_statuses = ['pending', 'accepted', 'issued', 'reported']
         has_active = StockRequest.objects.filter(
             requested_by=request.user, 
@@ -438,13 +473,23 @@ class StockRequestViewSet(viewsets.ModelViewSet):
         return Response(StockRequestDetailSerializer(obj).data)
 
     @action(detail=True, methods=['post'])
+    @transaction.atomic
     def accept(self, request, pk=None):
         if request.user.role != 'hod':
             return Response(
                 {'success': False, 'error': 'Only HOD can accept requests'},
                 status=status.HTTP_403_FORBIDDEN
             )
-        obj = self.get_object()
+        # Lock the request row before any status/quantity check so concurrent
+        # accept calls serialize on the same request (pre-deploy race-condition
+        # pattern: lock the request object, not just inventory rows).
+        try:
+            obj = StockRequest.objects.select_for_update().get(pk=pk)
+        except StockRequest.DoesNotExist:
+            return Response(
+                {'success': False, 'error': 'Not found.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
         if obj.status == 'accepted':
             return Response(
                 {'success': True, 'data': {'message': 'Already accepted.'}},
@@ -455,16 +500,121 @@ class StockRequestViewSet(viewsets.ModelViewSet):
                 {'success': False, 'error': 'Only pending requests can be accepted.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+        # Optional HOD quantity adjustment. Payload shape:
+        #   { "chemical_items": [{ "chemical_item_id": 5, "quantity_ml": 350 }],
+        #     "hod_remarks": "..." }
+        payload_items = request.data.get('chemical_items') or []
+        hod_remarks = (request.data.get('hod_remarks') or '').strip()
+
+        # Lock the request's chemical items so validation + write is a
+        # consistent read/write within the transaction.
+        item_map = {item.id: item for item in obj.chemical_items.select_for_update()}
+        adjustments = []
+
+        for entry in payload_items:
+            if not isinstance(entry, dict):
+                return Response(
+                    {'success': False, 'error': 'Each chemical_items entry must be an object with chemical_item_id and quantity_ml.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            raw_id = entry.get('chemical_item_id')
+            raw_qty = entry.get('quantity_ml')
+            if raw_id is None or raw_qty is None:
+                return Response(
+                    {'success': False, 'error': 'Each chemical_items entry requires chemical_item_id and quantity_ml.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            try:
+                item_id = int(raw_id)
+            except (TypeError, ValueError):
+                return Response(
+                    {'success': False, 'error': 'chemical_item_id must be an integer.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            try:
+                new_qty = Decimal(str(raw_qty))
+            except (TypeError, ValueError, InvalidOperation):
+                return Response(
+                    {'success': False, 'error': 'quantity_ml must be a valid number.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            if new_qty <= 0:
+                return Response(
+                    {'success': False, 'error': 'Adjusted quantity must be greater than 0.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            item = item_map.get(item_id)
+            if item is None:
+                return Response(
+                    {'success': False, 'error': f'chemical_item_id {item_id} is not part of this request.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            try:
+                chem = AvailableChemical.objects.select_for_update().get(
+                    chemical_name__iexact=item.chemical_name
+                )
+            except AvailableChemical.DoesNotExist:
+                transaction.set_rollback(True)
+                return Response(
+                    {'success': False, 'error': f'Chemical {item.chemical_name} not found in inventory'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            remaining = chem.quantity - chem.committed_quantity_ml
+            if new_qty > remaining:
+                transaction.set_rollback(True)
+                return Response(
+                    {'success': False, 'error': f'Insufficient stock for {item.chemical_name}. Available: {_fmt_quantity(remaining)}, Requested: {_fmt_quantity(new_qty)}'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            if new_qty != item.quantity:
+                adjustments.append((item, item.quantity, new_qty))
+                item.quantity = new_qty
+                item.save()
+
+        # Commit the (possibly HOD-adjusted) requested quantity for every
+        # chemical on the request — including items the HOD did not adjust —
+        # so later accept/issue decisions see this stock as promised.
+        # Validation is against remaining stock (physical minus already
+        # committed), not raw physical stock.
+        for item in obj.chemical_items.select_for_update():
+            try:
+                chem = AvailableChemical.objects.select_for_update().get(
+                    chemical_name__iexact=item.chemical_name
+                )
+            except AvailableChemical.DoesNotExist:
+                transaction.set_rollback(True)
+                return Response(
+                    {'success': False, 'error': f'Chemical {item.chemical_name} not found in inventory'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            remaining = chem.quantity - chem.committed_quantity_ml
+            if item.quantity > remaining:
+                transaction.set_rollback(True)
+                return Response(
+                    {'success': False, 'error': f'Insufficient stock for {item.chemical_name}. Available: {_fmt_quantity(remaining)}, Requested: {_fmt_quantity(item.quantity)}'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            chem.committed_quantity_ml += item.quantity
+            chem.save()
+
         obj.status = 'accepted'
         obj.reviewed_at = timezone.now()
         obj.reviewed_by = request.user
         obj.save()
+
+        description = f'Request {obj.request_id} accepted by {request.user.full_name}'
+        for item, old_qty, new_qty in adjustments:
+            description += f' Adjusted {item.chemical_name}: {_fmt_quantity(old_qty)}{item.unit} → {_fmt_quantity(new_qty)}{item.unit}.'
+        if hod_remarks:
+            description += f' HOD remarks: {hod_remarks}'
         AuditLogService.log(
             user=request.user,
             action='REQUEST_ACCEPTED',
             entity_type='StockRequest',
             entity_id=obj.id,
-            description=f'Request {obj.request_id} accepted by {request.user.full_name}',
+            description=description,
             request=request,
         )
         return Response(StockRequestDetailSerializer(obj).data)
@@ -510,34 +660,80 @@ class StockRequestViewSet(viewsets.ModelViewSet):
 
 
     @action(detail=True, methods=['post'])
+    @transaction.atomic
     def cancel(self, request, pk=None):
-        """Cancel a pending request"""
-        obj = self.get_object()
-        if obj.requested_by != request.user:
+        """Cancel a pending request (owner only), or release committed stock on an
+        accepted request (HOD or store keeper only)."""
+        reason = (request.data.get('reason') or '').strip()
+        try:
+            obj = StockRequest.objects.select_for_update().get(pk=pk)
+        except StockRequest.DoesNotExist:
             return Response(
-                {'success': False, 'error': 'You can only cancel your own requests'},
-                status=status.HTTP_403_FORBIDDEN
+                {'success': False, 'error': 'Not found.'},
+                status=status.HTTP_404_NOT_FOUND
             )
+
         if obj.status == 'cancelled':
             return Response(
                 {'success': True, 'data': {'message': 'Already cancelled.'}},
                 status=status.HTTP_200_OK
             )
-        if obj.status != 'pending':
+
+        if obj.status == 'pending':
+            if obj.requested_by != request.user:
+                return Response(
+                    {'success': False, 'error': 'You can only cancel your own requests'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            description = f'Request {obj.request_id} cancelled by {request.user.full_name}'
+            if reason:
+                description += f' Reason: {reason}'
+            AuditLogService.log(
+                user=request.user,
+                action='REQUEST_CANCELLED',
+                entity_type='StockRequest',
+                entity_id=obj.id,
+                description=description,
+                request=request,
+            )
+        elif obj.status == 'accepted':
+            if request.user.role not in ('hod', 'store_keeper'):
+                return Response(
+                    {'success': False, 'error': 'Only HOD or store keeper can cancel an accepted request.'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            items = list(obj.chemical_items.select_for_update())
+            for item in items:
+                try:
+                    chem = AvailableChemical.objects.select_for_update().get(
+                        chemical_name__iexact=item.chemical_name
+                    )
+                except AvailableChemical.DoesNotExist:
+                    return Response(
+                        {'success': False, 'error': f'Chemical {item.chemical_name} not found in inventory'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                chem.committed_quantity_ml -= item.quantity
+                chem.save()
+            description = f'Request {obj.request_id} cancelled by {request.user.full_name}. Committed stock released.'
+            if reason:
+                description += f' Reason: {reason}'
+            AuditLogService.log(
+                user=request.user,
+                action='REQUEST_CANCELLED',
+                entity_type='StockRequest',
+                entity_id=obj.id,
+                description=description,
+                request=request,
+            )
+        else:
             return Response(
-                {'success': False, 'error': 'Only pending requests can be cancelled.'},
+                {'success': False, 'error': 'Only pending or accepted requests can be cancelled.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
         obj.status = 'cancelled'
         obj.save()
-        AuditLogService.log(
-            user=request.user,
-            action='REQUEST_CANCELLED',
-            entity_type='StockRequest',
-            entity_id=obj.id,
-            description=f'Request {obj.request_id} cancelled by {request.user.full_name}',
-            request=request,
-        )
         return Response(StockRequestDetailSerializer(obj).data)
 
 

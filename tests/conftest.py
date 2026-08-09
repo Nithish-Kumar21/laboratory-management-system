@@ -181,6 +181,23 @@ def _ensure_venue_column(db):
         """)
 
 
+@pytest.fixture(autouse=True)
+def _ensure_committed_quantity_column(db):
+    """Ensure committed_quantity_ml exists on available_chemicals (managed=False model)."""
+    from django.db import connection
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            DO $$ BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name='available_chemicals' AND column_name='committed_quantity_ml'
+                ) THEN
+                    ALTER TABLE available_chemicals ADD COLUMN committed_quantity_ml NUMERIC(10,2) NOT NULL DEFAULT 0;
+                END IF;
+            END $$;
+        """)
+
+
 @pytest.fixture
 def today():
     return timezone.now().date()

@@ -7,14 +7,26 @@ from .models import (
 
 class AvailableChemicalSerializer(serializers.ModelSerializer):
     quantity = serializers.DecimalField(max_digits=10, decimal_places=2)
+    remaining = serializers.SerializerMethodField()
     unit = serializers.SerializerMethodField()
 
     class Meta:
         model = AvailableChemical
-        fields = ['id', 'chemical_name', 'quantity', 'unit', 'reorder_level', 'last_updated']
+        fields = ['id', 'chemical_name', 'quantity', 'remaining', 'unit', 'reorder_level', 'last_updated']
+
+    def get_remaining(self, obj):
+        return obj.quantity - (obj.committed_quantity_ml or 0)
 
     def get_unit(self, obj):
         return obj.unit
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get('request')
+        role = getattr(getattr(request, 'user', None), 'role', None)
+        if role == 'staff':
+            data['quantity'] = data['remaining']
+        return data
 
 class AvailableApparatusSerializer(serializers.ModelSerializer):
     class Meta:

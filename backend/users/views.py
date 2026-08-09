@@ -5,7 +5,7 @@ from rest_framework import status, generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, Throttled
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 from rest_framework_simplejwt.exceptions import TokenError
 from django.contrib.auth import authenticate
@@ -27,6 +27,14 @@ logger = logging.getLogger(__name__)
 class LoginView(APIView):
     permission_classes = [AllowAny]
     throttle_classes = [LoginRateThrottle]
+
+    def handle_exception(self, exc):
+        if isinstance(exc, Throttled):
+            return Response(
+                {'success': False, 'error': 'Too many login attempts. Please try again later.'},
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+            )
+        return super().handle_exception(exc)
 
     def post(self, request):
         username = request.data.get('username')
@@ -273,7 +281,7 @@ class ResetPasswordView(APIView):
         from django.contrib.auth.password_validation import validate_password
         from django.core.exceptions import ValidationError as DjangoValidationError
         try:
-            validate_password(new_password)
+            validate_password(new_password, user=reset_token.user)
         except DjangoValidationError as e:
             return Response(
                 {'new_password': list(e.messages)},

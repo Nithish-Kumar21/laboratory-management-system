@@ -275,6 +275,15 @@
     border: 1px dashed var(--border);
 }
 
+.success-banner {
+    background: rgba(46, 125, 50, 0.1);
+    color: #2e7d32;
+    padding: 15px;
+    border-radius: 12px;
+    margin-top: 15px;
+    font-weight: 600;
+}
+
 /* Mini Requests for Staff */
 .recent-requests-mini {
     margin-top: 24px;

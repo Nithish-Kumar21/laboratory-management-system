@@ -61,7 +61,8 @@ api.interceptors.response.use(
 
     if (error.response?.status === 401 && !originalRequest._retry) {
       // If it was a login attempt that failed, don't retry, just fail
-      if (originalRequest.url === 'users/login/') {
+      const normalizedUrl = (originalRequest.url || '').replace(/^\//, '');
+      if (normalizedUrl === 'users/login/') {
         return Promise.reject(error);
       }
 

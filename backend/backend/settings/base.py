@@ -78,14 +78,15 @@ DATABASES = {
     }
 }
 
+PASSWORD_COMPLEXITY_VALIDATOR = 'users.validators.PasswordComplexityValidator'
+
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator', 'OPTIONS': {'min_length': 8}},
     {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
+    {'NAME': PASSWORD_COMPLEXITY_VALIDATOR},
 ]
-
-PASSWORD_COMPLEXITY_VALIDATOR = 'users.validators.PasswordComplexityValidator'
 
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Asia/Kolkata'
@@ -125,6 +126,10 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 100,
+    'DEFAULT_THROTTLE_CLASSES': [],
+    'DEFAULT_THROTTLE_RATES': {
+        'login': '10/min',
+    },
     'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler',
     'NON_FIELD_ERRORS_KEY': 'error',
     'DATETIME_FORMAT': '%Y-%m-%d %H:%M:%S',

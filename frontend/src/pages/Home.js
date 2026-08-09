@@ -32,6 +32,7 @@ function Home() {
   const [hasPendingRequest, setHasPendingRequest] = useState(false);
   const [rejectState, setRejectState] = useState({ show: false, id: null, reason: '' });
   const [actionError, setActionError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -131,9 +132,12 @@ function Home() {
 
   const handleAccept = (id) => {
     setActionError('');
+    setSuccessMsg('');
     api
       .post(`/stock_request/${id}/accept/`)
       .then(() => {
+        setSuccessMsg('Request approved.');
+        setTimeout(() => setSuccessMsg(''), 4000);
         fetchRequests();
         window.dispatchEvent(new CustomEvent('inventory-updated'));
       })
@@ -318,6 +322,7 @@ function Home() {
               <Link to="/requests?status=pending" className="view-all-link">Manage All</Link>
             </div>
             {actionError && <div className="error-banner">{actionError}</div>}
+            {successMsg && <div className="success-banner">{successMsg}</div>}
             {requestsLoading ? (
               <p>Loading...</p>
             ) : pendingRequests.length === 0 ? (
@@ -387,6 +392,7 @@ function Home() {
             </div>
           </div>
         )}
+
       </div>
     </div>
   );

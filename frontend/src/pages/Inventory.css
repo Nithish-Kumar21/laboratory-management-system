@@ -281,6 +281,11 @@
   text-align: center;
 }
 
+.col-remaining {
+  width: 160px;
+  text-align: center;
+}
+
 .col-rl {
   width: 160px;
   text-align: center;

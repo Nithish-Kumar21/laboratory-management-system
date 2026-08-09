@@ -1,15 +1,28 @@
 CREATE TABLE IF NOT EXISTS service_entry (
-    id                      SERIAL PRIMARY KEY,
-    service_code            VARCHAR(20) NOT NULL UNIQUE,
-    storekeeper             VARCHAR(64) NOT NULL,
-    service_person_name     VARCHAR(64) NOT NULL,
-    contact_country_code    VARCHAR(5)  NOT NULL,
-    contact_number          VARCHAR(10) NOT NULL,
-    email                   VARCHAR(100),
-    deliver_by_date         DATE,
-    date                    DATE NOT NULL DEFAULT CURRENT_DATE,
-    status                  VARCHAR(20) NOT NULL DEFAULT 'in_service',
-    completed_at            TIMESTAMP,
+    id                              SERIAL PRIMARY KEY,
+    service_code                    VARCHAR(20) NOT NULL UNIQUE,
+    storekeeper                     VARCHAR(64) NOT NULL,
+    service_person_name             VARCHAR(64) NOT NULL,
+    contact_country_code            VARCHAR(5)  NOT NULL,
+    contact_number                  VARCHAR(10) NOT NULL,
+    email                           VARCHAR(100),
+    deliver_by_date                 DATE,
+    company_name                    VARCHAR(128),
+    company_address                 TEXT,
+    company_contact_country_code    VARCHAR(5),
+    company_contact_number          VARCHAR(10),
+    vendor_name                     VARCHAR(128),
+    vendor_contact                  VARCHAR(128),
+    entry_date                      DATE DEFAULT CURRENT_DATE,
+    total_cost                      NUMERIC(12,2) DEFAULT 0.00,
+    remarks                         TEXT,
+    date                            DATE NOT NULL DEFAULT CURRENT_DATE,
+    status                          VARCHAR(20) NOT NULL DEFAULT 'in_service',
+    completed_at                    TIMESTAMP,
+    created_at                      TIMESTAMP NOT NULL DEFAULT now(),
+    updated_at                      TIMESTAMP NOT NULL DEFAULT now(),
+    created_by_id                   INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    updated_by_id                   INTEGER REFERENCES users(id) ON DELETE SET NULL,
     CONSTRAINT chk_contact_number_10digit CHECK (contact_number ~ '^[0-9]{10}$'),
     CONSTRAINT chk_service_status CHECK (status IN ('in_service', 'completed'))
 );
@@ -104,40 +117,16 @@ BEFORE INSERT ON service_entry_item_logs
 FOR EACH ROW
 EXECUTE FUNCTION fn_service_action_apply();
 
-CREATE OR REPLACE FUNCTION fn_service_entry_check_complete()
-RETURNS TRIGGER AS $$
-DECLARE
-    v_open_count INTEGER;
-BEGIN
-    SELECT COUNT(*) INTO v_open_count
-    FROM service_entry_items
-    WHERE service_entry_id = NEW.service_entry_id
-      AND quantity_remaining > 0;
-
-    IF v_open_count = 0 THEN
-        UPDATE service_entry
-        SET status = 'completed',
-            completed_at = now()
-        WHERE id = NEW.service_entry_id
-          AND status != 'completed';
-    END IF;
-
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-DROP TRIGGER IF EXISTS trg_service_entry_complete ON service_entry_items;
-
-CREATE TRIGGER trg_service_entry_complete
-AFTER UPDATE ON service_entry_items
-FOR EACH ROW
-EXECUTE FUNCTION fn_service_entry_check_complete();
+-- NOTE: trg_service_entry_complete / fn_service_entry_check_complete were
+-- INTENTIONALLY REMOVED. The old AFTER UPDATE trigger auto-completed a
+-- service entry the moment the last item's quantity_remaining reached 0,
+-- pre-empting the Storekeeper's explicit final submit. Completion is now
+-- handled solely by the explicit "Complete Entry" action at
+-- POST /service-entries/{id}/complete/ (ServiceEntryViewSet.complete in
+-- service_entry/views.py). Do NOT reintroduce this trigger/function.
 
 -- ============================================================
--- Migration: Add company/vendor fields to service_entry
--- Safe to re-run (uses IF NOT EXISTS)
+-- NOTE: company_name, company_address, company_contact_country_code,
+-- company_contact_number are now included in the CREATE TABLE above.
+-- Legacy ALTER TABLE migration block removed.
 -- ============================================================
-ALTER TABLE service_entry ADD COLUMN IF NOT EXISTS company_name VARCHAR(128);
-ALTER TABLE service_entry ADD COLUMN IF NOT EXISTS company_address TEXT;
-ALTER TABLE service_entry ADD COLUMN IF NOT EXISTS company_contact_country_code VARCHAR(5);
-ALTER TABLE service_entry ADD COLUMN IF NOT EXISTS company_contact_number VARCHAR(10);
