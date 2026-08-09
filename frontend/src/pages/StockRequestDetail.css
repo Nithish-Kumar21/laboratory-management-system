@@ -3,9 +3,6 @@
     background: #F0F2F5;
 }
 
-:root.dark-mode .request-detail-wrapper {
-    background: #0f172a;
-}
 
 .request-detail-page {
     padding: 40px;
@@ -533,9 +530,6 @@
     background: #F0F2F5;
 }
 
-:root.dark-mode .staff-detail-wrapper {
-    background: #0f172a;
-}
 
 .staff-detail-page {
     padding: 40px 24px;
@@ -578,9 +572,6 @@
     border-bottom: none;
 }
 
-:root.dark-mode .sd-card {
-    border-bottom-color: #334155;
-}
 
 .sd-card-header {
     display: flex;
@@ -616,17 +607,6 @@
     border-color: #1A3C6E;
 }
 
-:root.dark-mode .sd-edit-btn {
-    background: #1e293b;
-    border-color: #4B5563;
-    color: #4A90D9;
-}
-
-:root.dark-mode .sd-edit-btn:hover {
-    background: #4A90D9;
-    color: #fff;
-}
-
 .sd-req-id {
     font-size: 20px;
     font-weight: 700;
@@ -639,9 +619,6 @@
     margin: 18px 0;
 }
 
-:root.dark-mode .sd-divider {
-    border-color: #334155;
-}
 
 /* Badge */
 .badge {
@@ -734,9 +711,6 @@
     border-bottom: 0.5px solid #e2e8f0;
 }
 
-:root.dark-mode .sd-chem-row {
-    border-color: #334155;
-}
 
 .sd-chem-row:last-child {
     border-bottom: none;
@@ -830,10 +804,6 @@
     border: 2px solid #d1d5db;
 }
 
-:root.dark-mode .sd-tl-dot.pending {
-    background: transparent;
-    border-color: #4B5563;
-}
 
 .sd-tl-line {
     width: 2px;
@@ -850,9 +820,6 @@
     background: #e5e7eb;
 }
 
-:root.dark-mode .sd-tl-line:not(.done) {
-    background: #374151;
-}
 
 .sd-tl-content {
     flex: 1;
@@ -886,9 +853,6 @@
     padding-left: 20px;
 }
 
-:root.dark-mode .sd-card-error {
-    border-left-color: #DC2626;
-}
 
 .sd-card-error .sd-card-title svg {
     color: #EF4444;
@@ -912,9 +876,6 @@
     border: 0.5px solid #e2e8f0;
 }
 
-:root.dark-mode .sd-usage-row {
-    border-color: #334155;
-}
 
 .sd-usage-name {
     flex: 1;
@@ -939,9 +900,6 @@
     width: 110px;
 }
 
-:root.dark-mode .sd-usage-input-wrap {
-    border-color: #4B5563;
-}
 
 .sd-usage-input-wrap:focus-within {
     border-color: #3B82F6;
@@ -1006,19 +964,6 @@
     border-color: #1A3C6E;
 }
 
-:root.dark-mode .srq-chem-edit-btn {
-    background: #1e293b;
-    border-color: #4B5563;
-    color: #4A90D9;
-}
-
-:root.dark-mode .srq-chem-edit-btn:hover,
-:root.dark-mode .srq-chem-edit-btn.active {
-    background: #4A90D9;
-    color: #fff;
-    border-color: #4A90D9;
-}
-
 .srq-chem-edit-row {
     display: flex;
     align-items: center;
@@ -1031,9 +976,6 @@
     border: 0.5px solid #e2e8f0;
 }
 
-:root.dark-mode .srq-chem-edit-row {
-    border-color: #334155;
-}
 
 .srq-chem-edit-name {
     flex: 1;
@@ -1091,38 +1033,23 @@
     color: #1A3C6E;
 }
 
-:root.dark-mode .sd-btn-outline {
-    background: transparent;
-    border-color: #4A90D9;
-    color: #4A90D9;
-}
 
 .sd-btn-outline:hover:not(:disabled) {
     background: #1A3C6E;
     color: #fff;
 }
 
-:root.dark-mode .sd-btn-outline:hover:not(:disabled) {
-    background: #4A90D9;
-    color: #fff;
-}
 
 .sd-btn-primary {
     background: #1A3C6E;
     color: #fff;
 }
 
-:root.dark-mode .sd-btn-primary {
-    background: #4A90D9;
-}
 
 .sd-btn-primary:hover:not(:disabled) {
     background: #14305a;
 }
 
-:root.dark-mode .sd-btn-primary:hover:not(:disabled) {
-    background: #357ABD;
-}
 
 .sd-btn-danger {
     background: #EF4444;
@@ -1288,10 +1215,6 @@
     gap: 6px;
 }
 
-:root.dark-mode .srq-chem-card {
-    background: #1a2332;
-    border-color: #334155;
-}
 
 .srq-chem-top {
     display: flex;
@@ -1316,9 +1239,6 @@
     flex-shrink: 0;
 }
 
-:root.dark-mode .srq-chem-qty {
-    color: #4A90D9;
-}
 
 .srq-chem-unit {
     font-size: 13px;

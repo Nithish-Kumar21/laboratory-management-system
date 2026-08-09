@@ -139,57 +139,6 @@
   font-style: italic;
 }
 
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .searchable-dropdown-input {
-    background: #1f2937;
-    border-color: #374151;
-    color: white;
-  }
-  
-  .searchable-dropdown-input:focus {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-  }
-  
-  .searchable-dropdown-input:disabled {
-    background-color: #374151;
-  }
-  
-  .searchable-dropdown-panel {
-    background: #1f2937;
-    border-color: #374151;
-  }
-  
-  .searchable-dropdown-header {
-    background: #374151;
-    border-bottom-color: #4b5563;
-    color: #9ca3af;
-  }
-  
-  .searchable-dropdown-close {
-    color: #9ca3af;
-  }
-  
-  .searchable-dropdown-close:hover {
-    background: #4b5563;
-    color: #e5e7eb;
-  }
-  
-  .searchable-dropdown-item {
-    border-bottom-color: #374151;
-  }
-  
-  .searchable-dropdown-item:hover,
-  .searchable-dropdown-item.active {
-    background: #1e3a8a;
-  }
-  
-  .searchable-dropdown-no-results {
-    color: #9ca3af;
-  }
-}
-
 /* Integration with existing grid layouts */
 .grid-row .searchable-dropdown-wrapper {
   width: 100%;

@@ -93,6 +93,12 @@ function NewServiceEntry() {
       return;
     }
 
+    const todayStr = new Date().toLocaleDateString('en-CA');
+    if (formData.deliver_by_date && formData.deliver_by_date < todayStr) {
+      setAlertDialog({ open: true, message: 'Tentative delivery date cannot be in the past.' });
+      return;
+    }
+
     setSubmitting(true);
     try {
       const payload = {
@@ -197,6 +203,7 @@ function NewServiceEntry() {
             <div className="nrf-field">
               <label className="nrf-field-label"><FaCalendarAlt /> Tentative Delivery Date</label>
               <input type="date" className="nrf-input" value={formData.deliver_by_date}
+                min={new Date().toLocaleDateString('en-CA')}
                 onChange={e => setFormData({ ...formData, deliver_by_date: e.target.value })} />
             </div>
           </div>

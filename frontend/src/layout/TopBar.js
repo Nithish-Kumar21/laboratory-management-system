@@ -3,26 +3,15 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
     FaFlask,
     FaBars,
-    FaSun,
-    FaMoon,
-    FaDesktop,
     FaCog
 } from 'react-icons/fa';
-import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import NotificationCenter from '../components/NotificationCenter';
 import './TopBar.css';
 
 const TopBar = ({ onToggleSidebar, isSidebarOpen }) => {
-    const { themeMode, toggleTheme } = useTheme();
     const { user } = useAuth();
     const navigate = useNavigate();
-
-    const getThemeIcon = () => {
-        if (themeMode === 'light') return <FaSun />;
-        if (themeMode === 'dark') return <FaMoon />;
-        return <FaDesktop />;
-    };
 
     return (
         <nav className="topbar">
@@ -42,10 +31,6 @@ const TopBar = ({ onToggleSidebar, isSidebarOpen }) => {
 
             <div className="topbar-right">
                 <div className="action-group">
-                    <button className="topbar-action-btn" onClick={toggleTheme} title={`Theme: ${themeMode}`}>
-                        {getThemeIcon()}
-                    </button>
-
                     <button className="topbar-action-btn" onClick={() => navigate('/settings')} title="Settings">
                         <FaCog />
                     </button>

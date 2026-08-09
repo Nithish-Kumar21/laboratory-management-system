@@ -348,12 +348,6 @@
   transition: all 0.3s ease;
 }
 
-:root.dark-mode .damaged-entry-modal .grid-row {
-  background: #1a2235 !important;
-  /* Specific bluish dark */
-  color: #ffffff !important;
-  border: 1.5px solid #2d3748;
-}
 
 .grid-row:focus-within {
   z-index: 100;
@@ -389,11 +383,6 @@
   transition: all 0.2s;
 }
 
-:root.dark-mode .damaged-entry-modal .grid-input {
-  background: #0f172a !important;
-  color: #ffffff !important;
-  border: 1.5px solid #334155 !important;
-}
 
 .grid-input::placeholder {
   color: #94a3b8;
@@ -406,11 +395,6 @@
   outline: none;
 }
 
-:root.dark-mode .damaged-entry-modal .grid-input:focus {
-  background: #0f172a !important;
-  color: #ffffff !important;
-  border-color: #475569 !important;
-}
 
 /* Center quantity input */
 .grid-row input[type="number"] {
@@ -437,10 +421,6 @@
   flex-shrink: 0;
 }
 
-:root.dark-mode .damaged-entry-modal .btn-row-del {
-  background: #334155 !important;
-  border-color: #475569 !important;
-}
 
 .damaged-entry-modal .btn-row-del:hover {
   transform: scale(1.05);

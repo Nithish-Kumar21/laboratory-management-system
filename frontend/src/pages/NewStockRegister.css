@@ -20,7 +20,7 @@
   color: #1A3C6E;
   font-weight: 600;
   font-size: 16px;
-  margin-bottom: 20px;
+  margin-bottom: 40px;
 }
 
 .nrf-back-row svg {
@@ -33,9 +33,6 @@
   gap: 22px;
 }
 
-:root.dark-mode .nrf-card {
-  /* Card styling removed — form sits on page background */
-}
 
 .nrf-divider {
   width: 100%;
@@ -44,9 +41,6 @@
   margin: 4px 0;
 }
 
-:root.dark-mode .nrf-divider {
-  background: #334155;
-}
 
 .nrf-input-error {
   border-color: #EF4444 !important;
@@ -107,10 +101,6 @@
   box-sizing: border-box;
 }
 
-:root.dark-mode .nrf-input {
-  background: #1e293b;
-  border-color: #4B5563;
-}
 
 .nrf-input:focus {
   border-color: #3f51b5;
@@ -151,9 +141,6 @@
   color: #1A3C6E;
 }
 
-:root.dark-mode .nrf-section-title svg {
-  color: #4A90D9;
-}
 
 .nrf-add-btn {
   display: flex;
@@ -170,17 +157,11 @@
   white-space: nowrap;
 }
 
-:root.dark-mode .nrf-add-btn {
-  background: #4A90D9;
-}
 
 .nrf-add-btn:hover {
   background: #14305a;
 }
 
-:root.dark-mode .nrf-add-btn:hover {
-  background: #357ABD;
-}
 
 /* ── Chem entry container ── */
 .nrf-chem-entry {
@@ -194,10 +175,6 @@
   margin-bottom: 8px;
 }
 
-:root.dark-mode .nrf-chem-entry {
-  background: #0f172a;
-  border-color: #334155;
-}
 
 .nrf-chem-entry .nrf-input {
   height: 38px;
@@ -277,10 +254,6 @@
   }
 }
 
-:root.dark-mode .nrf-app-entry {
-  background: #0f172a;
-  border-color: #334155;
-}
 
 .nrf-app-entry .nrf-input {
   height: 38px;
@@ -328,10 +301,6 @@
   margin-bottom: 8px;
 }
 
-:root.dark-mode .nrf-dmg-entry {
-  background: #0f172a;
-  border-color: #334155;
-}
 
 .nrf-dmg-entry .nrf-input {
   height: 38px;
@@ -413,14 +382,6 @@
   flex-shrink: 0;
 }
 
-:root.dark-mode .nrf-composite {
-  border-color: #4B5563;
-}
-
-:root.dark-mode .nrf-composite select.nrf-input {
-  border-color: #4B5563;
-}
-
 /* Autocomplete */
 .nrf-autocomplete {
   position: relative;
@@ -445,10 +406,6 @@
   margin: 4px 0 0;
 }
 
-:root.dark-mode .nrf-suggestions {
-  background: #1e293b;
-  border-color: #4B5563;
-}
 
 .nrf-suggestion-item {
   padding: 9px 14px;
@@ -465,10 +422,6 @@
   background: #F0F4FF;
 }
 
-:root.dark-mode .nrf-suggestion-item:hover,
-:root.dark-mode .nrf-suggestion-item.active {
-  background: #0f172a;
-}
 
 .nrf-stock {
   font-size: 12px;
@@ -503,9 +456,40 @@
   cursor: default;
 }
 
-:root.dark-mode .nrf-readonly {
-  background: #1e293b !important;
-  color: #9ca3af !important;
+/* Reorder level source indicator (auto from inventory vs manual entry) */
+.nrf-restock-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+}
+
+.nrf-input:disabled {
+  background: #f3f4f6 !important;
+  color: #6b7280 !important;
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+.nrf-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.nrf-badge-auto {
+  background: #d1fae5;
+  color: #047857;
+}
+
+.nrf-badge-manual {
+  background: #fef3c7;
+  color: #b45309;
 }
 
 /* Delete Button */
@@ -543,10 +527,6 @@
   box-sizing: border-box;
 }
 
-:root.dark-mode .nrf-textarea {
-  background: #1e293b;
-  border-color: #4B5563;
-}
 
 .nrf-textarea::placeholder {
   color: var(--text-muted);
@@ -594,10 +574,6 @@
   color: var(--text-muted);
 }
 
-:root.dark-mode .nrf-btn-ghost {
-  background: transparent;
-  border-color: #4B5563;
-}
 
 .nrf-btn-ghost:hover:not(:disabled) {
   border-color: var(--text-muted);
@@ -609,17 +585,11 @@
   padding: 0 28px;
 }
 
-:root.dark-mode .nrf-btn-submit {
-  background: #4A90D9;
-}
 
 .nrf-btn-submit:hover:not(:disabled) {
   background: #14305a;
 }
 
-:root.dark-mode .nrf-btn-submit:hover:not(:disabled) {
-  background: #357ABD;
-}
 
 .nrf-spacer {
   flex: 1;
@@ -654,10 +624,6 @@
   position: relative;
 }
 
-:root.dark-mode .nrf-multi-btn {
-  background: #1e293b;
-  border-color: #4B5563;
-}
 
 .nrf-multi-btn .nrf-chevron {
   right: 12px;
@@ -689,10 +655,6 @@
   box-shadow: 0 4px 16px rgba(0,0,0,0.1);
 }
 
-:root.dark-mode .nrf-multi-dropdown {
-  background: #1e293b;
-  border-color: #4B5563;
-}
 
 .nrf-multi-option {
   display: flex;
@@ -708,9 +670,6 @@
   background: #f1f5f9;
 }
 
-:root.dark-mode .nrf-multi-option:hover {
-  background: #334155;
-}
 
 .nrf-multi-option input[type="checkbox"] {
   accent-color: #1A3C6E;
@@ -784,11 +743,6 @@
     align-items: stretch;
   }
 
-  :root.dark-mode .nrf-chem-entry,
-  :root.dark-mode .nrf-app-entry {
-    background: #0f172a;
-    border-color: #334155;
-  }
 
   /* Chem rows on mobile */
   .nrf-chem-row-1 {

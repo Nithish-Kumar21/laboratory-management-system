@@ -3,9 +3,6 @@
   background: #F0F2F5;
 }
 
-:root.dark-mode .staff-detail-wrapper {
-  background: #0f172a;
-}
 
 .staff-detail-page {
   padding: 40px 24px;
@@ -78,11 +75,6 @@
   overflow: hidden;
 }
 
-:root.dark-mode .srd-dropdown {
-  background: #1e293b;
-  border-color: #334155;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-}
 
 .srd-dropdown-item {
   display: flex;
@@ -104,9 +96,6 @@
   background: #f1f5f9;
 }
 
-:root.dark-mode .srd-dropdown-item:hover:not(:disabled) {
-  background: #334155;
-}
 
 .srd-dropdown-item:disabled {
   opacity: 0.4;
@@ -127,9 +116,6 @@
   padding-top: 10px;
 }
 
-:root.dark-mode .srd-dropdown-danger {
-  border-top-color: #334155;
-}
 
 /* ===== SUMMARY LINE ===== */
 .srd-summary {
@@ -159,9 +145,6 @@
   border-bottom: none;
 }
 
-:root.dark-mode .sd-card {
-  border-bottom-color: #334155;
-}
 
 .sd-card-header {
   display: flex;
@@ -202,17 +185,6 @@
   cursor: not-allowed;
 }
 
-:root.dark-mode .sd-action-icon-btn {
-  background: #1e293b;
-  border-color: #4B5563;
-  color: #4A90D9;
-}
-
-:root.dark-mode .sd-action-icon-btn:hover:not(:disabled) {
-  background: #4A90D9;
-  color: #fff;
-}
-
 .sd-req-id {
   font-size: 20px;
   font-weight: 700;
@@ -225,9 +197,6 @@
   margin: 18px 0;
 }
 
-:root.dark-mode .sd-divider {
-  border-color: #334155;
-}
 
 /* ===== METADATA GRID (shared with IssueRegisterDetail) ===== */
 .sd-meta-grid {
@@ -305,10 +274,6 @@
   gap: 6px;
 }
 
-:root.dark-mode .sd-chem-item {
-  background: #1a2332;
-  border-color: #334155;
-}
 
 .srd-item-top {
   display: flex;
@@ -346,9 +311,6 @@
   margin: 6px 0;
 }
 
-:root.dark-mode .srd-card-divider {
-  background: #334155;
-}
 
 .srd-item-stats {
   display: flex;

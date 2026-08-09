@@ -4,11 +4,10 @@ import {
     FaExclamationTriangle
 } from 'react-icons/fa';
 import {
-    TbEye, TbEyeOff, TbSun, TbMoon, TbDeviceDesktop,
+    TbEye, TbEyeOff,
     TbPencil, TbTrash, TbPlus
 } from 'react-icons/tb';
 import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../utils/api';
 import ConfirmDialog from './ConfirmDialog';
@@ -16,12 +15,11 @@ import './Settings.css';
 
 function Settings() {
     const { isStoreKeeper, isAdmin } = useAuth();
-    const { themeMode, setThemeMode } = useTheme();
     const navigate = useNavigate();
     const location = useLocation();
 
     const [activeSection, setActiveSection] = useState(
-        location.state?.activeSection || 'appearance'
+        location.state?.activeSection || 'security'
     );
     const [message, setMessage] = useState('');
     const [loading, setLoading] = useState(false);
@@ -281,9 +279,6 @@ function Settings() {
             </div>
 
             <div className="settings-tabs overflow-x-auto md:overflow-visible flex-nowrap -webkit-overflow-scrolling-touch pb-px">
-                <button className={`settings-tab ${activeSection === 'appearance' ? 'active' : ''}`} onClick={() => setActiveSection('appearance')}>
-                    Appearance
-                </button>
                 <button className={`settings-tab ${activeSection === 'security' ? 'active' : ''}`} onClick={() => setActiveSection('security')}>
                     Security
                 </button>
@@ -306,38 +301,6 @@ function Settings() {
 
             <div className="settings-panel">
                 {message && <div className="settings-toast success animate-fade"><FaCheckCircle /> {message}</div>}
-
-                {activeSection === 'appearance' && (
-                    <div className="space-y-8">
-                        <div>
-                            <h3 className="text-lg font-bold text-[var(--text-main)] mb-2">Theme Preference</h3>
-                            <div className="border-b border-[var(--border)] mb-5" />
-                            <div className="flex gap-4">
-                                {[
-                                    { mode: 'light', Icon: TbSun, label: 'Light' },
-                                    { mode: 'dark', Icon: TbMoon, label: 'Dark' },
-                                    { mode: 'system', Icon: TbDeviceDesktop, label: 'System' },
-                                ].map(({ mode, Icon, label }) => (
-                                    <button
-                                        key={mode}
-                                        onClick={() => setThemeMode(mode)}
-                                        className={`settings-theme-btn ${themeMode === mode ? 'active' : ''}`}
-                                        type="button"
-                                    >
-                                        <span className="settings-theme-icon"><Icon size={22} /></span>
-                                        <span className="settings-theme-label">{label}</span>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div>
-                            <h3 className="text-lg font-bold text-[var(--text-main)] mb-2">About / Help</h3>
-                            <div className="border-b border-[var(--border)] mb-5" />
-                            <p className="text-[var(--text-muted)] text-sm">Will update soon.</p>
-                        </div>
-                    </div>
-                )}
 
                 {activeSection === 'security' && (
                     <div>

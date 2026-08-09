@@ -75,14 +75,6 @@
   font-weight: 500;
 }
 
-:root.dark-mode .de-service-placeholder-title {
-  color: #F1F5F9;
-}
-
-:root.dark-mode .de-service-placeholder-sub {
-  color: #94A3B8;
-}
-
 /* ===== TITLE ROW ===== */
 .de-title-row {
   display: flex;
@@ -592,59 +584,4 @@
   .de-search-right {
     display: none;
   }
-}
-
-/* ===== DARK MODE ===== */
-:root.dark-mode .de-page {
-  background: #0F172A;
-}
-
-:root.dark-mode .de-search-row {
-  background: #1E293B;
-}
-
-:root.dark-mode .de-search-input {
-  color: #F1F5F9;
-}
-
-:root.dark-mode .de-filters-panel {
-  background: #1E293B;
-}
-
-:root.dark-mode .de-filter-group input {
-  background: #0F172A;
-  color: #F1F5F9;
-  border-color: #334155;
-}
-
-:root.dark-mode .de-card {
-  background: #1E293B;
-}
-
-:root.dark-mode .de-card-ref {
-  color: #F1F5F9;
-}
-
-:root.dark-mode .de-card-staff {
-  color: #94A3B8;
-}
-
-:root.dark-mode .de-card-count {
-  color: #94A3B8;
-}
-
-:root.dark-mode .de-card-mobile {
-  background: #1E293B;
-}
-
-:root.dark-mode .de-mobile-ref {
-  color: #F1F5F9;
-}
-
-:root.dark-mode .de-mobile-staff {
-  color: #94A3B8;
-}
-
-:root.dark-mode .de-empty-title {
-  color: #F1F5F9;
 }

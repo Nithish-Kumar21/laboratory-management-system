@@ -242,7 +242,7 @@
   grid-template-columns: 2.5fr 1fr 60px !important;
   gap: 20px;
   align-items: center;
-  margin-bottom: 14px;
+  margin-bottom: 24px;
   padding: 16px 24px;
   border-radius: 20px;
   background: #ffffff !important;
@@ -262,12 +262,6 @@
   overflow: visible !important;
 }
 
-:root.dark-mode .chemical-requirements-section .grid-row.chemical-row {
-  background: #1a2235 !important;
-  /* Bluish dark from image */
-  color: #ffffff !important;
-  border: 1.5px solid #2d3748;
-}
 
 .chemical-requirements-section .grid-input {
   width: 100% !important;
@@ -281,11 +275,6 @@
   font-weight: 600;
 }
 
-:root.dark-mode .chemical-requirements-section .grid-input {
-  background: #0f172a !important;
-  color: #ffffff !important;
-  border: 1.5px solid #334155 !important;
-}
 
 .chemical-requirements-section .grid-input:focus {
   background: #ffffff !important;
@@ -294,11 +283,6 @@
   outline: none;
 }
 
-:root.dark-mode .chemical-requirements-section .grid-input:focus {
-  background: #0f172a !important;
-  color: #ffffff !important;
-  border-color: #475569 !important;
-}
 
 .chemical-requirements-section .btn-row-del {
   width: 48px !important;
@@ -315,19 +299,12 @@
   justify-self: center;
 }
 
-:root.dark-mode .chemical-requirements-section .btn-row-del {
-  background: #334155 !important;
-  border-color: #475569 !important;
-}
 
 .chemical-requirements-section .btn-row-del:hover {
   transform: scale(1.05);
   /* Just a slight scale, no color change */
 }
 
-:root.dark-mode .chemical-requirements-section .btn-row-del:hover {
-  transform: scale(1.05);
-}
 
 /* Generic Fallbacks */
 .btn-add-line {
@@ -523,9 +500,6 @@
   flex-shrink: 0;
 }
 
-:root.dark-mode .unit-label {
-  color: #94a3b8;
-}
 
 .qty-ml-wrapper .field-error {
   position: absolute;
