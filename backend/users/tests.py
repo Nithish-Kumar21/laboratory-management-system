@@ -8,6 +8,8 @@ from django.test import SimpleTestCase, TestCase
 from rest_framework import status
 from rest_framework.settings import api_settings
 from rest_framework.test import APITestCase
+from rest_framework_simplejwt.settings import api_settings as jwt_api_settings
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import PasswordResetToken
 from .serializers import (
@@ -265,3 +267,44 @@ class LoginThrottleTest(APITestCase):
 
         self.user.refresh_from_db()
         self.assertLessEqual(self.user.failed_login_attempts, 5)
+
+
+class LogoutBlacklistTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            employee_id='LOGOUT01', email='logout@test.com',
+            password='Logout@Pass1', role='staff',
+            full_name='Logout Test', phone='+919876543210',
+            designation='Staff', department='B.Sc Chemistry',
+        )
+
+    def test_logout_blacklists_refresh_token(self):
+        refresh = RefreshToken.for_user(self.user)
+        resp = self.client.post(
+            '/api/users/logout/',
+            {'refresh': str(refresh)},
+            HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}',
+        )
+        self.assertEqual(resp.status_code, 200)
+
+        resp2 = self.client.post('/api/users/token/refresh/', {'refresh': str(refresh)})
+        self.assertEqual(resp2.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_refresh_rotation_invalidates_old_refresh_token(self):
+        # settings_test.py sets BLACKLIST_AFTER_ROTATION=False; enable it to
+        # verify the prod (base.py) rotation behavior.
+        orig_rotate = jwt_api_settings.ROTATE_REFRESH_TOKENS
+        orig_blacklist = jwt_api_settings.BLACKLIST_AFTER_ROTATION
+        jwt_api_settings.ROTATE_REFRESH_TOKENS = True
+        jwt_api_settings.BLACKLIST_AFTER_ROTATION = True
+        try:
+            refresh = RefreshToken.for_user(self.user)
+            resp = self.client.post('/api/users/token/refresh/', {'refresh': str(refresh)})
+            self.assertEqual(resp.status_code, 200)
+            self.assertNotEqual(resp.data['refresh'], str(refresh))
+
+            resp2 = self.client.post('/api/users/token/refresh/', {'refresh': str(refresh)})
+            self.assertEqual(resp2.status_code, status.HTTP_401_UNAUTHORIZED)
+        finally:
+            jwt_api_settings.ROTATE_REFRESH_TOKENS = orig_rotate
+            jwt_api_settings.BLACKLIST_AFTER_ROTATION = orig_blacklist
