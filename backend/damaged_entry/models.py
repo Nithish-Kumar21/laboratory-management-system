@@ -1,4 +1,3 @@
-from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
 class DamagedEntry(models.Model):
@@ -7,7 +6,7 @@ class DamagedEntry(models.Model):
     date = models.DateField()
     details = models.TextField(blank=True, default='')
     day_order = models.CharField(max_length=5, blank=True, default='')
-    hour = ArrayField(models.IntegerField(), default=list, blank=True)
+    hour = models.JSONField(default=list, blank=True)
 
     class Meta:
         db_table = 'damaged_entry'

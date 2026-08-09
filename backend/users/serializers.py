@@ -85,7 +85,10 @@ class UserCreateSerializer(serializers.ModelSerializer):
             data['password'] = User.generate_secure_password()
         else:
             try:
-                validate_password(password)
+                validate_password(
+                    password,
+                    user=User(employee_id=data.get('employee_id', ''), email=data.get('email', ''))
+                )
             except DjangoValidationError as e:
                 raise serializers.ValidationError({'password': list(e.messages)})
             data['password'] = password
@@ -184,7 +187,7 @@ class ChangePasswordSerializer(serializers.Serializer):
             })
 
         try:
-            validate_password(data['new_password'])
+            validate_password(data['new_password'], user=self.context['request'].user)
         except DjangoValidationError as e:
             raise serializers.ValidationError({'new_password': list(e.messages)})
 
@@ -217,7 +220,7 @@ class FirstLoginChangePasswordSerializer(serializers.Serializer):
             })
 
         try:
-            validate_password(data['new_password'])
+            validate_password(data['new_password'], user=self.context['user'])
         except DjangoValidationError as e:
             raise serializers.ValidationError({'new_password': list(e.messages)})
 

@@ -21,19 +21,35 @@ class ServiceEntryListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ServiceEntry
-        fields = ['id', 'service_code', 'storekeeper', 'service_person_name', 'date', 'status', 'completed_at', 'items']
+        fields = [
+            'id', 'service_code', 'storekeeper', 'service_person_name', 'date',
+            'status', 'completed_at', 'vendor_name', 'total_cost', 'items',
+        ]
 
 
 class ServiceEntryDetailSerializer(serializers.ModelSerializer):
     items = ServiceEntryItemSerializer(many=True, read_only=True)
+    items_log = serializers.SerializerMethodField()
+    created_by_name = serializers.CharField(source='created_by.full_name', read_only=True, default=None)
+    updated_by_name = serializers.CharField(source='updated_by.full_name', read_only=True, default=None)
 
     class Meta:
         model = ServiceEntry
         fields = [
             'id', 'service_code', 'storekeeper', 'service_person_name',
             'contact_country_code', 'contact_number', 'email',
-            'deliver_by_date', 'date', 'status', 'completed_at', 'items',
+            'deliver_by_date', 'company_name', 'company_address',
+            'company_contact_country_code', 'company_contact_number',
+            'vendor_name', 'vendor_contact', 'entry_date', 'total_cost', 'remarks',
+            'date', 'status', 'completed_at',
+            'created_at', 'updated_at', 'created_by', 'created_by_name',
+            'updated_by', 'updated_by_name',
+            'items', 'items_log',
         ]
+        read_only_fields = ['created_at', 'updated_at', 'created_by', 'updated_by']
+
+    def get_items_log(self, obj):
+        return ServiceEntryItemLogSerializer(obj.items_log, many=True).data
 
 
 class ServiceEntryItemWriteSerializer(serializers.Serializer):
@@ -72,7 +88,9 @@ class ServiceEntryCreateSerializer(serializers.ModelSerializer):
         model = ServiceEntry
         fields = [
             'service_person_name', 'contact_country_code', 'contact_number',
-            'email', 'deliver_by_date', 'items',
+            'email', 'deliver_by_date', 'company_name', 'company_address',
+            'company_contact_country_code', 'company_contact_number',
+            'vendor_name', 'vendor_contact', 'total_cost', 'remarks', 'items',
         ]
 
     def validate_contact_number(self, value):
@@ -112,6 +130,7 @@ class ServiceEntryCreateSerializer(serializers.ModelSerializer):
             storekeeper=username,
             date=today,
             status='in_service',
+            created_by=user,
             **validated_data,
         )
 

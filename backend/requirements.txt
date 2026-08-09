@@ -6,4 +6,6 @@ psycopg2-binary==2.9.11
 djangorestframework==3.16.1
 django-cors-headers==4.9.0
 python-decouple==3.8
-djangorestframework-simplejwt 
+djangorestframework-simplejwt==5.5.1
+reportlab==5.0.0
+openpyxl==3.1.5

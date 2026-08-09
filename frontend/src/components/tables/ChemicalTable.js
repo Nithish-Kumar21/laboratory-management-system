@@ -13,7 +13,7 @@ function ChemicalTable({ showExtra = true, searchTerm = '', showOnlyLowStock = f
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('available_chemicals/')
+    api.get('/available_chemicals/')
       .then((res) => {
         setChemicals(
           Array.isArray(res.data) ? res.data : res.data.results || []
@@ -27,7 +27,7 @@ function ChemicalTable({ showExtra = true, searchTerm = '', showOnlyLowStock = f
 
   const filtered = chemicals.filter((item) => {
     const term = searchTerm.toLowerCase();
-    if (term && !item.chemical_name.toLowerCase().includes(term)) return false;
+    if (term && !(item.chemical_name || '').toLowerCase().includes(term)) return false;
     if (showOnlyLowStock) {
       const qty = parseFloat(item.quantity);
       const reorder = parseFloat(item.reorder_level || 0);
@@ -49,14 +49,16 @@ function ChemicalTable({ showExtra = true, searchTerm = '', showOnlyLowStock = f
             <tr>
               <th className="col-index">#</th>
               <th className="col-name">Name</th>
-              <th className="col-qty">Quantity</th>
+              <th className="col-qty">Stock in Hand</th>
+              {showExtra && <th className="col-remaining">Remaining</th>}
               {showExtra && <th className="col-rl">Reorder Level</th>}
               {showExtra && <th className="col-status">Status</th>}
             </tr>
           </thead>
           <tbody>
             {filtered.map((item, idx) => {
-              const qty = parseFloat(item.quantity);
+              const qty = showExtra ? parseFloat(item.quantity) : parseFloat(item.remaining ?? item.quantity);
+              const remaining = parseFloat(item.remaining ?? item.quantity);
               const reorder = parseFloat(item.reorder_level || 0);
               const status = showExtra ? getStatus(qty, reorder) : null;
               const colors = status ? getStatusColor(status) : null;
@@ -65,6 +67,7 @@ function ChemicalTable({ showExtra = true, searchTerm = '', showOnlyLowStock = f
                   <td className="col-index">{idx + 1}</td>
                   <td className="col-name"><span className="item-name">{item.chemical_name}</span></td>
                   <td className="col-qty">{qty} <span className="unit-text">{item.unit}</span></td>
+                  {showExtra && <td className="col-remaining">{remaining} <span className="unit-text">{item.unit}</span></td>}
                   {showExtra && <td className="col-rl">{reorder} <span className="unit-text">{item.unit}</span></td>}
                   {showExtra && (
                     <td className="col-status">
@@ -80,7 +83,8 @@ function ChemicalTable({ showExtra = true, searchTerm = '', showOnlyLowStock = f
 
       <div className="inv-card-grid">
         {filtered.map((item) => {
-          const qty = parseFloat(item.quantity);
+          const qty = showExtra ? parseFloat(item.quantity) : parseFloat(item.remaining ?? item.quantity);
+          const remaining = parseFloat(item.remaining ?? item.quantity);
           const reorder = parseFloat(item.reorder_level || 0);
           const status = showExtra ? getStatus(qty, reorder) : null;
           return (
@@ -90,6 +94,11 @@ function ChemicalTable({ showExtra = true, searchTerm = '', showOnlyLowStock = f
                 <span className="inv-card-label">
                   Qty: <span className="inv-card-value">{qty} <span className="unit-text">{item.unit}</span></span>
                 </span>
+                {showExtra && (
+                  <span className="inv-card-label">
+                    Rem: <span className="inv-card-value">{remaining} <span className="unit-text">{item.unit}</span></span>
+                  </span>
+                )}
                 {showExtra && (
                   <span className="inv-card-label">
                     RL: <span className="inv-card-value">{reorder} <span className="unit-text">{item.unit}</span></span>

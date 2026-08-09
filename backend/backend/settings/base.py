@@ -1,10 +1,14 @@
+import os
 from pathlib import Path
 from datetime import timedelta
 from decouple import config
+from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+load_dotenv(BASE_DIR / '.env')
 
-SECRET_KEY = config('SECRET_KEY')
+
+SECRET_KEY = os.environ['SECRET_KEY']
 
 DEBUG = config('DEBUG', default=False, cast=bool)
 
@@ -20,6 +24,7 @@ INSTALLED_APPS = [
     'django.contrib.postgres',
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'users',
     'inventory',
@@ -41,6 +46,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'users.middleware.FirstLoginMiddleware',
+    'backend.middleware.MaxRequestBodySizeMiddleware',
 ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -74,14 +80,15 @@ DATABASES = {
     }
 }
 
+PASSWORD_COMPLEXITY_VALIDATOR = 'users.validators.PasswordComplexityValidator'
+
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator', 'OPTIONS': {'min_length': 8}},
     {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
+    {'NAME': PASSWORD_COMPLEXITY_VALIDATOR},
 ]
-
-PASSWORD_COMPLEXITY_VALIDATOR = 'users.validators.PasswordComplexityValidator'
 
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Asia/Kolkata'
@@ -121,10 +128,28 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 100,
+    'DEFAULT_THROTTLE_CLASSES': [],
+    'DEFAULT_THROTTLE_RATES': {
+        'login': '10/min',
+        'forgot_password': '5/min',
+        'reset_password': '3/min',
+        'verify_reset_token': '10/min',
+        # ScopedRateThrottle uses REMOTE_ADDR; ensure NUM_PROXIES is set if behind reverse proxy
+    },
     'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler',
     'NON_FIELD_ERRORS_KEY': 'error',
     'DATETIME_FORMAT': '%Y-%m-%d %H:%M:%S',
+    # Throttle identity must come from REMOTE_ADDR, never from the
+    # X-Forwarded-For header (which a client can set to rotate its throttle
+    # bucket). 0 = no trusted reverse proxy in front of Django. In production
+    # behind Nginx, set this to the number of trusted proxies instead.
+    'NUM_PROXIES': 0,
 }
+
+# Reject request bodies larger than 2 MB before they are parsed.
+DATA_UPLOAD_MAX_MEMORY_SIZE = 2 * 1024 * 1024
+FILE_UPLOAD_MAX_MEMORY_SIZE = 2 * 1024 * 1024
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 100
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=8),

@@ -299,6 +299,12 @@ since there's nothing left to action).
 - Do not add Django migrations for the new tables — schema is raw SQL only
   (Part 1), per project convention (`managed=False` is a guardrail against
   silent AI-driven migrations).
+- **Schema changes are raw SQL only and must be applied manually in 3 places:**
+  (1) your real/working local DB, (2) your local test DB (the separate DB
+  Django auto-creates for `manage.py test` — NOT the same as #1), and
+  (3) communicated to every teammate to run on their own DBs. A schema change
+  is not done until all 3 are synced. See `docs/DECISIONS.md` #7 and
+  `docs/KNOWN_ISSUES_schema_sync_note.md`.
 - Do not implement any inventory math in Python — all quantity
   deduction/increment logic lives in the PostgreSQL triggers already
   defined in Part 1.

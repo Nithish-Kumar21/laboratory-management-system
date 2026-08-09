@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import api from '../utils/api';
 import { getStatus } from '../utils/inventory';
@@ -9,6 +9,44 @@ function LowStockAlert({ activeTab }) {
   const [lowStockApparatus, setLowStockApparatus] = useState([]);
   const [isExpanded, setIsExpanded] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  const fetchLowStock = useCallback(() => {
+    Promise.all([
+      api.get('/available_chemicals/').catch(() => ({ data: [] })),
+      api.get('/available_apparatus/').catch(() => ({ data: [] }))
+    ])
+      .then(([chemRes, appRes]) => {
+        const chemData = Array.isArray(chemRes.data) ? chemRes.data : chemRes.data.results || [];
+        const appData = Array.isArray(appRes.data) ? appRes.data : appRes.data.results || [];
+
+        const lowChem = chemData.filter(c => {
+          const qty = parseFloat(c.quantity) || 0;
+          const reorder = parseFloat(c.reorder_level || 0);
+          return getStatus(qty, reorder) !== 'healthy';
+        }).map(c => ({
+          ...c,
+          chemical_name: c.chemical_name,
+          current_quantity: c.quantity,
+          reorder_level: c.reorder_level
+        }));
+
+        const lowApp = appData.filter(a => {
+          const qty = parseFloat(a.available_quantity_pieces) || 0;
+          const reorder = parseFloat(a.reorder_level || 0);
+          return getStatus(qty, reorder) !== 'healthy';
+        }).map(a => ({
+          ...a,
+          apparatus_name: a.apparatus_name,
+          current_quantity_pieces: a.available_quantity_pieces,
+          reorder_level: a.reorder_level
+        }));
+
+        setLowStockChemicals(lowChem);
+        setLowStockApparatus(lowApp);
+      })
+      .catch((error) => console.error('Error fetching low stock:', error))
+      .finally(() => setLoading(false));
+  }, []);
 
   useEffect(() => {
     fetchLowStock();
@@ -26,45 +64,7 @@ function LowStockAlert({ activeTab }) {
       window.removeEventListener('inventory-updated', fetchLowStock);
       window.removeEventListener('storage', handleStorage);
     };
-  }, []);
-
-  const fetchLowStock = () => {
-    Promise.all([
-      api.get('/available_chemicals/').catch(() => ({ data: [] })),
-      api.get('/available_apparatus/').catch(() => ({ data: [] }))
-    ])
-      .then(([chemRes, appRes]) => {
-        const chemData = Array.isArray(chemRes.data) ? chemRes.data : chemRes.data.results || [];
-        const appData = Array.isArray(appRes.data) ? appRes.data : appRes.data.results || [];
-
-        const lowChem = chemData.filter(c => {
-          const qty = parseFloat(c.quantity);
-          const reorder = parseFloat(c.reorder_level || 0);
-          return getStatus(qty, reorder) !== 'healthy';
-        }).map(c => ({
-          ...c,
-          chemical_name: c.chemical_name,
-          current_quantity: c.quantity,
-          reorder_level: c.reorder_level
-        }));
-
-        const lowApp = appData.filter(a => {
-          const qty = parseFloat(a.available_quantity_pieces);
-          const reorder = parseFloat(a.reorder_level || 0);
-          return getStatus(qty, reorder) !== 'healthy';
-        }).map(a => ({
-          ...a,
-          apparatus_name: a.apparatus_name,
-          current_quantity_pieces: a.available_quantity_pieces,
-          reorder_level: a.reorder_level
-        }));
-
-        setLowStockChemicals(lowChem);
-        setLowStockApparatus(lowApp);
-      })
-      .catch((error) => console.error('Error fetching low stock:', error))
-      .finally(() => setLoading(false));
-  };
+  }, [fetchLowStock]);
 
   const currentLowStock = activeTab === 'chemical' ? lowStockChemicals : lowStockApparatus;
   const shouldDisplay = currentLowStock.length > 0;

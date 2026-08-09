@@ -164,6 +164,46 @@ def existing_apparatus(db):
     return app
 
 
+@pytest.fixture(autouse=True)
+def _ensure_venue_column(db):
+    """Ensure the venue column exists on the stock_request table (managed=False model)."""
+    from django.db import connection
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            DO $$ BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name='stock_request' AND column_name='venue'
+                ) THEN
+                    ALTER TABLE stock_request ADD COLUMN venue varchar(100) NULL DEFAULT 'B.Sc Chemistry Laboratory';
+                END IF;
+            END $$;
+        """)
+
+
+@pytest.fixture(autouse=True)
+def _ensure_committed_quantity_column(db):
+    """Ensure committed_quantity_ml exists on available_chemicals (managed=False model)."""
+    from django.db import connection
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            DO $$ BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name='available_chemicals' AND column_name='committed_quantity_ml'
+                ) THEN
+                    ALTER TABLE available_chemicals ADD COLUMN committed_quantity_ml NUMERIC(10,2) NOT NULL DEFAULT 0;
+                END IF;
+            END $$;
+        """)
+
+
 @pytest.fixture
 def today():
     return timezone.now().date()
+
+
+@pytest.fixture(autouse=True)
+def clear_throttle_cache():
+    from django.core.cache import cache
+    cache.clear()

@@ -52,7 +52,8 @@ class StockRequest(models.Model):
     purpose_type = models.CharField(max_length=20, choices=PURPOSE_TYPE_CHOICES)
     experiment_name = models.TextField()
     student_name = models.CharField(max_length=100, null=True, blank=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    venue = models.CharField(max_length=100, blank=True, default='B.Sc Chemistry Laboratory')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
     reason = models.TextField(blank=True)
     rejection_reason = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -161,6 +162,7 @@ class IssueRegister(models.Model):
     class_field = models.CharField(db_column='class', max_length=50)
     date = models.DateField()
     status = models.CharField(max_length=20)
+    venue = models.CharField(max_length=100, blank=True, default='B.Sc Chemistry Laboratory')
 
     class Meta:
         managed = False

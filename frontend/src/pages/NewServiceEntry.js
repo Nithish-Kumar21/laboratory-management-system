@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaPlus, FaTrash, FaUserTie, FaPhone, FaEnvelope, FaCalendarAlt, FaTools, FaIdCard, FaUser } from 'react-icons/fa';
+import { FaArrowLeft, FaPlus, FaTrash, FaUserTie, FaPhone, FaEnvelope, FaCalendarAlt, FaTools, FaIdCard, FaUser, FaBuilding } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -36,6 +36,10 @@ function NewServiceEntry() {
     contact_number: '',
     email: '',
     deliver_by_date: '',
+    company_name: '',
+    company_address: '',
+    company_contact_country_code: '+91',
+    company_contact_number: '',
   });
   const [items, setItems] = useState([{ apparatus_name: '', quantity: '' }]);
   const [apparatusNames, setApparatusNames] = useState([]);
@@ -48,7 +52,7 @@ function NewServiceEntry() {
   const scrollRef = useRef(null);
 
   useEffect(() => {
-    api.get('available_apparatus/names/')
+    api.get('/available_apparatus/names/')
       .then(res => setApparatusNames(Array.isArray(res.data) ? res.data : []))
       .catch(err => console.error(err));
   }, []);
@@ -77,16 +81,28 @@ function NewServiceEntry() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (submitting) return;
+
+    // Validate numeric fields before submission
+    const errors = {};
+    items.forEach((it, i) => {
+      if (!it.apparatus_name) return;
+      if (it.quantity === '' || isNaN(parseInt(it.quantity))) errors[`item_${i}_qty`] = 'Required';
+    });
+    if (Object.keys(errors).length > 0) {
+      setAlertDialog({ open: true, message: 'Please fill in all quantity fields with valid numbers.' });
+      return;
+    }
+
     setSubmitting(true);
     try {
       const payload = {
         ...formData,
         items: items.filter(it => it.apparatus_name).map(it => ({
           apparatus_name: it.apparatus_name,
-          quantity: parseInt(it.quantity),
+          quantity: parseInt(it.quantity) || 0,
         })),
       };
-      await api.post('service-entries/', payload);
+      await api.post('/service-entries/', payload);
       navigate('/damaged-entry');
     } catch (err) {
       const serverErr = err.response?.data;
@@ -118,34 +134,31 @@ function NewServiceEntry() {
           <span>New Service Entry</span>
         </div>
 
-        {/* Card 1 — Read-only details */}
-        <div className="nrf-card" style={{ marginBottom: '16px' }}>
-          <div className="nrf-auto-row">
-            <div className="nrf-field">
-              <label className="nrf-field-label"><FaIdCard /> Service ID</label>
-              <input type="text" className="nrf-input" value="SVC-### (auto-generated)" disabled />
-            </div>
-            <div className="nrf-field">
-              <label className="nrf-field-label"><FaCalendarAlt /> Date</label>
-              {/* ASSUMPTION: The storekeeper can now pick any date via the native
-                  date picker (matching Tentative Delivery Date's UX). If the business
-                  rule requires this always equal today's date and be non-editable,
-                  revert to a disabled input or constrain on change. */}
-              <input type="date" className="nrf-input" value={entryDate}
-                onChange={e => setEntryDate(e.target.value)} />
-            </div>
+        {/* Group 1 — Service ID, Date, Store Keeper */}
+        <div className="flex flex-col gap-3 md:grid md:grid-cols-3 md:gap-4 mb-4">
+          <div className="nrf-field">
+            <label className="nrf-field-label"><FaIdCard /> Service ID</label>
+            <input type="text" className="nrf-input" value="SVC-### (auto-generated)" disabled />
           </div>
-          <div className="nrf-auto-row">
-            <div className="nrf-field">
-              <label className="nrf-field-label"><FaUser /> Store Keeper</label>
-              <input type="text" className="nrf-input" value={user?.full_name || '-'} disabled />
-            </div>
+          <div className="nrf-field">
+            <label className="nrf-field-label"><FaCalendarAlt /> Date</label>
+            <input type="date" className="nrf-input" value={entryDate}
+              onChange={e => setEntryDate(e.target.value)} />
+          </div>
+          <div className="nrf-field">
+            <label className="nrf-field-label"><FaUser /> Store Keeper</label>
+            <input type="text" className="nrf-input" value={user?.full_name || '-'} disabled />
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} onKeyDown={handleKeyDown}>
+        <div className="nrf-divider" style={{ marginTop: 16, marginBottom: 8 }}></div>
+        <div className="nrf-section" style={{ marginBottom: 12 }}>
+          <div className="nrf-section-title"><FaUserTie /> Service Person Details</div>
+        </div>
+
+        <form className="nrf-service-form" onSubmit={handleSubmit} onKeyDown={handleKeyDown}>
         <div className="nrf-card">
-          <div className="nrf-auto-row">
+          <div className="flex flex-col gap-3 md:grid md:grid-cols-2 md:gap-4">
             <div className="nrf-field">
               <label className="nrf-field-label"><FaUserTie /> Service Person Name</label>
               <input type="text" className="nrf-input" value={formData.service_person_name} required placeholder="Name of service person"
@@ -153,10 +166,9 @@ function NewServiceEntry() {
             </div>
             <div className="nrf-field">
               <label className="nrf-field-label"><FaPhone /> Contact Number</label>
-              <div style={{ display: 'flex', gap: '8px' }}>
+              <div className="nrf-composite">
                 <select
                   className="nrf-input"
-                  style={{ width: '120px', flexShrink: 0 }}
                   value={formData.contact_country_code}
                   onChange={e => setFormData({ ...formData, contact_country_code: e.target.value })}
                 >
@@ -166,7 +178,7 @@ function NewServiceEntry() {
                 </select>
                 <input
                   type="text"
-                  className="nrf-input"
+                  className="nrf-input min-w-0"
                   placeholder="10-digit number"
                   value={formData.contact_number}
                   required
@@ -177,9 +189,6 @@ function NewServiceEntry() {
                 />
               </div>
             </div>
-          </div>
-
-          <div className="nrf-auto-row">
             <div className="nrf-field">
               <label className="nrf-field-label"><FaEnvelope /> Email</label>
               <input type="email" className="nrf-input" value={formData.email} placeholder="service@example.com"
@@ -192,6 +201,53 @@ function NewServiceEntry() {
             </div>
           </div>
 
+          <div className="nrf-divider"></div>
+
+          {/* Company / Vendor Information */}
+          <div className="nrf-section">
+            <div className="nrf-section-header">
+              <div className="nrf-section-title"><FaBuilding /> Company / Vendor Information</div>
+            </div>
+            <div className="flex flex-col gap-3 md:grid md:grid-cols-2 md:gap-4">
+              <div className="nrf-field">
+                <label className="nrf-field-label">Company Name</label>
+                <input type="text" className="nrf-input" value={formData.company_name} placeholder="Name of company"
+                  onChange={e => setFormData({ ...formData, company_name: e.target.value })} />
+              </div>
+              <div className="nrf-field">
+                <label className="nrf-field-label">Company Contact</label>
+                <div className="nrf-composite">
+                  <select
+                    className="nrf-input"
+                    value={formData.company_contact_country_code}
+                    onChange={e => setFormData({ ...formData, company_contact_country_code: e.target.value })}
+                  >
+                    {COUNTRY_CODES.map(c => (
+                      <option key={c.code} value={c.code}>{c.label}</option>
+                    ))}
+                  </select>
+                  <input
+                    type="text"
+                    className="nrf-input min-w-0"
+                    placeholder="10-digit number"
+                    value={formData.company_contact_number}
+                    maxLength={10}
+                    pattern="[0-9]{10}"
+                    title="Exactly 10 digits"
+                    onChange={e => setFormData({ ...formData, company_contact_number: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="nrf-field">
+              <label className="nrf-field-label">Company Address</label>
+              <textarea className="nrf-textarea" value={formData.company_address} placeholder="Company address" rows={3}
+                onChange={e => setFormData({ ...formData, company_address: e.target.value })} />
+            </div>
+          </div>
+
+          <div className="nrf-divider"></div>
+
           {/* Line Items */}
           <div className="nrf-section">
             <div className="nrf-section-header">
@@ -199,34 +255,31 @@ function NewServiceEntry() {
               <button type="button" className="nrf-add-btn" onClick={addRow}><FaPlus /> Add Line</button>
             </div>
             {items.map((it, i) => (
-              <div key={i} className="nrf-app-entry">
-                <div className="nrf-app-row-1">
-                  <div className="nrf-autocomplete">
-                    <input type="text" className="nrf-input" placeholder="Search apparatus..." value={it.apparatus_name} required autoComplete="off"
-                      onChange={e => { const next = [...items]; next[i].apparatus_name = e.target.value; setItems(next); setShowSuggestions({ [i]: true }); setActiveIndex(-1); }}
-                      onFocus={() => { setShowSuggestions({ [i]: true }); setActiveIndex(-1); }}
-                      onBlur={() => setTimeout(() => setShowSuggestions({}), 250)} />
-                    {showSuggestions[i] && it.apparatus_name && (
-                      <ul className="nrf-suggestions">
-                        {apparatusNames.filter(n => n.name.toLowerCase().startsWith(it.apparatus_name.toLowerCase())).slice(0, 6).map((n, idx) => (
-                          <li key={idx} className={`nrf-suggestion-item ${activeIndex === idx ? 'active' : ''}`}
-                            onMouseDown={() => selectApparatus(i, n.name)}>
-                            <span>{n.name}</span>
-                            <span className="nrf-stock">Stock: {n.available_quantity}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
+              <div key={i} className="nrf-app-entry md:flex md:flex-row md:items-center md:gap-3 md:flex-nowrap">
+                <div className="nrf-autocomplete md:flex-1 md:min-w-0">
+                  <input type="text" className="nrf-input" placeholder="Search apparatus..." value={it.apparatus_name} required autoComplete="off"
+                    onChange={e => { const next = [...items]; next[i].apparatus_name = e.target.value; setItems(next); setShowSuggestions({ [i]: true }); setActiveIndex(-1); }}
+                    onFocus={() => { setShowSuggestions({ [i]: true }); setActiveIndex(-1); }}
+                    onBlur={() => setTimeout(() => setShowSuggestions({}), 250)} />
+                  {showSuggestions[i] && it.apparatus_name && (
+                    <ul className="nrf-suggestions">
+                      {apparatusNames.filter(n => n.name.toLowerCase().startsWith(it.apparatus_name.toLowerCase())).slice(0, 6).map((n, idx) => (
+                        <li key={idx} className={`nrf-suggestion-item ${activeIndex === idx ? 'active' : ''}`}
+                          onMouseDown={() => selectApparatus(i, n.name)}>
+                          <span>{n.name}</span>
+                          <span className="nrf-stock">Stock: {n.available_quantity}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
-                <div className="nrf-app-row-2">
-                  <div className="nrf-labeled-field">
-                    <span className="nrf-inline-label">Qty</span>
+                <div className="flex items-center gap-2 md:gap-3 flex-nowrap md:shrink-0">
+                  <div className="nrf-labeled-field md:w-20 md:shrink-0">
+                    <span className="nrf-inline-label md:hidden">Qty</span>
                     <input type="number" step="1" className="nrf-input" placeholder="Qty" value={it.quantity ?? ''} required min="1"
                       onChange={e => { const next = [...items]; next[i].quantity = e.target.value; setItems(next); }} />
                   </div>
-                  <div></div>
-                  <button type="button" className="nrf-del-btn" onClick={() => setItems(items.filter((_, idx) => idx !== i))} title="Remove"><FaTrash /></button>
+                  <button type="button" className="nrf-del-btn md:w-9 md:h-9 md:shrink-0" onClick={() => setItems(items.filter((_, idx) => idx !== i))} title="Remove"><FaTrash /></button>
                 </div>
               </div>
             ))}

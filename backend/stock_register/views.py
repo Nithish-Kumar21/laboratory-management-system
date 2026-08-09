@@ -110,19 +110,19 @@ class StockRegisterViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         
-        # 1. Deduct chemicals from inventory
+        # 1. Lock and deduct chemicals from inventory
         for chem in instance.chemical_items.all():
             try:
-                available = AvailableChemical.objects.get(chemical_name=chem.chemical_name)
+                available = AvailableChemical.objects.select_for_update().get(chemical_name=chem.chemical_name)
                 available.quantity -= chem.total_quantity
                 available.save()
             except AvailableChemical.DoesNotExist:
                 pass
                 
-        # 2. Deduct apparatus from inventory
+        # 2. Lock and deduct apparatus from inventory
         for app in instance.apparatus_items.all():
             try:
-                available = AvailableApparatus.objects.get(apparatus_name=app.apparatus_name)
+                available = AvailableApparatus.objects.select_for_update().get(apparatus_name=app.apparatus_name)
                 available.available_quantity_pieces -= app.quantity_pieces
                 available.save()
             except AvailableApparatus.DoesNotExist:

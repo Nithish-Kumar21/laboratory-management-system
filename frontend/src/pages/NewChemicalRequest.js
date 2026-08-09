@@ -24,6 +24,7 @@ function NewChemicalRequest() {
     date: new Date().toISOString().split('T')[0],
     day_order: 'I',
     hour: [],
+    venue: 'B.Sc Chemistry Laboratory',
     purpose_type: 'practical_lab',
     experiment_name: '',
     student_name: ''
@@ -38,7 +39,7 @@ function NewChemicalRequest() {
   const [loadingDraft, setLoadingDraft] = useState(!!editId);
 
   useEffect(() => {
-    api.get('available_chemicals/')
+    api.get('/available_chemicals/')
       .then((res) => {
         setAvailableChemicals(Array.isArray(res.data) ? res.data : res.data.results || []);
       })
@@ -56,6 +57,7 @@ function NewChemicalRequest() {
           date: data.date || new Date(data.created_at).toISOString().split('T')[0],
           day_order: data.day_order || 'I',
           hour: data.hour || [],
+          venue: data.venue || 'B.Sc Chemistry Laboratory',
           purpose_type: data.purpose_type || 'practical_lab',
           experiment_name: data.experiment_name || '',
           student_name: data.student_name || '',
@@ -129,6 +131,7 @@ function NewChemicalRequest() {
       date: formData.date,
       day_order: formData.day_order,
       hour: formData.hour,
+      venue: formData.venue,
       purpose_type: formData.purpose_type,
       experiment_name: formData.experiment_name,
       student_name: formData.purpose_type === 'practical_lab' ? '' : formData.student_name,
@@ -140,9 +143,9 @@ function NewChemicalRequest() {
     };
     try {
       if (editId) {
-        await api.put(`stock_request/${editId}/`, payload);
+        await api.put(`/stock_request/${editId}/`, payload);
       } else {
-        await api.post('stock_request/', payload);
+        await api.post('/stock_request/', payload);
       }
       window.dispatchEvent(new CustomEvent('inventory-updated'));
       navigate('/requests');
@@ -195,7 +198,9 @@ function NewChemicalRequest() {
           </div>
         </div>
 
-        <div className="nrf-field-row">
+        <div className="nrf-divider"></div>
+
+        <div className="nrf-field-row flex flex-col gap-3 md:flex-row md:gap-4">
           <div className="nrf-field nrf-field-half">
             <label className="nrf-field-label">Class</label>
             <div className="nrf-field-control">
@@ -227,7 +232,7 @@ function NewChemicalRequest() {
           </div>
         </div>
 
-        <div className="nrf-field-row">
+        <div className="nrf-field-row flex flex-col gap-3 md:flex-row md:gap-4">
           <div className="nrf-field nrf-field-half">
             <label className="nrf-field-label">Day Order</label>
             <div className="nrf-field-control">
@@ -281,6 +286,25 @@ function NewChemicalRequest() {
           </div>
         </div>
 
+        <div className="nrf-field" style={{ marginTop: 12 }}>
+          <label className="nrf-field-label">Venue</label>
+          <div className="nrf-field-control">
+            <select
+              value={formData.venue}
+              onChange={(e) => setFormData({ ...formData, venue: e.target.value })}
+              className="nrf-select"
+            >
+              <option value="B.Sc Chemistry Laboratory">B.Sc Chemistry Laboratory</option>
+              <option value="M.Sc Chemistry Laboratory">M.Sc Chemistry Laboratory</option>
+              <option value="Research Lab - Chemistry Dept">Research Lab - Chemistry Dept</option>
+              <option value="Allied Laboratory">Allied Laboratory</option>
+            </select>
+            <FaChevronDown className="nrf-chevron" />
+          </div>
+        </div>
+
+        <div className="nrf-divider"></div>
+
         <div className="nrf-chem-section">
           <div className="nrf-chem-header">
             <div className="nrf-chem-title">
@@ -291,74 +315,78 @@ function NewChemicalRequest() {
             </button>
           </div>
 
-          <div className="nrf-chem-cols">
-            <span>Chemical</span>
-            <span>QTY</span>
-            <span></span>
-          </div>
-
           {chemicalItems.map((item, i) => (
             <div key={i} className="nrf-chem-row">
-              <div className="nrf-chem-select">
-                <input
-                  type="text"
-                  className={`nrf-chem-input ${errors[`chemical_name_${i}`] ? 'nrf-error' : ''}`}
-                  placeholder="Select chemicals"
-                  value={item.chemical_name}
-                  onChange={(e) => {
-                    updateChemicalItem(i, 'chemical_name', e.target.value);
-                    if (e.target.value.trim()) setShowSuggestions({ [i]: true });
-                  }}
-                  onFocus={() => {
-                    if (item.chemical_name?.trim()) setShowSuggestions({ [i]: true });
-                  }}
-                  onBlur={() => setTimeout(() => setShowSuggestions({}), 200)}
-                />
-                <FaChevronDown className="nrf-chevron-sm" />
-                {errors[`chemical_name_${i}`] && <span className="nrf-field-err">Required</span>}
-                {showSuggestions[i] && item.chemical_name && (
-                  <ul className="nrf-suggestions">
-                    {availableChemicals
-                      .filter(c => (c.chemical_name || '').toLowerCase().startsWith((item.chemical_name || '').toLowerCase()))
-                      .map((c, idx) => (
-                        <li
-                          key={idx}
-                          className="nrf-suggestion-item"
-                          onMouseDown={() => { updateChemicalItem(i, 'chemical_name', c.chemical_name); setShowSuggestions({}); }}
-                        >
-                          <span>{c.chemical_name}</span>
-                          <span className="nrf-stock">Stock: {c.quantity} {c.unit}</span>
-                        </li>
-                      ))}
-                  </ul>
-                )}
+              <div className="nrf-chem-field">
+                <span className="nrf-chem-label">Chemical</span>
+                <div className="nrf-chem-select">
+                  <input
+                    type="text"
+                    className={`nrf-chem-input ${errors[`chemical_name_${i}`] ? 'nrf-error' : ''}`}
+                    placeholder="Select chemicals"
+                    value={item.chemical_name}
+                    onChange={(e) => {
+                      updateChemicalItem(i, 'chemical_name', e.target.value);
+                      if (e.target.value.trim()) setShowSuggestions({ [i]: true });
+                    }}
+                    onFocus={() => {
+                      if (item.chemical_name?.trim()) setShowSuggestions({ [i]: true });
+                    }}
+                    onBlur={() => setTimeout(() => setShowSuggestions({}), 200)}
+                  />
+                  <FaChevronDown className="nrf-chevron-sm" />
+                  {errors[`chemical_name_${i}`] && <span className="nrf-field-err">Required</span>}
+                  {showSuggestions[i] && item.chemical_name && (
+                    <ul className="nrf-suggestions">
+                      {availableChemicals
+                        .filter(c => (c.chemical_name || '').toLowerCase().startsWith((item.chemical_name || '').toLowerCase()))
+                        .map((c, idx) => (
+                          <li
+                            key={idx}
+                            className="nrf-suggestion-item"
+                            onMouseDown={() => { updateChemicalItem(i, 'chemical_name', c.chemical_name); setShowSuggestions({}); }}
+                          >
+                            <span>{c.chemical_name}</span>
+                            <span className="nrf-stock">Stock: {c.quantity} {c.unit}</span>
+                          </li>
+                        ))}
+                    </ul>
+                  )}
+                </div>
               </div>
-              <div className="nrf-qty-wrap">
-                <input
-                  type="number"
-                  step="1"
-                  min="0"
-                  className={`nrf-qty-input ${errors[`chemical_quantity_${i}`] ? 'nrf-error' : ''}`}
-                  placeholder="0"
-                  value={item.quantity === '' || item.quantity == null ? '' : item.quantity}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    updateChemicalItem(i, 'quantity', v === '' ? '' : v);
-                  }}
-                />
-                <span className="nrf-qty-unit">{availableChemicals.find(c => c.chemical_name === item.chemical_name)?.unit}</span>
+              <div className="nrf-chem-actions">
+                <span className="nrf-chem-label">QTY</span>
+                <div className="nrf-qty-row">
+                  <div className="nrf-qty-wrap">
+                    <input
+                      type="number"
+                      step="1"
+                      min="0"
+                      className={`nrf-qty-input ${errors[`chemical_quantity_${i}`] ? 'nrf-error' : ''}`}
+                      placeholder="0"
+                      value={item.quantity === '' || item.quantity == null ? '' : item.quantity}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        updateChemicalItem(i, 'quantity', v === '' ? '' : v);
+                      }}
+                    />
+                    <span className="nrf-qty-unit">{availableChemicals.find(c => c.chemical_name === item.chemical_name)?.unit}</span>
+                  </div>
+                  <button
+                    type="button"
+                    className="nrf-del-btn"
+                    onClick={() => removeChemicalRow(i)}
+                    disabled={chemicalItems.length === 1}
+                  >
+                    <FaTrash />
+                  </button>
+                </div>
               </div>
-              <button
-                type="button"
-                className="nrf-del-btn"
-                onClick={() => removeChemicalRow(i)}
-                disabled={chemicalItems.length === 1}
-              >
-                <FaTrash />
-              </button>
             </div>
           ))}
         </div>
+
+        <div className="nrf-divider"></div>
 
         <div className="nrf-field">
           <label className="nrf-field-label">Purpose Type</label>
@@ -399,44 +427,42 @@ function NewChemicalRequest() {
 
         {formData.purpose_type === 'research_project' && (
           <>
-            <div className="nrf-field-row">
-              <div className="nrf-field nrf-field-half">
-                <label className="nrf-field-label">Student Name(s)</label>
-                <div className="nrf-field-control">
-                  <textarea
-                    value={formData.student_name}
-                    onChange={(e) => setFormData({ ...formData, student_name: e.target.value })}
-                    className={`nrf-text-input ${errors.student_name ? 'nrf-error' : ''}`}
-                    placeholder="Enter student name(s), one per line"
-                    rows={3}
-                  />
-                </div>
-                {errors.student_name && <span className="nrf-field-err">{errors.student_name}</span>}
+            <div className="nrf-field">
+              <label className="nrf-field-label">Student Name(s)</label>
+              <div className="nrf-field-control">
+                <textarea
+                  value={formData.student_name}
+                  onChange={(e) => setFormData({ ...formData, student_name: e.target.value })}
+                  className={`nrf-text-input ${errors.student_name ? 'nrf-error' : ''}`}
+                  placeholder="Enter student name(s), one per line"
+                  rows={3}
+                />
               </div>
-              <div className="nrf-field nrf-field-half">
-                <label className="nrf-field-label">Experiment Name(s)</label>
-                <div className="nrf-field-control">
-                  <textarea
-                    value={formData.experiment_name}
-                    onChange={(e) => setFormData({ ...formData, experiment_name: e.target.value })}
-                    className={`nrf-text-input ${errors.experiment_name ? 'nrf-error' : ''}`}
-                    placeholder="Enter experiment name(s), one per line"
-                    rows={3}
-                  />
-                </div>
-                {errors.experiment_name && <span className="nrf-field-err">{errors.experiment_name}</span>}
+              {errors.student_name && <span className="nrf-field-err">{errors.student_name}</span>}
+            </div>
+            <div className="nrf-field">
+              <label className="nrf-field-label">Experiment Name(s)</label>
+              <div className="nrf-field-control">
+                <textarea
+                  value={formData.experiment_name}
+                  onChange={(e) => setFormData({ ...formData, experiment_name: e.target.value })}
+                  className={`nrf-text-input ${errors.experiment_name ? 'nrf-error' : ''}`}
+                  placeholder="Enter experiment name(s), one per line"
+                  rows={3}
+                />
               </div>
+              {errors.experiment_name && <span className="nrf-field-err">{errors.experiment_name}</span>}
             </div>
           </>
         )}
 
         {errors.submit && <div className="nrf-submit-err">{errors.submit}</div>}
 
-        <div className="nrf-action-row">
+        <div className="nrf-action-row !flex-row !flex-nowrap">
           <button type="button" className="nrf-btn nrf-btn-ghost" onClick={() => navigate('/requests')}>
             Cancel
           </button>
-          <div className="nrf-spacer"></div>
+          <div className="nrf-spacer hidden md:block"></div>
           <button type="button" className="nrf-btn nrf-btn-draft" onClick={(e) => handleAction(e, false)}>
             Draft
           </button>

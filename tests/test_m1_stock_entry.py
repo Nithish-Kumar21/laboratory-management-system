@@ -21,7 +21,7 @@ class TestM1StockEntry:
                 'supplier_name': SUPPLIER,
                 'remarks': 'M1 test entry',
                 'chemical_items': [
-                    {'chemical_name': CHEMICAL_NAME, 'make': 'Merck', 'quantity': '500.00', 'rate': '850.00'},
+                    {'chemical_name': CHEMICAL_NAME, 'make': 'Merck', 'pack_size': '500.00', 'rate': '850.00', 'no_of_packs': 1},
                 ],
                 'apparatus_items': [
                     {'apparatus_name': APPARATUS_NAME, 'make': 'Borosil', 'quantity_pieces': 10, 'rate': '150.00'},
@@ -62,7 +62,7 @@ class TestM1StockEntry:
             'date': '2026-06-26',
             'supplier_name': SUPPLIER,
             'chemical_items': [
-                {'chemical_name': CHEMICAL_NAME, 'make': 'Merck', 'quantity': '300.00', 'rate': '850.00'},
+                {'chemical_name': CHEMICAL_NAME, 'make': 'Merck', 'pack_size': '300.00', 'rate': '850.00', 'no_of_packs': 1},
             ],
         }, format='json')
         assert resp2.status_code == status.HTTP_201_CREATED
@@ -85,7 +85,7 @@ class TestM1StockEntry:
             'date': '2026-06-26',
             'supplier_name': SUPPLIER,
             'chemical_items': [
-                {'chemical_name': CHEMICAL_NAME2, 'make': 'SRL', 'quantity': '100.00', 'rate': '200.00'},
+                {'chemical_name': CHEMICAL_NAME2, 'make': 'SRL', 'pack_size': '100.00', 'rate': '200.00', 'no_of_packs': 1},
             ],
         }, format='json')
         assert resp.status_code == status.HTTP_201_CREATED

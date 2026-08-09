@@ -64,13 +64,13 @@ function StockRegister() {
       if (filters.supplier && !register.supplier_name?.toLowerCase().includes(filters.supplier.toLowerCase())) return false;
       if (filters.chemicalName) {
         const hasChemical = register.chemical_items?.some(item =>
-          item.chemical_name.toLowerCase().includes(filters.chemicalName.toLowerCase())
+          (item.chemical_name || '').toLowerCase().includes(filters.chemicalName.toLowerCase())
         );
         if (!hasChemical) return false;
       }
       if (filters.apparatusName) {
         const hasApparatus = register.apparatus_items?.some(item =>
-          item.apparatus_name.toLowerCase().includes(filters.apparatusName.toLowerCase())
+          (item.apparatus_name || '').toLowerCase().includes(filters.apparatusName.toLowerCase())
         );
         if (!hasApparatus) return false;
       }
@@ -88,8 +88,8 @@ function StockRegister() {
   };
 
   const filtered = applyFilters(stockRegisters).filter(r =>
-    r.invoice_number.toLowerCase().includes(search.toLowerCase()) ||
-    r.supplier_name?.toLowerCase().includes(search.toLowerCase())
+    (r.invoice_number || '').toLowerCase().includes(search.toLowerCase()) ||
+    (r.supplier_name || '').toLowerCase().includes(search.toLowerCase())
   );
 
   const handleCardClick = (id) => {

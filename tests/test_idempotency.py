@@ -26,6 +26,10 @@ class TestIdempotency:
             'reason': REASON,
             'status': 'draft',
             'date': timezone.now().date().isoformat(),
+            'day_order': 'I',
+            'hour': [1, 2],
+            'purpose_type': 'practical_lab',
+            'experiment_name': 'Titration',
             'chemical_items': [
                 {'chemical_name': CHEM_NAME, 'quantity': '100.00'},
             ],
@@ -41,9 +45,10 @@ class TestIdempotency:
         assert r1.status_code == 200
         assert StockRequest.objects.get(id=req_id).status == 'pending'
 
+        # FIX-2b (ATK-15): a second submit must return 400 so the caller knows
+        # the request was already submitted, not a fresh success.
         r2 = auth_staff.post(f'/api/stock_request/{req_id}/submit/')
-        assert r2.status_code == 200
-        assert r2.data['data']['message'] == 'Already submitted.'
+        assert r2.status_code == 400
         assert StockRequest.objects.get(id=req_id).status == 'pending'
 
     def test_cancel_idempotent(self, auth_staff):

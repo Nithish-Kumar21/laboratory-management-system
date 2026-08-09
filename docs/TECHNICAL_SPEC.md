@@ -378,30 +378,55 @@ HTTP status codes follow REST convention: `200`, `201`, `400`, `401`, `403`, `40
 
 | Method | URL | Auth | Role | Description |
 |---|---|---|---|---|
-| POST | `/api/auth/login/` | None | Any | Login with employee_id + password |
-| POST | `/api/auth/token/refresh/` | None | Any | Refresh access token |
-| POST | `/api/auth/logout/` | JWT | Any | Blacklist refresh token |
-| POST | `/api/auth/change-password/` | JWT | Any | Change password (also handles first-login change) |
+| POST | `/api/users/login/` | None | Any | Login with employee_id + password |
+| POST | `/api/users/token/refresh/` | None | Any | Refresh access token |
+| POST | `/api/users/logout/` | JWT | Any | Blacklist refresh token (revocation) |
+| POST | `/api/users/change-password/` | JWT | Any | Change password (also handles first-login change) |
+| POST | `/api/users/forgot-password/` | None | Any | Request password reset (throttled 5/min) |
+| POST | `/api/users/reset-password/` | None | Any | Complete password reset (throttled 3/min) |
+| GET | `/api/users/reset-password/verify/` | None | Any | Verify reset token (throttled 10/min) |
 
-**POST `/api/auth/login/`**
+**POST `/api/users/login/`**
 ```
-Request:  { "employee_id": "EMP001", "password": "..." }
-Response: { "success": true, "data": { "access": "...", "refresh": "...", "role": "staff", "is_first_login": true } }
+Request:  { "username": "EMP001", "password": "..." }   # username = the employee ID
+Response: { "access": "...", "refresh": "...", "user": { ... } }
 Errors:
-  - 401: Invalid credentials
-  - 403: Account locked. { "locked_until": "2026-04-22T10:30:00Z" }
+  - 400: Employee ID and password are required
+  - 401: Invalid employee ID or password   # generic — same message for unknown ID,
+                                            # wrong password, and inactive accounts
+                                            # (prevents user enumeration)
+  - 401: Too many failed attempts. Try again later.   # account locked
+Rate limit: 10 attempts/min per IP (`login` throttle scope)
 ```
 
-**POST `/api/auth/change-password/`**
+**First-login response (`is_first_login=True`)**
 ```
-Request:  { "current_password": "...", "new_password": "..." }
-Response: { "success": true, "data": { "message": "Password updated successfully" } }
+Response: { "first_login": true, "message": "...", "user_id": 1, "temp_token": "..." }
+```
+The `temp_token` is a short-lived (15 min) JWT used only to call `/api/users/change-password/`.
+A matching single-use `ChangePasswordToken` record is created in the DB at login; the
+record is consumed (`used_at` set) on the first successful password change and cannot be reused.
+
+**POST `/api/users/change-password/`**
+```
+Request:  { "current_password": "...", "new_password": "...", "confirm_password": "..." }
+Response: { "message": "Password changed successfully.", "access": "...", "refresh": "...", "user": { ... } }
 Errors:
+  - 400: Current password is incorrect       # required on the first-login path
+  - 400: Token expired or already used.      # temp token missing/expired/replayed
   - 400: New password does not meet complexity requirements
   - 400: New password cannot be the same as the current password
-  - 401: Current password is incorrect
 ```
-On success, if `is_first_login` is `True`, set it to `False` and include `"is_first_login": false` in the response so the frontend can redirect to the dashboard.
+On success, if `is_first_login` is `True`, it is set to `False` so the frontend can redirect to the dashboard.
+
+**POST `/api/users/forgot-password/`** / **POST `/api/users/reset-password/`** / **GET `/api/users/reset-password/verify/`**
+```
+ForgotPassword: { "employee_id": "...", "email": "..." }    -> always returns a generic success message
+ResetPassword:  { "token": "...", "new_password": "..." }
+VerifyToken:    /reset-password/verify/?token=...
+All three respond with generic messages and are rate-limited per IP
+(forgot 5/min, reset 3/min, verify 10/min) to prevent token brute-forcing.
+```
 
 ---
 
@@ -657,12 +682,17 @@ Enforced in a shared validator used by both the user creation serializer and the
 
 ### 4.5 First Login Flow
 ```
-Frontend logic:
-1. After login, check is_first_login in the response
-2. If True: redirect to /change-password — all other routes redirect back here
-3. After successful password change: is_first_login becomes False, redirect to dashboard
-4. Backend enforces this: any protected endpoint checks is_first_login and returns
-   403 with { "code": "FIRST_LOGIN_REQUIRED" } if True, except /api/auth/change-password/
+Flow:
+1. Login returns { "first_login": true, "temp_token": "..." }. The backend also
+   stores a single-use ChangePasswordToken record keyed by the temp token's `jti`,
+   expiring after FIRST_LOGIN_TOKEN_EXPIRY_MINUTES (15 min).
+2. Frontend redirects to /change-password — all other routes redirect back here.
+3. To change the password the user must supply their current (pre-set) password AND
+   the temp_token. The backend verifies `current_password` via check_password(),
+   then looks up and consumes the ChangePasswordToken record.
+4. On success: is_first_login becomes False and used_at is stamped on the token
+   record, so replaying the same temp_token returns 400 "Token expired or already used."
+5. The temp token alone is never sufficient — the current password is always required.
 ```
 
 ---
@@ -886,21 +916,30 @@ closing_stock = chemical.available_quantity_ml  # Current live value
 
 ### Required `.env` Variables
 
+A commit-safe template lives at `backend/.env.example`. Copy it to `backend/.env` and fill in real values; `.env` is git-ignored. Variables are read with python-decouple (`config()`) from `backend/.env`:
+
 ```env
 # Core
 SECRET_KEY=<strong-random-key>          # No default in settings.py — app crashes if missing
 DEBUG=False                              # True only in development
-ALLOWED_HOSTS=192.168.1.10,localhost
+ALLOWED_HOSTS=192.168.1.10,localhost     # Comma-separated; prod.py refuses requests from other hosts
 
-# Database
-DATABASE_URL=postgres://user:pass@host:5432/lms_db
+# Database (MySQL)
+DB_NAME=lms_db                           # No default — app crashes if missing
+DB_USER=lms_user
+DB_PASSWORD=your-db-password
+DB_HOST=localhost
+DB_PORT=3306
 
-# CORS
-CORS_ALLOWED_ORIGINS=http://192.168.1.10:3000
+# CORS (comma-separated origins; prod.py also reads from the environment first)
+CORS_ALLOWED_ORIGINS=http://192.168.1.10:3000,http://localhost:3000
 
-# Media
-MEDIA_ROOT=/var/www/lms/media
-MEDIA_URL=/media/
+# Frontend base URL (used in password-reset links)
+FRONTEND_URL=http://192.168.1.10:3000
+
+# Email (Gmail SMTP; host/port/TLS are fixed in base.py)
+EMAIL_HOST_USER=your-email@gmail.com
+EMAIL_APP_PASSWORD=your-gmail-app-password   # Gmail App Password, not account password
 ```
 
 ### Settings Split
@@ -909,9 +948,9 @@ MEDIA_URL=/media/
 backend/
   settings/
     __init__.py
-    base.py       # All common settings. SECRET_KEY loaded with os.environ['SECRET_KEY'] — no fallback.
-    dev.py        # DEBUG=True, CORS allows localhost, relaxed email backend
-    prod.py       # DEBUG=False, strict CORS, ALLOWED_HOSTS from env
+    base.py       # All common settings. Secrets loaded via python-decouple config() — no fallback.
+    dev.py        # DEBUG=True, CORS allows localhost/LAN, SQL logging enabled
+    prod.py       # DEBUG=False, strict CORS, ALLOWED_HOSTS from env, TLS headers enforced
 ```
 
 ### Frontend `.env`
@@ -926,6 +965,40 @@ const api = axios.create({ baseURL: process.env.REACT_APP_API_BASE_URL });
 ```
 
 No `http://127.0.0.1:8000` anywhere in source code.
+
+### Security Hardening (Phase 1–2)
+
+Summary of the production security fixes implemented:
+
+- **TLS / transport (prod.py):** `SECURE_SSL_REDIRECT = True`, `SESSION_COOKIE_SECURE = True`,
+  `CSRF_COOKIE_SECURE = True`, `SECURE_HSTS_SECONDS = 31536000` (HSTS enforced, no plain HTTP),
+  `SECURE_CONTENT_TYPE_NOSNIFF`, `SECURE_BROWSER_XSS_FILTER`, `X_FRAME_OPTIONS = 'DENY'`.
+- **Token revocation:** `rest_framework_simplejwt.token_blacklist` is enabled;
+  `POST /api/users/logout/` blacklists the refresh token so it can no longer be used.
+  Refresh-token rotation also blacklists the old refresh token (`BLACKLIST_AFTER_ROTATION = True`).
+- **First-login temp token:** single-use, DB-backed (see §3.1 and §4.5). Current password
+  required; replay returns 400.
+- **Rate limiting (ScopedRateThrottle, per IP):** login `10/min`, forgot-password `5/min`,
+  reset-password `3/min`, verify-reset-token `10/min`. Set the `NUM_PROXIES` option if the
+  backend sits behind a reverse proxy.
+- **No user enumeration:** login returns one generic 401 (`Invalid employee ID or password`)
+  for unknown IDs, wrong passwords, and inactive accounts; a locked account returns a separate
+  generic 401.
+- **Input guards:** report views reject non-integer `year`/`page` params with 400
+  (`Invalid year format.` / `Invalid page number.`).
+- **No exception leakage:** `damaged_entry` returns generic 400/500 messages and logs the
+  real error server-side with `exc_info=True`; responses never contain `str(e)`.
+- **Dependency hygiene:** `djangorestframework-simplejwt==5.5.1`, `reportlab==5.0.0`,
+  `openpyxl==3.1.5` pinned in `requirements.txt`; legacy `settings.py` (containing a
+  `django-insecure-` key) deleted.
+
+### CSV Formula Injection (deferred — low risk)
+
+CSV report exports (issue-register / stock-register reports) embed chemical names and
+other free-text fields that could begin with `=`, `+`, `-`, or `@` and be interpreted as a
+formula when opened in Excel. **Decision: defer implementation** — the data sources are
+internal college staff inputs, not untrusted external data, so the risk is low. If the
+system ever ingests externally supplied names, prefix dangerous cells with `'` before export.
 
 ---
 

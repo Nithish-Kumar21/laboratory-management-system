@@ -204,6 +204,26 @@ class PasswordResetToken(models.Model):
         )
 
 
+class ChangePasswordToken(models.Model):
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='change_password_tokens'
+    )
+    token_jti = models.CharField(max_length=255, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    used_at = models.DateTimeField(null=True, blank=True)
+    expires_at = models.DateTimeField()
+
+    class Meta:
+        db_table = 'change_password_token'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Change-password token for {self.user.employee_id}"
+
+    def is_valid(self):
+        return self.used_at is None and self.expires_at > timezone.now()
+
+
 class DegreeClass(models.Model):
     degree = models.CharField(max_length=50, choices=DEGREE_CHOICES)
     name = models.CharField(max_length=100)

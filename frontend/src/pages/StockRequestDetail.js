@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { FaArrowLeft, FaArrowRight, FaFlask, FaIdCard, FaUser, FaGraduationCap, FaCalendarAlt, FaCheckCircle, FaTimesCircle, FaClock, FaTrash, FaEdit, FaClipboardList, FaExclamationTriangle } from 'react-icons/fa';
+import { FaArrowLeft, FaArrowRight, FaFlask, FaIdCard, FaUser, FaGraduationCap, FaCalendarAlt, FaCheckCircle, FaTimesCircle, FaClock, FaTrash, FaEdit, FaClipboardList, FaExclamationTriangle, FaPrint } from 'react-icons/fa';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import AddRequestModal from '../components/modals/AddRequestModal';
@@ -35,13 +35,24 @@ function StockRequestDetail() {
         }
     }, [id]);
 
+    useEffect(() => {
+        if (isHOD || isStoreKeeper) {
+            api.get('available_chemicals/')
+                .then((res) => {
+                    const data = Array.isArray(res.data) ? res.data : res.data.results || [];
+                    setAvailableChemicals(data);
+                })
+                .catch((err) => console.error('Error fetching available chemicals:', err));
+        }
+    }, [id, isHOD, isStoreKeeper]);
+
     const checkActiveRequests = async () => {
         try {
             const res = await api.get('/stock_request/');
             const data = Array.isArray(res.data) ? res.data : res.data.results || [];
             // Active = any request that is NOT completed, NOT rejected, NOT draft, and NOT the current one (if current is not draft)
             // But here we only care if they have ANY other active request that would block submitting this draft.
-            setHasActiveRequest(data.some(r => r.id !== parseInt(id) && r.status !== 'completed' && r.status !== 'rejected' && r.status !== 'draft'));
+            setHasActiveRequest(data.some(r => r.id !== parseInt(id) && r.status !== 'completed' && r.status !== 'rejected' && r.status !== 'draft' && r.status !== 'cancelled'));
         } catch (err) {
             console.error('Error checking active requests:', err);
         }
@@ -73,12 +84,87 @@ function StockRequestDetail() {
 
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [rejectionReason, setRejectionReason] = useState('');
+    const [showCancelModal, setShowCancelModal] = useState(false);
+    const [cancelReason, setCancelReason] = useState('');
     const [dialog, setDialog] = useState({ open: false, message: '', showCancel: true, variant: 'confirm', onConfirm: null });
 
+    // Inline Quantity Adjustment (HOD accept) State
+    const [editMode, setEditMode] = useState(false);
+    const [editQuantities, setEditQuantities] = useState({});
+    const [availableChemicals, setAvailableChemicals] = useState([]);
+    const [acceptError, setAcceptError] = useState('');
+
+    const fmtQty = (value) => {
+        if (value === null || value === undefined || value === '') return '';
+        const n = parseFloat(value);
+        if (Number.isNaN(n)) return '';
+        return String(n);
+    };
+
+    const availFor = (item) => availableChemicals.find(
+        (c) => String(c.chemical_name || '').toLowerCase() === String(item.chemical_name || '').toLowerCase()
+    );
+
+    const rowError = (item, val) => {
+        if (val === '' || val === null || val === undefined) return 'Quantity is required.';
+        const n = parseFloat(val);
+        if (Number.isNaN(n) || n <= 0) return 'Enter a quantity greater than 0.';
+        const a = availFor(item);
+        const availQty = a ? parseFloat(a.remaining ?? a.quantity) : 0;
+        if (a && n > availQty) {
+            return `Exceeds available stock (${fmtQty(availQty)} ${a.unit || item.unit}).`;
+        }
+        return '';
+    };
+
+    const toggleEditMode = () => {
+        if (!editMode) {
+            const initial = {};
+            (request.chemical_items || []).forEach((it) => { initial[it.id] = it.quantity; });
+            setEditQuantities(initial);
+            setAcceptError('');
+            api.get('available_chemicals/')
+                .then((res) => {
+                    const data = Array.isArray(res.data) ? res.data : res.data.results || [];
+                    setAvailableChemicals(data);
+                })
+                .catch((err) => console.error('Error fetching available chemicals:', err));
+            setEditMode(true);
+        } else {
+            setEditMode(false);
+            setEditQuantities({});
+            setAcceptError('');
+        }
+    };
+
     const handleAccept = () => {
+        let firstError = '';
+        const changed = [];
+        if (editMode) {
+            (request.chemical_items || []).forEach((it) => {
+                const msg = rowError(it, editQuantities[it.id]);
+                if (msg && !firstError) firstError = msg;
+                if (parseFloat(editQuantities[it.id]) !== parseFloat(it.quantity)) {
+                    changed.push({ chemical_item_id: it.id, quantity_ml: parseFloat(editQuantities[it.id]) });
+                }
+            });
+            if (firstError) {
+                setAcceptError(firstError);
+                return;
+            }
+        }
+        const payload = {};
+        if (changed.length) payload.chemical_items = changed;
         setActionLoading(true);
-        api.post(`stock_request/${id}/accept/`)
-            .then(() => { fetchRequest(); window.dispatchEvent(new CustomEvent('inventory-updated')); showToast('Request Approved'); })
+        api.post(`stock_request/${id}/accept/`, payload)
+            .then(() => {
+                fetchRequest();
+                window.dispatchEvent(new CustomEvent('inventory-updated'));
+                showToast(changed.length ? 'Request approved with adjusted quantities' : 'Request Approved');
+                setEditMode(false);
+                setEditQuantities({});
+                setAcceptError('');
+            })
             .catch(err => setDialog({ open: true, message: err.response?.data?.error || 'Failed to approve', showCancel: false }))
             .finally(() => setActionLoading(false));
     };
@@ -112,20 +198,42 @@ function StockRequestDetail() {
             .finally(() => setActionLoading(false));
     };
 
+    const handleReleaseCancel = () => {
+        setActionLoading(true);
+        api.post(`stock_request/${id}/cancel/`, { reason: cancelReason })
+            .then(() => { setShowCancelModal(false); setCancelReason(''); fetchRequest(); window.dispatchEvent(new CustomEvent('inventory-updated')); showToast('Request Cancelled & Stock Released'); })
+            .catch(err => setDialog({ open: true, message: err.response?.data?.error || 'Failed to cancel request', showCancel: false }))
+            .finally(() => setActionLoading(false));
+    };
+
     const handleReportUsage = () => {
         setActionLoading(true);
-        const items = Object.keys(usageReport).map(k => ({ id: parseInt(k), actual_used_quantity: parseFloat(usageReport[k]) }));
+        const items = Object.keys(usageReport).map(k => ({ id: parseInt(k) || 0, actual_used_quantity: parseFloat(usageReport[k]) || 0 }));
         api.post(`stock_request/${id}/report_usage/`, { items })
             .then(() => { fetchRequest(); window.dispatchEvent(new CustomEvent('inventory-updated')); showToast('Quantity Updated'); })
             .catch(err => setDialog({ open: true, message: err.response?.data?.error || 'Failed to report usage', showCancel: false }))
             .finally(() => setActionLoading(false));
     };
 
+    const extractCompleteErrorMessage = (err, fallback) => {
+        console.error('Complete request failed:', err);
+        const data = err?.response?.data;
+        if (data && typeof data === 'object') {
+            if (data.error) return data.error;
+            if (data.detail) return data.detail;
+        }
+        if (typeof data === 'string' && data.trim()) {
+            const cleaned = data.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+            if (cleaned) return cleaned.length > 300 ? cleaned.slice(0, 300) + '...' : cleaned;
+        }
+        return err?.response?.status ? `${fallback} Please contact support with error code ${err.response.status}.` : fallback;
+    };
+
     const handleMarkAsCompleted = () => {
         setActionLoading(true);
         api.post(`stock_request/${id}/mark_as_completed/`)
             .then(() => { fetchRequest(); window.dispatchEvent(new CustomEvent('inventory-updated')); showToast('Request completed'); })
-            .catch(err => setDialog({ open: true, message: err.response?.data?.error || 'Failed to complete request', showCancel: false }))
+            .catch(err => setDialog({ open: true, message: extractCompleteErrorMessage(err, 'Failed to complete request'), showCancel: false }))
             .finally(() => setActionLoading(false));
     };
 
@@ -316,10 +424,19 @@ function StockRequestDetail() {
                 <div className="staff-detail-page animate-up">
                     <div className="staff-detail-inner">
 
-                    {/* Back Row */}
-                    <div className="sd-back-row" onClick={() => navigate('/requests')}>
-                        <FaArrowLeft />
-                        <span>Request Details</span>
+                    {/* Header */}
+                    <div className="srq-header">
+                        <div className="srq-header-left">
+                            <div className="sd-back-row" onClick={() => navigate('/requests')}>
+                                <FaArrowLeft />
+                                <span>Request Details</span>
+                            </div>
+                        </div>
+                        <div className="srq-header-actions">
+                            <button className="sd-action-icon-btn" onClick={() => window.print()} title="Print">
+                                <FaPrint />
+                            </button>
+                        </div>
                     </div>
 
                     {/* Info Card */}
@@ -331,7 +448,7 @@ function StockRequestDetail() {
                             </div>
                         </div>
                         <hr className="sd-divider" />
-                        <div className="sd-meta-grid">
+                        <div className="srq-meta-grid">
                             <div className="sd-meta-item">
                                 <div className="sd-meta-label"><FaUser /> Staff</div>
                                 <div className="sd-meta-value">{request.requested_by_name}</div>
@@ -356,6 +473,10 @@ function StockRequestDetail() {
                                 <div className="sd-meta-label">Hour</div>
                                 <div className="sd-meta-value">{request.hour?.length ? request.hour.sort((a,b)=>a-b).join(', ') : '-'}</div>
                             </div>
+                            <div className="sd-meta-item">
+                                <div className="sd-meta-label">Venue</div>
+                                <div className="sd-meta-value">{request.venue || '-'}</div>
+                            </div>
                         </div>
                     </div>
 
@@ -365,11 +486,19 @@ function StockRequestDetail() {
                             <FaFlask /> Chemical Requirements
                         </div>
                         <hr className="sd-divider" />
-                        <div className="sd-chem-list">
+                        <div className="srq-chem-list">
                             {request.chemical_items?.map((item, idx) => (
-                                <div key={idx} className="sd-chem-row">
-                                    <span className="sd-chem-name">{item.chemical_name}</span>
-                                    <span className="sd-chem-qty">{item.quantity}<span className="sd-chem-unit"> {item.unit}</span></span>
+                                <div key={idx} className="srq-chem-card">
+                                    <div className="srq-chem-top">
+                                        <span className="srq-chem-name">{item.chemical_name}</span>
+                                        <span className="srq-chem-qty">{item.quantity}<span className="srq-chem-unit"> {item.unit}</span></span>
+                                    </div>
+                                    {item.actual_used_quantity != null && ['reported', 'completed'].includes(request.status) && (
+                                        <div className="srq-chem-top" style={{ marginTop: 4 }}>
+                                            <span className="srq-chem-name" style={{ fontWeight: 400, fontSize: 13, color: 'var(--text-muted)' }}>Actual Used</span>
+                                            <span className="srq-chem-qty" style={{ fontSize: 13, fontWeight: 600 }}>{item.actual_used_quantity}<span className="srq-chem-unit"> {item.unit}</span></span>
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                             {(!request.chemical_items || request.chemical_items.length === 0) && (
@@ -385,13 +514,13 @@ function StockRequestDetail() {
                                 {request.purpose_type === 'research_project' ? 'Research / Project' : 'Practical Lab'}
                             </div>
                             <hr className="sd-divider" />
-                            <div className="sd-meta-grid">
-                                <div className="sd-meta-item" style={{ gridColumn: '1 / -1' }}>
+                            <div className="srq-meta-grid">
+                                <div className="sd-meta-item">
                                     <div className="sd-meta-label">Experiment Name(s)</div>
                                     <div className="sd-meta-value">{request.experiment_name || '-'}</div>
                                 </div>
                                 {request.purpose_type === 'research_project' && (
-                                    <div className="sd-meta-item" style={{ gridColumn: '1 / -1' }}>
+                                    <div className="sd-meta-item">
                                         <div className="sd-meta-label">Student Name(s)</div>
                                         <div className="sd-meta-value">{request.student_name || '-'}</div>
                                     </div>
@@ -523,10 +652,19 @@ function StockRequestDetail() {
             <div className="staff-detail-page animate-up">
                 <div className="staff-detail-inner">
 
-                {/* Back Row */}
-                <div className="sd-back-row" onClick={() => navigate('/requests')}>
-                    <FaArrowLeft />
-                    <span>Request Details</span>
+                {/* Header */}
+                <div className="srq-header">
+                    <div className="srq-header-left">
+                        <div className="sd-back-row" onClick={() => navigate('/requests')}>
+                            <FaArrowLeft />
+                            <span>Request Details</span>
+                        </div>
+                    </div>
+                    <div className="srq-header-actions">
+                        <button className="sd-action-icon-btn" onClick={() => window.print()} title="Print">
+                            <FaPrint />
+                        </button>
+                    </div>
                 </div>
 
                 {/* Info Card */}
@@ -538,7 +676,7 @@ function StockRequestDetail() {
                         </div>
                     </div>
                     <hr className="sd-divider" />
-                    <div className="sd-meta-grid">
+                    <div className="srq-meta-grid">
                         <div className="sd-meta-item">
                             <div className="sd-meta-label"><FaUser /> Requested By</div>
                             <div className="sd-meta-value">{request.requested_by_name}</div>
@@ -563,26 +701,133 @@ function StockRequestDetail() {
                             <div className="sd-meta-label">Hour</div>
                             <div className="sd-meta-value">{request.hour?.length ? request.hour.sort((a,b)=>a-b).join(', ') : '-'}</div>
                         </div>
+                        <div className="sd-meta-item">
+                            <div className="sd-meta-label">Venue</div>
+                            <div className="sd-meta-value">{request.venue || '-'}</div>
+                        </div>
                     </div>
                 </div>
 
                 {/* Chemical Requirements Card */}
                 <div className="sd-card">
-                    <div className="sd-card-title">
-                        <FaFlask /> Chemical Requirements
-                    </div>
-                    <hr className="sd-divider" />
-                    <div className="sd-chem-list">
-                        {request.chemical_items?.map((item, idx) => (
-                            <div key={idx} className="sd-chem-row">
-                                <span className="sd-chem-name">{item.chemical_name}</span>
-                                <span className="sd-chem-qty">{item.quantity}<span className="sd-chem-unit"> {item.unit}</span></span>
-                            </div>
-                        ))}
-                        {(!request.chemical_items || request.chemical_items.length === 0) && (
-                            <div className="sd-empty-text">No chemicals listed</div>
+                    <div className="srq-card-title-row">
+                        <div className="sd-card-title">
+                            <FaFlask /> Chemical Requirements
+                        </div>
+                        {isHOD && request.status === 'pending' && (
+                            <button
+                                type="button"
+                                className={`srq-chem-edit-btn ${editMode ? 'active' : ''}`}
+                                onClick={toggleEditMode}
+                                title={editMode ? 'Done editing quantities' : 'Edit quantities'}
+                            >
+                                <FaEdit /> {editMode ? 'Done' : 'Edit'}
+                            </button>
                         )}
                     </div>
+                    <hr className="sd-divider" />
+                    {acceptError && <div className="error-banner">{acceptError}</div>}
+                    {editMode ? (
+                        <div className="sd-usage-table">
+                            {request.chemical_items?.map((item) => {
+                                const err = rowError(item, editQuantities[item.id]);
+                                const stock = availFor(item);
+                                const hasStock = stock !== undefined;
+                                const remainingQty = hasStock ? fmtQty(stock.remaining ?? stock.quantity) : null;
+                                const remainingUnit = hasStock ? (stock.unit || item.unit) : item.unit;
+                                return (
+                                    <div key={item.id} className="srq-chem-edit-row">
+                                        <div className="srq-chem-edit-name">
+                                            <span className="sd-usage-name">{item.chemical_name}</span>
+                                        </div>
+                                        <div className="srq-chem-qty-group">
+                                            <div className="srq-chem-qty-item">
+                                                <span className="srq-chem-qty-label">Requested</span>
+                                                <div className="sd-usage-input-wrap">
+                                                    <input
+                                                        type="number"
+                                                        min="0.01"
+                                                        step="0.01"
+                                                        value={editQuantities[item.id] ?? item.quantity}
+                                                        onChange={(e) => {
+                                                            const raw = e.target.value;
+                                                            const n = parseFloat(raw);
+                                                            if (raw === '' || Number.isNaN(n) || n <= 0) {
+                                                                setEditQuantities({ ...editQuantities, [item.id]: item.quantity });
+                                                            } else {
+                                                                setEditQuantities({ ...editQuantities, [item.id]: raw });
+                                                            }
+                                                            if (acceptError) setAcceptError('');
+                                                        }}
+                                                        className={`sd-usage-input ${err ? 'input-error' : ''}`}
+                                                    />
+                                                    <span className="sd-input-unit">{item.unit}</span>
+                                                </div>
+                                            </div>
+                                            <div className="srq-chem-qty-item">
+                                                <span className="srq-chem-qty-label">Stock Available</span>
+                                                <span className="srq-chem-qty">
+                                                    {remainingQty !== null ? remainingQty : '—'}
+                                                    {remainingQty !== null && <span className="srq-chem-unit"> {remainingUnit}</span>}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        {err && (
+                                            <div className="srq-chem-edit-error">
+                                                <FaExclamationTriangle /> {err}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                            {(!request.chemical_items || request.chemical_items.length === 0) && (
+                                <div className="sd-empty-text">No chemicals listed</div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="srq-chem-list">
+                            {request.chemical_items?.map((item, idx) => {
+                                const stock = availFor(item);
+                                const hasStock = stock !== undefined;
+                                const remainingQty = hasStock ? fmtQty(stock.remaining ?? stock.quantity) : null;
+                                const remainingUnit = hasStock ? (stock.unit || item.unit) : item.unit;
+                                return (
+                                <div key={idx} className="srq-chem-card">
+                                    <div className="srq-chem-top">
+                                        <span className="srq-chem-name">{item.chemical_name}</span>
+                                        <div className="srq-chem-qty-group">
+                                            <div className="srq-chem-qty-item">
+                                                <span className="srq-chem-qty-label">Requested</span>
+                                                <span className="srq-chem-qty">{item.quantity}<span className="srq-chem-unit"> {item.unit}</span></span>
+                                            </div>
+                                            {isHOD && (
+                                                <div className="srq-chem-qty-item srq-chem-stock-desktop">
+                                                    <span className="srq-chem-qty-label">Stock Available</span>
+                                                    <span className="srq-chem-qty">{remainingQty !== null ? remainingQty : '—'}<span className="srq-chem-unit"> {remainingQty !== null ? remainingUnit : ''}</span></span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    {isHOD && (
+                                        <div className="srq-chem-stock-row">
+                                            <span className="srq-chem-qty-label">Stock Available</span>
+                                            <span className="srq-chem-qty">{remainingQty !== null ? remainingQty : '—'}<span className="srq-chem-unit"> {remainingQty !== null ? remainingUnit : ''}</span></span>
+                                        </div>
+                                    )}
+                                    {item.actual_used_quantity != null && ['reported', 'completed'].includes(request.status) && (
+                                        <div className="srq-chem-top" style={{ marginTop: 4 }}>
+                                            <span className="srq-chem-name" style={{ fontWeight: 400, fontSize: 13, color: 'var(--text-muted)' }}>Actual Used</span>
+                                            <span className="srq-chem-qty" style={{ fontSize: 13, fontWeight: 600 }}>{item.actual_used_quantity}<span className="srq-chem-unit"> {item.unit}</span></span>
+                                        </div>
+                                    )}
+                                </div>
+                                );
+                            })}
+                            {(!request.chemical_items || request.chemical_items.length === 0) && (
+                                <div className="sd-empty-text">No chemicals listed</div>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 {/* Purpose Type Card */}
@@ -592,13 +837,13 @@ function StockRequestDetail() {
                             {request.purpose_type === 'research_project' ? 'Research / Project' : 'Practical Lab'}
                         </div>
                         <hr className="sd-divider" />
-                        <div className="sd-meta-grid">
-                            <div className="sd-meta-item" style={{ gridColumn: '1 / -1' }}>
+                        <div className="srq-meta-grid">
+                            <div className="sd-meta-item">
                                 <div className="sd-meta-label">Experiment Name(s)</div>
                                 <div className="sd-meta-value">{request.experiment_name || '-'}</div>
                             </div>
                             {request.purpose_type === 'research_project' && (
-                                <div className="sd-meta-item" style={{ gridColumn: '1 / -1' }}>
+                                <div className="sd-meta-item">
                                     <div className="sd-meta-label">Student Name(s)</div>
                                     <div className="sd-meta-value">{request.student_name || '-'}</div>
                                 </div>
@@ -642,36 +887,70 @@ function StockRequestDetail() {
                         <div className="sd-card-title"><FaCheckCircle /> Verify & Complete Request</div>
                         <hr className="sd-divider" />
                         <p className="sd-section-helper">Review the usage report submitted by the staff. Inventory will be automatically adjusted upon confirmation.</p>
-                        <div className="card no-padding">
-                            <table className="detail-table comparison-mode">
+
+                        {/* Desktop Table */}
+                        <div className="vc-table-wrap">
+                            <table className="vc-table">
                                 <thead>
                                     <tr>
-                                        <th>Chemical</th>
-                                        <th>Requested</th>
-                                        <th>Actual Used</th>
-                                        <th>Returned</th>
-                                        <th>Additional</th>
+                                        <th className="vc-th-left">Chemical</th>
+                                        <th className="vc-th-right">Requested</th>
+                                        <th className="vc-th-right">Actual Used</th>
+                                        <th className="vc-th-right">Returned</th>
+                                        <th className="vc-th-right">Additional</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {request.chemical_items?.map(item => {
-                                        const req = parseFloat(item.quantity);
-                                        const act = parseFloat(item.actual_used_quantity || 0);
+                                        const req = parseFloat(item.quantity) || 0;
+                                        const act = parseFloat(item.actual_used_quantity) || 0;
                                         const ret = Math.max(0, req - act);
                                         const add = Math.max(0, act - req);
                                         return (
                                             <tr key={item.id}>
-                                                <td className="item-name">{item.chemical_name}</td>
-                                                <td><span className="qty-badge muted">{req} {item.unit}</span></td>
-                                                <td><span className="qty-badge primary">{act} {item.unit}</span></td>
-                                                <td>{ret > 0 ? <span className="diff-badge positive"><FaArrowLeft /> {ret.toFixed(2)} {item.unit}</span> : <span className="diff-none">-</span>}</td>
-                                                <td>{add > 0 ? <span className="diff-badge negative"><FaArrowRight /> {add.toFixed(2)} {item.unit}</span> : <span className="diff-none">-</span>}</td>
+                                                <td className="vc-td-name">{item.chemical_name}</td>
+                                                <td className="vc-td-right"><span className="vc-badge vc-badge-muted">{req} {item.unit}</span></td>
+                                                <td className="vc-td-right"><span className="vc-badge vc-badge-primary">{act} {item.unit}</span></td>
+                                                <td className="vc-td-right">{ret > 0 ? <span className="vc-diff vc-diff-positive"><FaArrowLeft /> {ret.toFixed(2)} {item.unit}</span> : <span className="vc-diff-none">—</span>}</td>
+                                                <td className="vc-td-right">{add > 0 ? <span className="vc-diff vc-diff-negative"><FaArrowRight /> {add.toFixed(2)} {item.unit}</span> : <span className="vc-diff-none">—</span>}</td>
                                             </tr>
                                         );
                                     })}
                                 </tbody>
                             </table>
                         </div>
+
+                        {/* Mobile Cards */}
+                        <div className="vc-cards">
+                            {request.chemical_items?.map(item => {
+                                const req = parseFloat(item.quantity) || 0;
+                                const act = parseFloat(item.actual_used_quantity) || 0;
+                                const ret = Math.max(0, req - act);
+                                const add = Math.max(0, act - req);
+                                return (
+                                    <div key={item.id} className="vc-card">
+                                        <div className="vc-card-header">{item.chemical_name}</div>
+                                        <div className="vc-card-row">
+                                            <span className="vc-card-label">Requested</span>
+                                            <span className="vc-badge vc-badge-muted">{req} {item.unit}</span>
+                                        </div>
+                                        <div className="vc-card-row">
+                                            <span className="vc-card-label">Actual Used</span>
+                                            <span className="vc-badge vc-badge-primary">{act} {item.unit}</span>
+                                        </div>
+                                        <div className="vc-card-row">
+                                            <span className="vc-card-label">Returned</span>
+                                            {ret > 0 ? <span className="vc-diff vc-diff-positive"><FaArrowLeft /> {ret.toFixed(2)} {item.unit}</span> : <span className="vc-diff-none">—</span>}
+                                        </div>
+                                        <div className="vc-card-row">
+                                            <span className="vc-card-label">Additional</span>
+                                            {add > 0 ? <span className="vc-diff vc-diff-negative"><FaArrowRight /> {add.toFixed(2)} {item.unit}</span> : <span className="vc-diff-none">—</span>}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
                         <button className="sd-btn sd-btn-primary sd-btn-full" onClick={handleMarkAsCompleted} disabled={actionLoading} style={{marginTop: '16px'}}>
                             {actionLoading ? 'Processing...' : <><FaCheckCircle /> Confirm & Adjust Inventory</>}
                         </button>
@@ -683,11 +962,13 @@ function StockRequestDetail() {
                     <div className="sd-card">
                         <div className="sd-card-title"><FaClipboardList /> Execution Summary</div>
                         <hr className="sd-divider" />
-                        <div className="sd-chem-list">
+                        <div className="srq-chem-list">
                             {request.chemical_items?.map(item => (
-                                <div key={item.id} className="sd-chem-row">
-                                    <span className="sd-chem-name">{item.chemical_name}</span>
-                                    <span className="sd-chem-qty">{item.actual_used_quantity}<span className="sd-chem-unit"> {item.unit}</span></span>
+                                <div key={item.id} className="srq-chem-card">
+                                    <div className="srq-chem-top">
+                                        <span className="srq-chem-name">{item.chemical_name}</span>
+                                        <span className="srq-chem-qty">{item.actual_used_quantity}<span className="srq-chem-unit"> {item.unit}</span></span>
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -706,11 +987,23 @@ function StockRequestDetail() {
                     </div>
                 )}
 
+                {/* HOD Release Action */}
+                {isHOD && request.status === 'accepted' && (
+                    <div className="sd-actions">
+                        <button className="sd-btn sd-btn-danger" onClick={() => setShowCancelModal(true)} disabled={actionLoading}>
+                            <FaTimesCircle /> Cancel & Release Stock
+                        </button>
+                    </div>
+                )}
+
                 {/* StoreKeeper Issue Action */}
                 {isStoreKeeper && request.status === 'accepted' && (
                     <div className="sd-actions">
                         <button className="sd-btn sd-btn-primary sd-btn-full" onClick={handleMarkAsIssued} disabled={actionLoading}>
                             {actionLoading ? 'Processing...' : <><FaCheckCircle /> Mark as Issued</>}
+                        </button>
+                        <button className="sd-btn sd-btn-danger sd-btn-full" onClick={() => setShowCancelModal(true)} disabled={actionLoading}>
+                            <FaTimesCircle /> Cancel & Release Stock
                         </button>
                     </div>
                 )}
@@ -760,6 +1053,26 @@ function StockRequestDetail() {
                         <div className="modal-footer" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                             <button type="button" className="btn-secondary" onClick={() => { setShowRejectModal(false); setRejectionReason(''); }} disabled={actionLoading}>Cancel</button>
                             <button type="button" className="btn-reject" onClick={handleReject} disabled={actionLoading || !rejectionReason.trim()}>{actionLoading ? 'Processing...' : 'Reject Request'}</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Cancel / Release Stock Modal */}
+            {showCancelModal && (
+                <div className="modal-overlay" onClick={() => setShowCancelModal(false)}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3>Cancel Request & Release Stock</h3>
+                            <button type="button" className="modal-close" onClick={() => setShowCancelModal(false)} aria-label="Close">×</button>
+                        </div>
+                        <div className="modal-body">
+                            <p className="sd-section-helper">This will cancel the request and release the committed stock back to inventory. Reason is optional.</p>
+                            <textarea value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} placeholder="Reason (optional)..." rows={4} className="modern-textarea" style={{ width: '100%', marginTop: '8px' }} />
+                        </div>
+                        <div className="modal-footer" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                            <button type="button" className="btn-secondary" onClick={() => { setShowCancelModal(false); setCancelReason(''); }} disabled={actionLoading}>Close</button>
+                            <button type="button" className="btn-reject" onClick={handleReleaseCancel} disabled={actionLoading}>{actionLoading ? 'Processing...' : 'Cancel & Release'}</button>
                         </div>
                     </div>
                 </div>

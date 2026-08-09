@@ -5,19 +5,21 @@ from rest_framework import status, generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, Throttled
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 from rest_framework_simplejwt.exceptions import TokenError
 from django.contrib.auth import authenticate
 from django.conf import settings
 from django.utils import timezone
-from .models import User, PasswordResetToken, DegreeClass
+from .models import User, PasswordResetToken, DegreeClass, ChangePasswordToken
 from .serializers import (
     UserSerializer, UserCreateSerializer, UserUpdateSerializer,
     ChangePasswordSerializer, FirstLoginChangePasswordSerializer,
     PasswordResetRequestSerializer, PasswordResetConfirmSerializer
 )
 from .email_utils import send_password_reset_email, send_welcome_email
+from .throttles import LoginRateThrottle, ForgotPasswordThrottle, ResetPasswordThrottle
 from audit.services import AuditLogService
 
 logger = logging.getLogger(__name__)
@@ -25,6 +27,15 @@ logger = logging.getLogger(__name__)
 
 class LoginView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [LoginRateThrottle]
+
+    def handle_exception(self, exc):
+        if isinstance(exc, Throttled):
+            return Response(
+                {'success': False, 'error': 'Too many login attempts. Please try again later.'},
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+            )
+        return super().handle_exception(exc)
 
     def post(self, request):
         username = request.data.get('username')
@@ -36,17 +47,15 @@ class LoginView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        # Generic lockout message (valid + locked account only). All other
+        # invalid-credential paths return the same generic 401 to prevent
+        # user enumeration.
         try:
             u = User.objects.get(employee_id=username)
             if u.is_account_locked():
                 return Response(
-                    {'error': 'Account is temporarily locked. Try again later.'},
-                    status=status.HTTP_403_FORBIDDEN
-                )
-            if not u.is_active:
-                return Response(
-                    {'error': 'Account is inactive'},
-                    status=status.HTTP_403_FORBIDDEN
+                    {'error': 'Too many failed attempts. Try again later.'},
+                    status=status.HTTP_401_UNAUTHORIZED
                 )
         except User.DoesNotExist:
             pass
@@ -54,6 +63,7 @@ class LoginView(APIView):
         user = authenticate(request, username=username, password=password)
 
         if user is None:
+            logger.warning('Failed login attempt for employee_id=%s', username)
             return Response(
                 {'error': 'Invalid employee ID or password'},
                 status=status.HTTP_401_UNAUTHORIZED
@@ -75,6 +85,14 @@ class LoginView(APIView):
                 lifetime=timedelta(
                     minutes=settings.FIRST_LOGIN_TOKEN_EXPIRY_MINUTES
                 )
+            )
+
+            ChangePasswordToken.objects.create(
+                user=user,
+                token_jti=temp_token['jti'],
+                expires_at=timezone.now() + timedelta(
+                    minutes=settings.FIRST_LOGIN_TOKEN_EXPIRY_MINUTES
+                ),
             )
 
             return Response({
@@ -147,12 +165,41 @@ class ChangePasswordView(APIView):
                         status=status.HTTP_403_FORBIDDEN
                     )
 
+                # Require the current (pre-set) password so a stolen temp token
+                # alone cannot change a password.
+                current_password = request.data.get('current_password')
+                if not current_password or not user.check_password(current_password):
+                    return Response(
+                        {'error': 'Current password is incorrect.'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                # Consume the single-use token record (DB-backed, keyed by jti).
+                jti = token.get('jti')
+                token_record = None
+                if jti:
+                    token_record = ChangePasswordToken.objects.filter(
+                        user=user,
+                        token_jti=jti,
+                        used_at__isnull=True,
+                        expires_at__gt=timezone.now(),
+                    ).first()
+
+                if not token_record or not user.is_first_login:
+                    return Response(
+                        {'error': 'Token expired or already used.'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
                 serializer = FirstLoginChangePasswordSerializer(
                     data=request.data,
                     context={'user': user}
                 )
                 if serializer.is_valid():
                     serializer.save()
+
+                    token_record.used_at = timezone.now()
+                    token_record.save(update_fields=['used_at'])
 
                     AuditLogService.log(
                         user=user,
@@ -204,6 +251,8 @@ class ChangePasswordView(APIView):
 
 class ForgotPasswordView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'forgot_password'
 
     def post(self, request):
         serializer = PasswordResetRequestSerializer(data=request.data)
@@ -216,7 +265,10 @@ class ForgotPasswordView(APIView):
         try:
             user = User.objects.get(employee_id=employee_id, email__iexact=email, is_active=True)
 
-            PasswordResetToken.objects.filter(user=user, used=False).delete()
+            # Only delete expired or already-used tokens. A valid, in-flight
+            # reset token must survive repeat requests.
+            PasswordResetToken.objects.filter(user=user, used=True).delete()
+            PasswordResetToken.objects.filter(user=user, expires_at__lt=timezone.now()).delete()
 
             reset_token = PasswordResetToken.create_for_user(user)
 
@@ -238,6 +290,8 @@ class ForgotPasswordView(APIView):
 
 class ResetPasswordView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'reset_password'
 
     def post(self, request):
         token_str = request.data.get('token')
@@ -271,7 +325,7 @@ class ResetPasswordView(APIView):
         from django.contrib.auth.password_validation import validate_password
         from django.core.exceptions import ValidationError as DjangoValidationError
         try:
-            validate_password(new_password)
+            validate_password(new_password, user=reset_token.user)
         except DjangoValidationError as e:
             return Response(
                 {'new_password': list(e.messages)},
@@ -311,6 +365,8 @@ class ResetPasswordView(APIView):
 
 class VerifyResetTokenView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'verify_reset_token'
 
     def get(self, request):
         token_str = request.query_params.get('token')
@@ -392,7 +448,7 @@ class UserRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         return user
 
     def perform_update(self, serializer):
-        instance = self.get_object()
+        instance = serializer.instance
         old_active = instance.is_active
         if self.request.user.role != 'hod':
             serializer.save(
