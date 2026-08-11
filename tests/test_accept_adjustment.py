@@ -25,6 +25,7 @@ class TestAcceptQuantityAdjustment:
         resp = staff_client.post('/api/stock_request/', {
             'class_name': CLASS_NAME,
             'reason': 'Test accept adjustment',
+            'status': 'draft',
             'date': timezone.now().date().isoformat(),
             'day_order': 'I',
             'hour': [1],

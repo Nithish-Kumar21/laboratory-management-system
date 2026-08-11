@@ -397,11 +397,18 @@ class StockRequestViewSet(viewsets.ModelViewSet):
     @transaction.atomic
     def perform_create(self, serializer):
         user = self.request.user
-        requested_status = serializer.validated_data.get('status', 'draft')
+        # Status is read-only in the create serializer (ATK-22), so read the
+        # requested value directly. Only 'draft' (Save Draft) or 'pending'
+        # (direct submit) are honored; anything else falls back to 'pending'.
+        requested_status = self.request.data.get('status', 'pending')
+        if requested_status not in ('draft', 'pending'):
+            requested_status = 'pending'
         # TOCTOU fix: lock active requests before creating to prevent
         # two simultaneous creates from both passing the "no active request" check.
-        # Drafts are always allowed — staff should be able to work on a new draft
-        # even while an active request is in progress.
+        # New requests land directly in pending (an active status), so the
+        # active-request guard below must block a second submission while one
+        # is already in pending/accepted/issued/reported. Drafts are always
+        # allowed — staff can save work without triggering the guard.
         if user.role == 'staff' and requested_status != 'draft':
             active_statuses = ['pending', 'accepted', 'issued', 'reported']
             active_requests = StockRequest.objects.select_for_update().filter(
@@ -441,9 +448,9 @@ class StockRequestViewSet(viewsets.ModelViewSet):
             instance = serializer.save(
                 request_id=request_id,
                 requested_by=user,
-                # Status is always draft on creation — never trust client input.
-                # Read-only in the create serializer, enforced here as belt-and-braces.
-                status='draft',
+                # New requests land directly in pending by default. Only an
+                # explicit 'draft' request is kept as a draft.
+                status=requested_status,
             )
         except IntegrityError:
             # Fallback: unique constraint violation (extremely rare, e.g. if

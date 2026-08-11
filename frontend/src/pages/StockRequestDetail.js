@@ -211,7 +211,7 @@ function StockRequestDetail() {
     const handleReleaseCancel = () => {
         setActionLoading(true);
         api.post(`stock_request/${id}/cancel/`, { reason: cancelReason })
-            .then(() => { setShowCancelModal(false); setCancelReason(''); fetchRequest(); window.dispatchEvent(new CustomEvent('inventory-updated')); showToast('Request Cancelled & Stock Released'); })
+            .then(() => { setShowCancelModal(false); setCancelReason(''); fetchRequest(); window.dispatchEvent(new CustomEvent('inventory-updated')); showToast('Request Cancelled'); })
             .catch(err => setDialog({ open: true, message: err.response?.data?.error || 'Failed to cancel request', showCancel: false }))
             .finally(() => setActionLoading(false));
     };
@@ -1003,21 +1003,18 @@ function StockRequestDetail() {
                     </div>
                 )}
 
-                {/* HOD Release Action */}
-                {isHOD && request.status === 'accepted' && (
-                    <div className="sd-actions">
-                        <button className="sd-btn sd-btn-danger" onClick={() => setShowCancelModal(true)} disabled={actionLoading}>
-                            <FaTimesCircle /> Cancel & Release Stock
-                        </button>
-                    </div>
-                )}
-
                 {/* StoreKeeper Issue Action */}
                 {isStoreKeeper && request.status === 'accepted' && (
                     <div className="sd-actions">
                         <button className="sd-btn sd-btn-primary sd-btn-full" onClick={handleMarkAsIssued} disabled={actionLoading}>
                             {actionLoading ? 'Processing...' : <><FaCheckCircle /> Mark as Issued</>}
                         </button>
+                    </div>
+                )}
+
+                {/* Owner Cancel Pending Request */}
+                {isStaff && user?.employee_id === request.requested_by_id && request.status === 'pending' && (
+                    <div className="sd-actions">
                         <button className="sd-btn sd-btn-danger sd-btn-full" onClick={() => setShowCancelModal(true)} disabled={actionLoading}>
                             <FaTimesCircle /> Cancel & Release Stock
                         </button>
@@ -1079,11 +1076,11 @@ function StockRequestDetail() {
                 <div className="modal-overlay" onClick={() => setShowCancelModal(false)}>
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
-                            <h3>Cancel Request & Release Stock</h3>
+                            <h3>Cancel Request</h3>
                             <button type="button" className="modal-close" onClick={() => setShowCancelModal(false)} aria-label="Close">×</button>
                         </div>
                         <div className="modal-body">
-                            <p className="sd-section-helper">This will cancel the request and release the committed stock back to inventory. Reason is optional.</p>
+                            <p className="sd-section-helper">This will cancel the request. Reason is optional.</p>
                             <textarea value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} placeholder="Reason (optional)..." rows={4} className="modern-textarea" style={{ width: '100%', marginTop: '8px' }} />
                         </div>
                         <div className="modal-footer" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>

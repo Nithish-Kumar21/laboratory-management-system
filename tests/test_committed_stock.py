@@ -41,6 +41,7 @@ class TestCommittedQuantityTracking:
         resp = client.post('/api/stock_request/', {
             'class_name': CLASS_NAME,
             'reason': 'Committed stock test',
+            'status': 'draft',
             'date': timezone.now().date().isoformat(),
             'day_order': 'I',
             'hour': [1],
@@ -179,6 +180,7 @@ class TestCancelReleasesCommittedStock:
         resp = client.post('/api/stock_request/', {
             'class_name': CLASS_NAME,
             'reason': 'Committed stock release test',
+            'status': 'draft',
             'date': timezone.now().date().isoformat(),
             'day_order': 'I',
             'hour': [1],
@@ -286,6 +288,7 @@ class TestCancelReleasesCommittedStock:
             return auth_staff.post('/api/stock_request/', {
                 'class_name': CLASS_NAME,
                 'reason': 'New request after release',
+                'status': 'draft',
                 'date': timezone.now().date().isoformat(),
                 'day_order': 'I',
                 'hour': [1],
