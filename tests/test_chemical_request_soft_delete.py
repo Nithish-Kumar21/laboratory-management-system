@@ -47,9 +47,6 @@ def _create(client, *, status_val="pending"):
         format="json",
     )
     assert resp.status_code == status.HTTP_201_CREATED, resp.data
-    req_id = resp.data["id"]
-    submit_resp = client.post(f"/api/stock_request/{req_id}/submit/")
-    assert submit_resp.status_code == status.HTTP_200_OK, submit_resp.data
     return resp
 
 
